@@ -6,3 +6,8 @@ onlyBuiltDependencies:
   - "@prisma/client"
   - "@prisma/engines"
   - "prisma"
+
+# Vá lỗ hổng phụ thuộc gián tiếp (CI chạy pnpm audit --audit-level high):
+# Prisma 6.19 kéo deepmerge-ts 7.x (GHSA-ggr8-5vv4-36mx); Prisma 7 đã dùng 8.0.2 cùng API.
+overrides:
+  deepmerge-ts: "^8.0.2"
