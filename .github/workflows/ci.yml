@@ -28,6 +28,9 @@ jobs:
       TEST_DATABASE_URL: postgresql://coinguon:coinguon@localhost:5432/coinguon_test
       TEST_APP_DATABASE_URL: postgresql://coinguon_app:coinguon_app@localhost:5432/coinguon_test
       TEST_PLATFORM_DATABASE_URL: postgresql://coinguon_platform:coinguon_platform@localhost:5432/coinguon_test
+      TEST_API_DATABASE_URL: postgresql://coinguon:coinguon@localhost:5432/coinguon_test_api
+      TEST_API_APP_DATABASE_URL: postgresql://coinguon_app:coinguon_app@localhost:5432/coinguon_test_api
+      TEST_API_PLATFORM_DATABASE_URL: postgresql://coinguon_platform:coinguon_platform@localhost:5432/coinguon_test_api
       SHADOW_DATABASE_URL: postgresql://coinguon:coinguon@localhost:5432/coinguon_shadow
     steps:
       - uses: actions/checkout@v4
@@ -51,6 +54,12 @@ jobs:
         run: |
           pnpm --filter @coinguon/db migrate:deploy
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f infra/docker/postgres/init.sql
+
+      - name: Database riêng cho test API
+        run: |
+          psql "$DATABASE_URL" -c "CREATE DATABASE coinguon_test_api"
+          DATABASE_URL="$TEST_API_DATABASE_URL" pnpm --filter @coinguon/db migrate:deploy
+          psql "$TEST_API_DATABASE_URL" -v ON_ERROR_STOP=1 -f infra/docker/postgres/init.sql
 
       - name: Migration SQL khớp schema.prisma
         run: |

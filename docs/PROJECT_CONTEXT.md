@@ -5,10 +5,10 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.3.1 |
+| Phiên bản file | 0.4.0 |
 | Cập nhật lần cuối | 2026-11-01 |
 | Người cập nhật | TuanLC, Claude |
-| Giai đoạn hiện tại | **Giai đoạn 0 (nền móng) xong — chuẩn bị MVP phần 1** |
+| Giai đoạn hiện tại | **MVP phần 1 — API phả đồ xong; tiếp theo: giao diện web** |
 | Mã nguồn | https://github.com/CongTuan99bk/giapha (nhánh `main`, CI xanh) |
 | Tài liệu đặc tả đầy đủ | "Tài liệu dự án: Hệ thống Gia Phả Cội Nguồn" v1.0 — https://claude.ai/artifact/1Wy2PqEVYSLqycMLH8LMzG |
 | Bản thảo kỹ thuật | https://claude.ai/artifact/T24kXNyJ9UkUPdRwMzBkFd |
@@ -50,17 +50,17 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Tài liệu đặc tả – phân tích – thiết kế v1.0 | Xong (2026-11-01) | FR/NFR/BR, use case, ERD, API, UI, thống kê, bảo mật, test, vận hành |
 | Sổ tay chủ sở hữu & Hướng dẫn sử dụng v1.0 | Xong (2026-11-01) | Viết theo thiết kế; đối chiếu lại tên nút, thêm ảnh chụp khi có giao diện |
 | Giai đoạn 0 — Nền móng (tuần 1–2) | **Xong (2026-11-01)** | Monorepo, CI, schema + RLS, genealogy-core, lunar-vn, schemas — 126 test xanh |
-| MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | Chưa bắt đầu | |
+| MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Đang làm** | API xong (2026-11-01): đăng nhập, dòng họ, người/quan hệ, phả đồ, xưng hô — 33 test e2e. Còn: mời thành viên, giao diện web |
 | MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | Chưa bắt đầu | |
 | Phase 2 (tuần 15–24), Phase 3 (tuần 25–32) | Chưa bắt đầu | |
 
 ### 2.2. Việc đang làm
-- (trống)
+- MVP phần 1 — `apps/web` (Next.js): đăng nhập, danh sách dòng họ, trình chỉnh sửa phả đồ dùng `GET /tree`.
 
 ### 2.3. Việc tiếp theo
-1. (Tuỳ chọn) chuyển kho GitHub về riêng tư.
-2. Chạy `prisma generate` + seed dữ liệu mẫu (cây 30 người, 5 đời) trên máy dev.
-3. MVP phần 1: `apps/api` (common: TenantGuard đặt `app.clan_id`, auth, clans/members, persons/unions/tree, kinship) và `apps/web` (đăng nhập, trình chỉnh sửa phả đồ dùng `layoutTree`).
+1. `apps/web`: đăng nhập/đăng ký, chọn dòng họ, phả đồ (pan/zoom, bấm người → thêm cha mẹ/vợ chồng/con, sửa, xoá), tra xưng hô.
+2. API: mời thành viên + đổi vai trò (FR-CLAN), rate limit (KI-010), OTP email (KI-009), seed dữ liệu mẫu (30 người, 5 đời).
+3. (Tuỳ chọn) chuyển kho GitHub về riêng tư.
 4. Chốt các câu hỏi còn lại ở mục 3.2.
 
 ---
@@ -77,7 +77,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 - Thông tin liên hệ ban quản lý hiển thị ở chân trang + trang Liên hệ, công khai từng trường, cần xác nhận đồng ý.
 - Giao diện và nội dung tự thiết kế mới; không dùng thương hiệu của web tham chiếu.
 - **Tên sản phẩm: "Gia Phả Cội Nguồn"** (chốt 2026-11-01). Tên package: `@coinguon/*`. Tên miền hệ thống: chưa chọn (cần tra cứu nhãn hiệu).
-- Prisma 6.19 (ADR-008); 3 role DB: `coinguon` (migration), `coinguon_app` (bị RLS), `coinguon_platform` (BYPASSRLS) — ADR-009.
+- Prisma 6.19 chỉ để quản lý schema/migration (ADR-008); API truy vấn bằng **Kysely** + NestJS 12 (ADR-010); 3 role DB: `coinguon` (migration), `coinguon_app` (bị RLS), `coinguon_platform` (BYPASSRLS) — ADR-009.
 
 ### 3.2. Chưa chốt (cần chủ dự án trả lời)
 - [ ] Dùng riêng cho một dòng họ hay làm dịch vụ nhiều dòng họ có thu phí?
@@ -96,9 +96,9 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | --- | --- |
 | Web (quản trị + website + PWA) | Next.js (App Router), React, Tailwind CSS, shadcn/ui |
 | Phả đồ | React Flow + layout tự viết (Reingold–Tilford/Walker) trong Web Worker; chế độ Canvas khi thu nhỏ |
-| API | NestJS (REST, OpenAPI) |
+| API | NestJS 12 (ESM, REST) + Kysely 0.29 (SQL có kiểu, sinh kiểu bằng `kysely-codegen`); Argon2id (`@node-rs/argon2`) |
 | Validation dùng chung | Zod (`packages/schemas`) |
-| ORM / DB | Prisma / PostgreSQL (ltree, pg_trgm, unaccent, RLS) |
+| Schema / DB | Prisma (schema + migration) / PostgreSQL 16 (ltree, pg_trgm, unaccent, RLS) |
 | Cache, hàng đợi, bộ đếm | Redis + BullMQ |
 | File | Cloudflare R2 (S3-compatible), upload trực tiếp bằng presigned URL |
 | Xuất file | ExcelJS; Playwright/Chromium cho PDF/PNG |
@@ -130,7 +130,9 @@ Trình duyệt (máy tính / điện thoại PWA / khách xem website)
 
 ```
 gia-pha-coi-nguon/
-├── apps/                    # (MVP) web — Next.js, api — NestJS, worker — BullMQ
+├── apps/
+│   ├── api/                 # ✅ @coinguon/api — NestJS + Kysely: src/{auth,clans,persons,tree,common,db}, test/*.e2e.test.ts
+│   └── web/, worker/        # (MVP) Next.js, BullMQ
 ├── packages/
 │   ├── lunar-vn/            # ✅ @coinguon/lunar-vn — âm lịch VN, tháng nhuận, ngày giỗ, can chi
 │   ├── genealogy-core/      # ✅ @coinguon/genealogy-core — FamilyIndex, validateGraph, computeLineage, kinship, layoutTree
@@ -183,11 +185,11 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 
 | Module (apps/api/src/modules) | Trách nhiệm | Yêu cầu | Trạng thái |
 | --- | --- | --- | --- |
-| common | TenantGuard, PolicyGuard, lỗi chuẩn, rate limit | NFR-SEC | Chưa làm |
-| auth | Đăng ký, đăng nhập, OTP, 2FA, Google | FR-AUTH | Chưa làm |
-| clans, members | Dòng họ, mời, vai trò, phạm vi chi | FR-CLAN | Chưa làm |
-| persons, unions, tree | CRUD người/quan hệ, cây có cache, mã xem | FR-TREE, FR-PERSON | Logic lõi xong (`genealogy-core`); API chưa làm |
-| kinship | Tra xưng hô | FR-KIN | Logic lõi xong (`kinship()`); bảng chưa duyệt (KI-001); API chưa làm |
+| common | SessionGuard (cookie + CSRF), TenantGuard (`withClan` đặt `app.clan_id`, vai trò `@MinRole`), ErrorFilter, audit | NFR-SEC | **Xong** (chưa có rate limit — KI-010) |
+| auth | Đăng ký, đăng nhập, OTP, 2FA, Google | FR-AUTH | **Email + mật khẩu xong** (khoá 15 phút sau 5 lần sai); OTP/2FA/Google chưa |
+| clans, members | Dòng họ, mời, vai trò, phạm vi chi | FR-CLAN | Tạo/xem/sửa dòng họ xong; mời & vai trò chưa |
+| persons, unions, tree | CRUD người/quan hệ, cây có cache, mã xem | FR-TREE, FR-PERSON | **API xong**: CRUD, thêm con/vợ chồng/cha mẹ, sắp thứ tự con, tìm không dấu, `GET /tree` có bố cục; cache cây & mã xem chưa |
+| kinship | Tra xưng hô | FR-KIN | **API xong** (`GET /kinship`, hai chiều); bảng chưa duyệt (KI-001) |
 | events | Sự kiện, lịch giỗ, nhắc | FR-EVENT | Logic lõi xong (`lunar-vn`); API, job chưa làm |
 | import-export | Excel, PDF/ảnh, sao lưu, GEDCOM (P2) | FR-IO | Chưa làm |
 | media, posts, places | Thư viện, bài viết, bản đồ | FR-MEDIA, FR-CONTENT, FR-GRAVE | Chưa làm |
@@ -205,6 +207,24 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 - Endpoint nghiệp vụ dưới `/clans/:clanId/...`; công khai dưới `/public/sites/:host/...`; thu thập thống kê `/t/pv`, `/t/hb`.
 - Mới (2026-11-01): `/clans/:clanId/contacts`, `/contacts/:id/consent`, `/analytics/live`, `/analytics/live/stream` (SSE), `/analytics/daily`, `/analytics/breakdown`, `/analytics/export`, `/public/sites/:host/counters`, `/public/sites/:host/contact-messages`.
 - Danh sách đầy đủ: tài liệu đặc tả mục 9.
+
+**Đã chạy được (v0.4.0)** — mọi request ghi cần header `X-CSRF-Token` = cookie `csrf`:
+
+| Method & đường dẫn | Quyền | Ghi chú |
+| --- | --- | --- |
+| `GET /health` | công khai | healthcheck |
+| `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` | công khai / đã đăng nhập | trả `{user, csrfToken}`; lỗi `EMAIL_TAKEN`, `INVALID_CREDENTIALS`, `ACCOUNT_LOCKED` (423) |
+| `GET /me`, `GET /me/clans` | đã đăng nhập | |
+| `POST /clans` | đã đăng nhập | người tạo = owner; `SLUG_TAKEN` |
+| `GET /clans/:clanId`, `PATCH /clans/:clanId` | member / admin | đổi `rootPersonId`/`lineageMode` → tính lại đời |
+| `GET /clans/:clanId/persons?q&generation&living&page&pageSize` | member | tìm không dấu; người `hidden` chỉ admin thấy |
+| `GET/POST/PATCH/DELETE /clans/:clanId/persons[/:personId]` | member xem, editor sửa | PATCH cần `version` → `PERSON_VERSION_CONFLICT`; DELETE có con cần `?confirm=true` (`HAS_DESCENDANTS`), không xoá thuỷ tổ (`IS_ROOT_PERSON`) |
+| `POST /clans/:clanId/persons/:id/children` · `/spouses` · `/parents` | editor | `UNION_REQUIRED` khi nhiều hôn phối, `SELF_UNION`, `ALREADY_SPOUSES`, `HAS_PARENTS` |
+| `PUT /clans/:clanId/unions/:unionId/children/order` | editor | `CHILD_LIST_MISMATCH` |
+| `GET /clans/:clanId/tree?rootId&depth&orientation&collapsed` | member | `{rootId, nodes[{personId,x,y,width,height,depth,isSpouse,hasHiddenChildren,person}], edges, width, height}` |
+| `GET /clans/:clanId/kinship?a&b` | member | `{related, aCallsB, bCallsA, kind, side, generationGap, viaMarriage, path}` |
+
+Không phải thành viên → **404** (không lộ dòng họ có tồn tại). Mã lỗi DB: trigger `ANCESTOR_CYCLE`/`SELF_PARENT`/`CROSS_CLAN_REFERENCE` → 422.
 
 ---
 
@@ -248,10 +268,13 @@ pnpm db:migrate:deploy         # chạy migration (Prisma)
 pnpm --filter @coinguon/db migrate:sql   # thay thế bằng psql khi không có Prisma CLI
 pnpm build && pnpm typecheck && pnpm test
 pnpm coverage                  # ngưỡng 90% cho lunar-vn, genealogy-core
-# (MVP) pnpm dev · pnpm test:e2e
+pnpm --filter @coinguon/api dev      # API tại http://localhost:4000/api/v1 (cần APP_DATABASE_URL, PLATFORM_DATABASE_URL)
+pnpm --filter @coinguon/api db:types # sinh lại src/db/generated.ts sau khi đổi schema
 ```
 
-Test DB tích hợp cần `TEST_DATABASE_URL`, `TEST_APP_DATABASE_URL`, `TEST_PLATFORM_DATABASE_URL`.
+Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE_URL`, `TEST_PLATFORM_DATABASE_URL` (DB `coinguon_test`);
+`apps/api` dùng DB riêng `coinguon_test_api` qua `TEST_API_DATABASE_URL`, `TEST_API_APP_DATABASE_URL`, `TEST_API_PLATFORM_DATABASE_URL`
+(mặc định localhost) để hai bộ test chạy song song không đụng nhau. Tạo DB: `CREATE DATABASE coinguon_test_api` → `migrate:deploy` (hoặc `migrate:sql`) → chạy `infra/docker/postgres/init.sql`.
 
 ---
 
@@ -287,6 +310,7 @@ Test DB tích hợp cần `TEST_DATABASE_URL`, `TEST_APP_DATABASE_URL`, `TEST_PL
 | ADR-006 | 2026-11-01 | Liên hệ ban quản lý trong bảng `contacts` riêng, công khai từng trường + consent | Tuân thủ luật dữ liệu cá nhân, linh hoạt nhiều người | Gộp vào site_settings |
 | ADR-007 | 2026-11-01 | Một VPS + Docker Compose + Caddy giai đoạn đầu | Chi phí ~30–40 USD/tháng, tên miền riêng có SSL tự động | Vercel + dịch vụ managed |
 | ADR-008 | 2026-11-01 | Prisma 6.19 (chưa lên 7/8) | Ổn định, ít thay đổi cấu hình; Prisma 7 bắt buộc driver adapter + prisma.config.ts — cân nhắc nâng cấp khi làm api | Prisma 7.10, Drizzle |
+| ADR-010 | 2026-11-01 | API dùng **Kysely** (query builder có kiểu) thay Prisma Client; Prisma chỉ giữ schema + migration. NestJS 12 ESM | Đặt `set_config('app.clan_id')` trong cùng transaction cho RLS rõ ràng; ltree, CTE đệ quy, `update … from (values …)` viết thẳng SQL; không cần engine nhị phân của Prisma | Prisma Client + `$extends` cho RLS, Drizzle |
 | ADR-009 | 2026-11-01 | Ràng buộc phả hệ cả ở DB (trigger chặn vòng lặp, tự làm cha mẹ, nối chéo dòng họ) ngoài kiểm tra ở `genealogy-core` | Phòng thủ nhiều lớp; FK không xét RLS nên cần trigger chặn nối người khác dòng họ | Chỉ kiểm tra ở service |
 
 ---
@@ -294,6 +318,18 @@ Test DB tích hợp cần `TEST_DATABASE_URL`, `TEST_APP_DATABASE_URL`, `TEST_PL
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.4.0] — 2026-11-01 — MVP phần 1: API phả đồ
+### Thêm
+- `apps/api` (NestJS 12 + Kysely): đăng ký/đăng nhập bằng cookie phiên HttpOnly + CSRF double-submit, Argon2id, khoá tài khoản 15 phút sau 5 lần sai.
+- Dòng họ: tạo (người tạo là owner, tạo sẵn `site_settings`), xem, sửa cài đặt (thuỷ tổ, phụ hệ/mẫu hệ, biến thể xưng hô, quy tắc giỗ ngày 30).
+- Người & quan hệ: thêm/sửa/xoá mềm, thêm con (tự gắn hôn phối), vợ/chồng (người mới hoặc có sẵn), cha mẹ (thuỷ tổ tự dời lên), sắp thứ tự con, tìm kiếm không dấu. Mọi thay đổi ghi `audit_logs` và tính lại đời/thuộc họ/`lineage_path`.
+- Tự tính ngày giỗ âm lịch (`death_anniv_lunar`) từ ngày mất.
+- `GET /tree` trả bố cục đã tính sẵn (giao diện chỉ việc vẽ); `GET /kinship` xưng hô hai chiều.
+- 33 test e2e (Supertest trên PostgreSQL thật, DB riêng `coinguon_test_api`); CI tạo DB này trước khi test. Tổng 159 test.
+### Ghi chú cho người bảo trì
+- Truy vấn theo dòng họ **luôn** đi qua `Database.withClan()`; không dùng `db.app` trực tiếp cho bảng có RLS (sẽ trả rỗng).
+- Bảng `clans`, `users`, `sessions` không có RLS — truy cập qua `db.app` được, nhưng luôn lọc theo id.
 
 ## [0.3.1] — 2026-11-01
 ### Bảo mật
@@ -347,6 +383,10 @@ Test DB tích hợp cần `TEST_DATABASE_URL`, `TEST_APP_DATABASE_URL`, `TEST_PL
 | KI-005 | Hướng dẫn sử dụng viết theo thiết kế, chưa có ảnh chụp màn hình | Thấp | Cập nhật cuối mỗi giai đoạn MVP |
 | KI-006 | ~~Migration SQL khởi tạo viết tay~~ — **đã xác nhận** khớp schema.prisma qua CI `check-drift` (2026-11-01) | Đã xử lý | Giữ bước check-drift trong CI |
 | KI-007 | `clan_id` ở nhiều bảng nội dung chưa có khoá ngoại tới `clans` (chỉ dựa RLS + xoá theo clan_id) | Thấp | Job xoá cứng dòng họ phải xoá mọi bảng theo `clan_id` |
+| KI-009 | Chưa có xác thực email (OTP) khi đăng ký và quên mật khẩu | Trung bình | Trước khi mở đăng ký công khai |
+| KI-010 | Chưa có rate limit theo IP cho đăng nhập/đăng ký (mới có khoá theo tài khoản) | Trung bình | Thêm cùng Redis ở MVP phần 2 |
+| KI-011 | Phân quyền theo chi (editor chỉ sửa chi được giao) chưa làm — editor sửa được cả cây | Thấp | Phase 2 theo kế hoạch |
+| KI-012 | `GET /tree` tính bố cục mỗi lần gọi (chưa cache); ổn với vài nghìn người | Thấp | Cache theo `clan.tree_version` khi cây > 5.000 người |
 | KI-008 | Bố cục phả đồ hiện là dạng "khối căn giữa", chưa nén nhánh kiểu Reingold–Tilford (cây rộng hơn cần thiết) | Thấp | Tối ưu khi làm trình chỉnh sửa phả đồ nếu cây quá rộng |
 
 ---
