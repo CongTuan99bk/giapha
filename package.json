@@ -16,7 +16,10 @@
     "dev:infra": "docker compose -f infra/docker/compose.dev.yml up -d",
     "dev:infra:down": "docker compose -f infra/docker/compose.dev.yml down",
     "db:migrate:deploy": "pnpm --filter @coinguon/db migrate:deploy",
-    "coverage": "turbo run coverage"
+    "coverage": "turbo run coverage",
+    "dev": "turbo run dev --filter=@coinguon/api --filter=@coinguon/web",
+    "khoi-tao": "node scripts/setup-local.mjs",
+    "dev:infra:reset": "docker compose -f infra/docker/compose.dev.yml down -v"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

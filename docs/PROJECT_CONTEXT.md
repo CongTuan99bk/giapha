@@ -5,7 +5,7 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.5.0 |
+| Phiên bản file | 0.5.1 |
 | Cập nhật lần cuối | 2026-11-01 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **MVP phần 1 — API + giao diện web phả đồ xong; tiếp theo: mời thành viên** |
@@ -286,6 +286,8 @@ pnpm db:migrate:deploy         # chạy migration (Prisma)
 pnpm --filter @coinguon/db migrate:sql   # thay thế bằng psql khi không có Prisma CLI
 pnpm build && pnpm typecheck && pnpm test
 pnpm coverage                  # ngưỡng 90% cho lunar-vn, genealogy-core
+pnpm khoi-tao                        # lần đầu: .env, migration, build, dữ liệu mẫu (scripts/setup-local.mjs)
+pnpm dev                             # API + web cùng lúc (turbo, chạy được trên Windows)
 pnpm --filter @coinguon/api dev      # API tại http://localhost:4000/api/v1 (cần APP_DATABASE_URL, PLATFORM_DATABASE_URL)
 pnpm --filter @coinguon/api db:types # sinh lại src/db/generated.ts sau khi đổi schema
 pnpm --filter @coinguon/api seed     # dữ liệu GIẢ ~60 người (chỉ chạy khi chưa có dòng họ); in ra email/mật khẩu
@@ -346,6 +348,14 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.5.1] — 2026-11-01
+### Thêm
+- `pnpm khoi-tao` (scripts/setup-local.mjs): tạo `.env`, chờ PostgreSQL, migration, build, dữ liệu mẫu — chạy được trên Windows/macOS/Linux.
+- `pnpm dev` chạy API + web cùng lúc qua turbo; API `dev`/`start` tự đọc `.env` ở thư mục gốc.
+### Sửa
+- Lệnh `migrate:deploy` khi chạy từ `pnpm khoi-tao` nhận `DATABASE_URL` từ `.env` gốc (Prisma chỉ tự đọc `.env` trong packages/db).
+- Script `dev` của API trước đây dùng `&` — không chạy đúng trên Windows.
 
 ## [0.5.0] — 2026-11-01 — Áp dụng quyết định của chủ dự án
 ### Thêm

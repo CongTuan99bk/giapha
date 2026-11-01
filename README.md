@@ -33,22 +33,36 @@ docs/                 # PROJECT_CONTEXT.md, hướng dẫn sử dụng
 .github/workflows/    # CI
 ```
 
-## Bắt đầu trên máy dev
+## Chạy trên máy cá nhân
 
-Yêu cầu: Node 22, pnpm 10, Docker.
+Cần cài: **Node.js 22** (bản 22.9 trở lên), **pnpm 10** (`corepack enable`), **Docker Desktop**, **Git**.
 
 ```bash
+git clone https://github.com/CongTuan99bk/giapha.git
+cd giapha
 pnpm install
-cp .env.example .env
-pnpm dev:infra                 # PostgreSQL, Redis, MinIO, Mailpit
-pnpm db:migrate:deploy         # chạy migration
-pnpm build && pnpm test        # build + toàn bộ test
-pnpm coverage                  # kiểm tra độ phủ ≥ 90% cho lunar-vn, genealogy-core
+pnpm dev:infra       # bật PostgreSQL, Redis… trong Docker (lần đầu tải image hơi lâu)
+pnpm khoi-tao        # tạo .env, tạo bảng, build, tạo dữ liệu mẫu GIẢ + tài khoản quản lý
+pnpm dev             # chạy API (cổng 4000) + giao diện (cổng 3000)
+```
 
-# chạy thử với dữ liệu GIẢ (cần APP_DATABASE_URL, PLATFORM_DATABASE_URL trong .env)
-pnpm --filter @coinguon/api seed   # in ra email/mật khẩu đăng nhập
-pnpm --filter @coinguon/api dev    # API  http://localhost:4000/api/v1
-pnpm --filter @coinguon/web dev    # Web  http://localhost:3000
+Mở http://localhost:3000 và đăng nhập bằng tài khoản in ra ở bước `pnpm khoi-tao`
+(mặc định `quanly@giapha.test` / `giapha-demo-2026`, đổi trong `.env` trước khi khởi tạo).
+Muốn xoá dữ liệu mẫu để nhập gia phả thật từ đầu:
+
+```bash
+pnpm dev:infra:reset   # XOÁ toàn bộ dữ liệu trong Docker trên máy này
+pnpm dev:infra
+pnpm khoi-tao --trong  # tạo bảng, không tạo dữ liệu mẫu
+pnpm dev               # vào http://localhost:3000/dang-ky — người đăng ký đầu tiên tạo dòng họ
+```
+
+Lệnh khác:
+
+```bash
+pnpm build && pnpm test        # build + toàn bộ test
+pnpm --filter @coinguon/web test:e2e   # test giao diện trên trình duyệt (cần DB coinguon_e2e, xem CI)
+pnpm coverage                  # độ phủ ≥ 90% cho lunar-vn, genealogy-core
 ```
 
 Test tích hợp DB chạy khi có biến `TEST_DATABASE_URL`, `TEST_APP_DATABASE_URL`, `TEST_PLATFORM_DATABASE_URL` (xem `.github/workflows/ci.yml`).

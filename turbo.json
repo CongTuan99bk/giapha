@@ -43,6 +43,13 @@
       "outputs": [
         "coverage/**"
       ]
+    },
+    "dev": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false,
+      "persistent": true
     }
   }
 }
