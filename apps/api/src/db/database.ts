@@ -22,6 +22,7 @@ export interface ClanContext {
  * - `app`: role coinguon_app, mọi truy vấn dữ liệu dòng họ PHẢI đi qua `withClan()`
  *   để đặt `app.clan_id` trong transaction — Row-Level Security lọc theo giá trị này (ADR-003).
  * - `platform`: role BYPASSRLS, chỉ dùng cho tác vụ nền tảng có kiểm soát (không dùng trong request thường).
+ *   Ngoại lệ duy nhất trong request: tra lời mời theo sha256 của mã (MembersService.findByToken).
  */
 @Injectable()
 export class Database implements OnModuleDestroy {

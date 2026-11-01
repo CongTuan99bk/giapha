@@ -97,3 +97,14 @@ describe("trang trợ giúp", async () => {
     ]);
   });
 });
+
+describe("safeNext", async () => {
+  const { safeNext } = await import("./redirect");
+  it("chỉ nhận đường dẫn nội bộ", () => {
+    expect(safeNext("/moi/abc")).toBe("/moi/abc");
+    expect(safeNext("//evil.com")).toBe("/");
+    expect(safeNext("/\\evil.com")).toBe("/");
+    expect(safeNext("https://evil.com")).toBe("/");
+    expect(safeNext(null, "/dong-ho")).toBe("/dong-ho");
+  });
+});

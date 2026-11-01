@@ -139,3 +139,42 @@ export interface PersonInput {
   deathDate?: FlexibleDate | null;
   privacy?: Privacy;
 }
+
+export type GrantableRole = Exclude<ClanRole, "owner">;
+
+export interface Member {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: ClanRole;
+  person: { id: string; fullName: string } | null;
+  joinedAt: string;
+}
+
+export type InvitationStatus = "active" | "expired" | "revoked" | "used";
+
+export interface Invitation {
+  id: string;
+  role: GrantableRole;
+  email: string | null;
+  maxUses: number;
+  useCount: number;
+  expiresAt: string;
+  createdAt: string;
+  createdBy: string | null;
+  person: { id: string; fullName: string } | null;
+  status: InvitationStatus;
+  /** Chỉ có ngay sau khi tạo */
+  token?: string;
+}
+
+export interface InvitationPreview {
+  clanName: string;
+  surname: string;
+  role: GrantableRole;
+  invitedBy: string | null;
+  expiresAt: string;
+  forSpecificEmail: boolean;
+  status: InvitationStatus;
+}

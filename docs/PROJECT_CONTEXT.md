@@ -5,10 +5,10 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.5.1 |
-| Cập nhật lần cuối | 2026-11-01 |
+| Phiên bản file | 0.6.0 |
+| Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
-| Giai đoạn hiện tại | **MVP phần 1 — API + giao diện web phả đồ xong; tiếp theo: mời thành viên** |
+| Giai đoạn hiện tại | **MVP phần 1 gần xong — phả đồ, mời thành viên, vai trò chạy được; tiếp theo: triển khai lên VPS** |
 | Mã nguồn | https://github.com/CongTuan99bk/giapha (nhánh `main`, CI xanh) |
 | Tài liệu đặc tả đầy đủ | "Tài liệu dự án: Hệ thống Gia Phả Cội Nguồn" v1.0 — https://claude.ai/artifact/1Wy2PqEVYSLqycMLH8LMzG |
 | Bản thảo kỹ thuật | https://claude.ai/artifact/T24kXNyJ9UkUPdRwMzBkFd |
@@ -56,14 +56,14 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Phase 2 (tuần 15–24), Phase 3 (tuần 25–32) | Chưa bắt đầu | |
 
 ### 2.2. Việc đang làm
-- MVP phần 1 — mời thành viên vào dòng họ (KI-014).
+- (trống)
 
 ### 2.3. Việc tiếp theo
-1. API + web: **mời thành viên** bằng link/mã (KI-014), đổi vai trò, trang cài đặt dòng họ (đổi thuỷ tổ, biến thể xưng hô).
-2. Rate limit (KI-010); OTP email (KI-009); sửa bảng xưng hô riêng của dòng họ (KI-013).
-3. Docker Compose production cho VPS 4 GB + hướng dẫn demo bằng Cloudflare Tunnel.
-3. (Tuỳ chọn) chuyển kho GitHub về riêng tư.
-4. Chốt các câu hỏi còn lại ở mục 3.2.
+1. Docker Compose production cho VPS 4 GB (Caddy, sao lưu) + hướng dẫn demo bằng Cloudflare Tunnel.
+2. Rate limit theo IP cho đăng nhập/đăng ký/xem lời mời (KI-010); quên mật khẩu + OTP email (KI-009).
+3. Giao diện: sắp xếp thứ tự con, con nuôi/con riêng, nhiều vợ/chồng (API đã có một phần — KI-017).
+4. Sửa bảng xưng hô riêng của dòng họ (KI-013); "Tôi gọi người này là gì?" từ người đã gắn "Đây là tôi".
+5. (Tuỳ chọn) chuyển kho GitHub về riêng tư. Chốt các câu hỏi còn lại ở mục 3.2.
 
 ---
 
@@ -200,7 +200,7 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | --- | --- | --- | --- |
 | common | SessionGuard (cookie + CSRF), TenantGuard (`withClan` đặt `app.clan_id`, vai trò `@MinRole`), ErrorFilter, audit | NFR-SEC | **Xong** (chưa có rate limit — KI-010) |
 | auth | Đăng ký, đăng nhập, OTP, 2FA, Google | FR-AUTH | **Email + mật khẩu xong** (khoá 15 phút sau 5 lần sai); OTP/2FA/Google chưa |
-| clans, members | Dòng họ, mời, vai trò, phạm vi chi | FR-CLAN | Tạo/xem/sửa dòng họ xong; mời & vai trò chưa |
+| clans, members | Dòng họ, mời, vai trò, phạm vi chi | FR-CLAN | **Xong** (2026-11-02): tạo/sửa dòng họ, link mời (vai trò, hạn, số lượt, theo email, gắn người), đổi vai trò, xoá thành viên, "Đây là tôi"; phạm vi chi chưa (KI-011) |
 | persons, unions, tree | CRUD người/quan hệ, cây có cache, mã xem | FR-TREE, FR-PERSON | **API xong**: CRUD, thêm con/vợ chồng/cha mẹ, sắp thứ tự con, tìm không dấu, `GET /tree` có bố cục; cache cây & mã xem chưa |
 | kinship | Tra xưng hô | FR-KIN | **API xong** (`GET /kinship`, hai chiều); bảng chưa duyệt (KI-001) |
 | events | Sự kiện, lịch giỗ, nhắc | FR-EVENT | Logic lõi xong (`lunar-vn`); API, job chưa làm |
@@ -239,6 +239,11 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | `PUT /clans/:clanId/unions/:unionId/children/order` | editor | `CHILD_LIST_MISMATCH` |
 | `GET /clans/:clanId/tree?rootId&depth&orientation&collapsed` | member | `{rootId, nodes[{personId,x,y,width,height,depth,isSpouse,hasHiddenChildren,person}], edges, width, height}` |
 | `GET /clans/:clanId/kinship?a&b` | member | `{related, aCallsB, bCallsA, kind, side, generationGap, viaMarriage, path}` |
+| `GET /clans/:clanId/members` · `PATCH/DELETE …/members/:memberId` | admin | đổi `role`/`personId`; chỉ quản lý người vai trò thấp hơn (`ROLE_TOO_LOW`, `CANNOT_CHANGE_OWN_ROLE`, `CANNOT_REMOVE_SELF`) |
+| `PATCH /clans/:clanId/me/person` | member | "Đây là tôi" `{personId \| null}`; `PERSON_ALREADY_LINKED` |
+| `GET/POST /clans/:clanId/invitations` · `DELETE …/invitations/:id` | admin | tạo `{role, email?, personId?, expiresInDays 1–30, maxUses 1–100}` → trả `token` **một lần**; không cấp được `owner` |
+| `GET /invitations/:token` | công khai | xem trước `{clanName, role, invitedBy, expiresAt, forSpecificEmail, status}` |
+| `POST /invitations/:token/accept` | đã đăng nhập | `{clanId, alreadyMember}`; lỗi `INVITE_NOT_FOUND` 404, `INVITE_EXPIRED`/`INVITE_REVOKED`/`INVITE_USED` 410, `INVITE_EMAIL_MISMATCH` 403 |
 
 Không phải thành viên → **404** (không lộ dòng họ có tồn tại). Mã lỗi DB: trigger `ANCESTOR_CYCLE`/`SELF_PARENT`/`CROSS_CLAN_REFERENCE` → 422.
 
@@ -337,6 +342,7 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | ADR-006 | 2026-11-01 | Liên hệ ban quản lý trong bảng `contacts` riêng, công khai từng trường + consent | Tuân thủ luật dữ liệu cá nhân, linh hoạt nhiều người | Gộp vào site_settings |
 | ADR-007 | 2026-11-01 (sửa) | Một VPS **ở Việt Nam** (Bizfly Cloud 4 GB ~240.000 đ/tháng) + Docker Compose + Caddy; ảnh lưu ổ đĩa VPS, sao lưu sang Google Drive; demo chạy máy cá nhân + Cloudflare Tunnel | Ngân sách ~10 USD/tháng, dữ liệu ở trong nước, chủ dự án chọn | Viettel IDC (gói 4 GB ~599.000 đ/tháng — vượt ngân sách), Singapore, R2 |
 | ADR-008 | 2026-11-01 | Prisma 6.19 (chưa lên 7/8) | Ổn định, ít thay đổi cấu hình; Prisma 7 bắt buộc driver adapter + prisma.config.ts — cân nhắc nâng cấp khi làm api | Prisma 7.10, Drizzle |
+| ADR-014 | 2026-11-02 | Lời mời bằng link: mã ngẫu nhiên 18 byte, DB chỉ lưu sha256; tra theo mã dùng role `coinguon_platform` (BYPASSRLS) vì người nhận chưa có ngữ cảnh dòng họ — chỉ khớp đúng `token_hash`, mọi ghi đều qua `withClan` | Không thể đặt `app.clan_id` trước khi biết lời mời thuộc dòng họ nào; FORCE RLS chặn cả hàm SECURITY DEFINER | Hàm SECURITY DEFINER + bỏ FORCE RLS; mã chứa clan_id |
 | ADR-013 | 2026-11-01 | Xưng hô mặc định miền Trung: ba/mạ, chị-em gái của cha là "o", chồng o/dì là "dượng" | Chủ dự án chọn; bảng tạm, sẽ cho dòng họ tự sửa (KI-013) | Bắc làm mặc định |
 | ADR-012 | 2026-11-01 | Điện thoại: PWA trước, rồi **Capacitor** đóng gói chính web app thành app iOS/Android, thêm tính năng gốc (thông báo đẩy ngày giỗ, chụp ảnh, xem offline) | Một mã nguồn, chi phí thấp; App Store yêu cầu app có tính năng gốc, không chỉ bọc web | React Native/Expo (viết lại giao diện), Flutter |
 | ADR-011 | 2026-11-01 | `CLAN_MODE=single`: chỉ tạo được dòng họ đầu tiên, `GET /instance` cho web biết dòng họ chính; vẫn giữ RLS đa dòng họ | Chủ dự án dùng riêng cho một dòng họ; giữ đường mở rộng | Bỏ hẳn `clan_id` / RLS |
@@ -348,6 +354,19 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.6.0] — 2026-11-02 — Mời thành viên, vai trò, cài đặt dòng họ
+### Thêm
+- Bảng `invitations` (migration `20261102000000_invitations`, có RLS, CHECK không cấp `owner`).
+- API: thành viên (xem, đổi vai trò, xoá), "Đây là tôi", lời mời (tạo, liệt kê, huỷ, xem trước công khai, nhận). Quy tắc: chỉ cấp/quản lý vai trò thấp hơn mình.
+- Web: thẻ **Cài đặt** (chỉ quản trị): tạo link mời + sao chép/chia sẻ, link còn hiệu lực, thành viên & vai trò, thông tin dòng họ (đổi thuỷ tổ, cách xưng hô). Trang `/moi/[token]` cho người nhận (chưa có tài khoản → đăng ký rồi quay lại). Nút "Đây là tôi" trong bảng thông tin.
+- Đăng nhập/đăng ký nhận `?tiep=` an toàn (`lib/redirect.ts`, chặn chuyển hướng ra ngoài).
+- Test: API 49 (thêm 13 cho thành viên/lời mời/phân quyền), web 24 đơn vị + 15 Playwright.
+### Bảo mật
+- Bảng `domains` bị sót Row-Level Security từ migration đầu → migration `20261102000100_domains_rls`: đọc công khai (tra website theo tên miền), ghi chỉ trong dòng họ hiện tại.
+- Test mới trong `packages/db`: **mọi bảng có cột `clan_id` phải bật + ép RLS và có policy** — thêm bảng mới mà quên RLS thì CI đỏ.
+### Sửa
+- Hướng dẫn sử dụng v1.2: mục 9, 11–13, 21 viết lại theo giao diện thật; vai trò "Biên tập viên" đổi tên thành **Người nhập liệu** cho khớp giao diện.
 
 ## [0.5.1] — 2026-11-01
 ### Thêm
@@ -441,7 +460,9 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-011 | Phân quyền theo chi (editor chỉ sửa chi được giao) chưa làm — editor sửa được cả cây | Thấp | Phase 2 theo kế hoạch |
 | KI-012 | `GET /tree` tính bố cục mỗi lần gọi (chưa cache); ổn với vài nghìn người | Thấp | Cache theo `clan.tree_version` khi cây > 5.000 người |
 | KI-013 | Xưng hô khác nhau theo vùng/gia đình: cần màn hình cho ban quản lý sửa bảng xưng hô riêng của dòng họ (lưu JSON trong cài đặt) | Trung bình | MVP phần 2 |
-| KI-014 | Chế độ một dòng họ: người đăng ký mới chưa vào được dòng họ cho tới khi có chức năng mời thành viên | Cao | Làm ngay sau giao diện phả đồ |
+| KI-014 | ~~Người đăng ký mới chưa vào được dòng họ~~ — **đã xử lý** bằng link mời (0.6.0) | Đã xử lý | — |
+| KI-017 | API sắp thứ tự con, con nuôi/con riêng đã có nhưng chưa có giao diện; thứ tự vợ/chồng chưa đổi được | Trung bình | Sau khi triển khai VPS |
+| KI-018 | Xem trước lời mời (`GET /invitations/:token`) chưa giới hạn tần suất — mã 18 byte nên dò không khả thi, nhưng nên chặn spam | Thấp | Cùng KI-010 |
 | KI-015 | `API_ORIGIN` của web được "đóng" vào lúc build (rewrites của Next) — đổi địa chỉ API phải build lại | Thấp | Docker build truyền `API_ORIGIN`; hoặc Caddy chuyển thẳng `/api` sang API |
 | KI-016 | Danh sách người hiện tối đa 50 người đầu, chưa có phân trang trên giao diện | Thấp | Thêm "Xem thêm" khi dòng họ > 50 người |
 | KI-008 | Bố cục phả đồ hiện là dạng "khối căn giữa", chưa nén nhánh kiểu Reingold–Tilford (cây rộng hơn cần thiết) | Thấp | Tối ưu khi làm trình chỉnh sửa phả đồ nếu cây quá rộng |

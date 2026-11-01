@@ -95,6 +95,33 @@ describe.skipIf(!enabled)("PostgreSQL: RLS, toàn vẹn, tìm kiếm", () => {
   });
 
   describe("Phân tách dòng họ (TC-SEC-01)", () => {
+    it("MỌI bảng có cột clan_id đều bật và ép RLS (chặn quên RLS khi thêm bảng mới)", async () => {
+      const { rows } = await owner.query<{ table: string; rls: boolean; forced: boolean; policies: number }>(`
+        SELECT c.relname AS table, c.relrowsecurity AS rls, c.relforcerowsecurity AS forced,
+               (SELECT count(*)::int FROM pg_policies p WHERE p.tablename = c.relname) AS policies
+        FROM pg_class c
+        JOIN pg_attribute a ON a.attrelid = c.oid AND a.attname = 'clan_id' AND NOT a.attisdropped
+        WHERE c.relkind = 'r' AND c.relnamespace = 'public'::regnamespace
+        ORDER BY 1`);
+      expect(rows.length).toBeGreaterThan(20);
+      expect(rows.map((r) => r.table)).toContain("invitations");
+      const missing = rows.filter((r) => !r.rls || !r.forced || r.policies === 0).map((r) => r.table);
+      expect(missing).toEqual([]);
+    });
+
+    it("tên miền: ai cũng đọc được (tra website theo hostname), chỉ ghi được trong dòng họ mình", async () => {
+      await owner.query("SELECT set_config('app.clan_id', $1, false)", [clanA]);
+      await owner.query("INSERT INTO domains (id, clan_id, hostname) VALUES ($1, $2, 'gia-pha-a.test')", [randomUUID(), clanA]);
+      await owner.query("SELECT set_config('app.clan_id', '', false)");
+      const seen = await asClan(app, null, () => app.query("SELECT clan_id FROM domains WHERE hostname = 'gia-pha-a.test'"));
+      expect(seen.rows).toEqual([{ clan_id: clanA }]);
+      expect(
+        await errorCode(asClan(app, clanB, () => app.query("INSERT INTO domains (id, clan_id, hostname) VALUES ($1, $2, 'chiem.test')", [randomUUID(), clanA]))),
+      ).toBe("new row violates row-level security policy for table \"domains\"");
+      const del = await asClan(app, clanB, () => app.query("DELETE FROM domains WHERE hostname = 'gia-pha-a.test'"));
+      expect(del.rowCount).toBe(0);
+    });
+
     it("chưa đặt dòng họ → không thấy gì", async () => {
       const r = await asClan(app, null, () => app.query("SELECT id FROM persons WHERE id = ANY($1)", [Object.values(ids)]));
       expect(r.rowCount).toBe(0);

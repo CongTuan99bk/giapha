@@ -2,7 +2,20 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
-import type { Clan, KinshipResult, Page, Person, PersonDetail, PersonInput, PersonListItem, TreeLayout, User } from "./types";
+import type {
+  Clan,
+  GrantableRole,
+  Invitation,
+  KinshipResult,
+  Member,
+  Page,
+  Person,
+  PersonDetail,
+  PersonInput,
+  PersonListItem,
+  TreeLayout,
+  User,
+} from "./types";
 
 export const keys = {
   me: ["me"] as const,
@@ -86,5 +99,61 @@ export function useUpdateClan(clanId: string) {
       void qc.invalidateQueries({ queryKey: ["clan", clanId] });
       void qc.invalidateQueries({ queryKey: keys.clans });
     },
+  });
+}
+
+// ───────────── Thành viên & lời mời ─────────────
+
+export const memberKeys = {
+  members: (clanId: string) => ["clan", clanId, "members"] as const,
+  invitations: (clanId: string) => ["clan", clanId, "invitations"] as const,
+};
+
+export const useMembers = (clanId: string) =>
+  useQuery({ queryKey: memberKeys.members(clanId), queryFn: () => api<Member[]>("GET", `/clans/${clanId}/members`) });
+
+export const useInvitations = (clanId: string) =>
+  useQuery({ queryKey: memberKeys.invitations(clanId), queryFn: () => api<Invitation[]>("GET", `/clans/${clanId}/invitations`) });
+
+export function useCreateInvitation(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { role: GrantableRole; email?: string; personId?: string; expiresInDays: number; maxUses: number }) =>
+      api<Invitation>("POST", `/clans/${clanId}/invitations`, v),
+    onSuccess: () => qc.invalidateQueries({ queryKey: memberKeys.invitations(clanId) }),
+  });
+}
+
+export function useRevokeInvitation(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<void>("DELETE", `/clans/${clanId}/invitations/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: memberKeys.invitations(clanId) }),
+  });
+}
+
+export function useUpdateMember(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; role?: GrantableRole; personId?: string | null }) =>
+      api<Member>("PATCH", `/clans/${clanId}/members/${v.id}`, { role: v.role, personId: v.personId }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: memberKeys.members(clanId) }),
+  });
+}
+
+export function useRemoveMember(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<void>("DELETE", `/clans/${clanId}/members/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: memberKeys.members(clanId) }),
+  });
+}
+
+/** "Đây là tôi" */
+export function useLinkMe(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (personId: string | null) => api<Member>("PATCH", `/clans/${clanId}/me/person`, { personId }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["clan", clanId] }),
   });
 }

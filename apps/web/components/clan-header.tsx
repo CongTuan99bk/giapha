@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useClan, useMe } from "@/lib/queries";
+import { ROLE_RANK } from "@/lib/roles";
 
 const TABS = [
   { href: "", label: "Phả đồ" },
@@ -39,7 +40,7 @@ export function ClanHeader({ clanId }: { clanId: string }) {
         </button>
       </div>
       <nav aria-label="Mục chính" className="mt-2 flex gap-1 overflow-x-auto px-2 md:px-4">
-        {TABS.map((t) => {
+        {[...TABS, ...(clan.data && ROLE_RANK[clan.data.role] >= ROLE_RANK.admin ? [{ href: "/cai-dat", label: "Cài đặt" } as const] : [])].map((t) => {
           const href = base + t.href;
           const active = t.href === "" ? path === base : path.startsWith(href);
           return (

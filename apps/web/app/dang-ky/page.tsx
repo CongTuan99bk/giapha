@@ -1,17 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AuthShell } from "@/components/auth-shell";
 import { Field, FormError } from "@/components/field";
 import { api, ApiError, fieldErrors } from "@/lib/api";
 import { keys } from "@/lib/queries";
+import { safeNext } from "@/lib/redirect";
 import type { User } from "@/lib/types";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const params = useSearchParams();
+  const next = safeNext(params.get("tiep"));
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -30,7 +33,7 @@ export default function RegisterPage() {
         password: String(form.get("password") ?? ""),
       });
       qc.setQueryData(keys.me, res.user);
-      router.replace("/");
+      router.replace(next);
     } catch (err) {
       const fe = fieldErrors(err);
       setFields(fe);
@@ -61,11 +64,19 @@ export default function RegisterPage() {
         </button>
         <p className="text-sm text-reu">
           Đã có tài khoản?{" "}
-          <Link href="/dang-nhap" className="font-medium text-son underline-offset-4 hover:underline">
+          <Link href={next === "/" ? "/dang-nhap" : `/dang-nhap?tiep=${encodeURIComponent(next)}`} className="font-medium text-son underline-offset-4 hover:underline">
             Đăng nhập
           </Link>
         </p>
       </form>
     </AuthShell>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }

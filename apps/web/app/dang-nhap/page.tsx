@@ -8,6 +8,7 @@ import { AuthShell } from "@/components/auth-shell";
 import { Field, FormError } from "@/components/field";
 import { api, ApiError } from "@/lib/api";
 import { keys } from "@/lib/queries";
+import { safeNext } from "@/lib/redirect";
 import type { User } from "@/lib/types";
 
 function LoginForm() {
@@ -28,8 +29,7 @@ function LoginForm() {
         password: String(form.get("password") ?? ""),
       });
       qc.setQueryData(keys.me, res.user);
-      const next = params.get("tiep");
-      router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
+      router.replace(safeNext(params.get("tiep")));
     } catch (err) {
       setError(
         err instanceof ApiError && err.code === "INVALID_CREDENTIALS"
@@ -52,7 +52,7 @@ function LoginForm() {
       </button>
       <p className="text-sm text-reu">
         Chưa có tài khoản?{" "}
-        <Link href="/dang-ky" className="font-medium text-son underline-offset-4 hover:underline">
+        <Link href={params.get("tiep") ? `/dang-ky?tiep=${encodeURIComponent(safeNext(params.get("tiep")))}` : "/dang-ky"} className="font-medium text-son underline-offset-4 hover:underline">
           Tạo tài khoản
         </Link>
       </p>

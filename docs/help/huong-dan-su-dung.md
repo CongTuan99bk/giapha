@@ -1,8 +1,8 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.1
-updated: 2026-11-01
-audience: Người dùng (khách, thành viên, biên tập viên, quản trị dòng họ)
+version: 1.2
+updated: 2026-11-02
+audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
 
 <!--
@@ -23,7 +23,7 @@ Gia Phả Cội Nguồn giúp dòng họ lưu giữ gia phả trên mạng: xem 
 | --- | --- |
 | Người xem website của dòng họ, chưa có tài khoản | Phần A (mục 1–7) |
 | Con cháu trong họ, có tài khoản | Phần A, B (mục 1–10) |
-| Người được giao nhập gia phả (biên tập viên) | Phần A, B, C (mục 1–16) |
+| Người được giao nhập gia phả (người nhập liệu) | Phần A, B, C (mục 1–16) |
 | Ban liên lạc, quản trị dòng họ | Toàn bộ |
 
 > **Mẹo:** Muốn chữ to hơn, bấm nút **Aa** ở góc trên màn hình, hoặc trên máy tính giữ phím `Ctrl` và bấm `+`.
@@ -131,10 +131,15 @@ Không cần tải từ kho ứng dụng; cài thẳng từ trình duyệt:
 
 ## 9. Nhận lời mời và liên kết với chính mình trong cây
 
-1. Ban liên lạc gửi lời mời qua email hoặc đường dẫn. Bấm vào đường dẫn, đăng nhập hoặc tạo tài khoản → **Chấp nhận**.
-2. Để app biết bạn là ai trong cây: tìm chính mình trên phả đồ → mở hồ sơ → bấm **Đây là tôi**. Quản trị sẽ xác nhận.
+1. Ban quản lý gửi cho bạn một **đường link mời** (qua Zalo, Messenger hoặc email). Mở link, bạn sẽ thấy tên dòng họ, người mời và vai trò của bạn.
+2. Chưa có tài khoản: bấm **Tạo tài khoản để tham gia**. Đã có: bấm **Tôi đã có tài khoản** và đăng nhập. Xong sẽ quay lại trang lời mời.
+3. Bấm **Tham gia dòng họ** → phả đồ hiện ra.
 
-Sau khi liên kết, bạn dùng được **Tôi gọi người này là gì?** và trang chủ sẽ hiện ngày giỗ của ông bà, cha mẹ bạn trước tiên.
+Link mời có hạn dùng và số lượt. Nếu báo *hết hạn*, *đã bị huỷ* hoặc *đã dùng hết lượt*, hãy nhờ ban quản lý gửi link mới. Có link chỉ dành cho một email — khi đó hãy đăng nhập đúng email được mời.
+
+**Đây là tôi:** bấm vào chính mình trên phả đồ → **Đây là tôi**. Bấm **Không phải tôi** nếu chọn nhầm. Mỗi người trong phả chỉ gắn với một tài khoản.
+
+Sau khi liên kết, bạn sẽ dùng được **Tôi gọi người này là gì?** và trang chủ hiện ngày giỗ của ông bà, cha mẹ bạn trước tiên *(Sắp ra mắt)*.
 
 ## 10. Đề xuất sửa thông tin *(Sắp ra mắt)*
 
@@ -146,43 +151,45 @@ Thấy thông tin sai hoặc thiếu (ngày sinh, ảnh, tiểu sử)?
 
 ---
 
-# Phần C — Dành cho biên tập viên
+# Phần C — Dành cho người nhập liệu
 
-Biên tập viên vào **Trang quản trị** bằng nút **Quản trị** góc trên (chỉ hiện khi bạn có quyền). Nếu bạn chỉ được giao một chi, bạn chỉ sửa được người trong chi đó.
+Người nhập liệu, quản trị và chủ sở hữu sửa phả **ngay trên thẻ Phả đồ**: bấm vào một người, bảng thông tin hiện ra kèm các nút thêm, sửa, xoá. Thành viên thường chỉ thấy phần xem.
 
 ## 11. Thêm người vào cây
 
-1. Vào **Quản trị → Phả đồ**.
-2. Bấm vào một người → chọn:
-   - **Thêm con** — nếu người này có nhiều vợ/chồng, chọn đứa con là của cặp nào.
-   - **Thêm vợ/chồng**
-   - **Thêm cha/mẹ** (thường chỉ dùng cho người đầu tiên của cây).
-3. Nhập ít nhất **họ tên**; nên nhập thêm giới tính, năm sinh → **Lưu**.
+1. Vào thẻ **Phả đồ**, bấm vào một người. Bảng thông tin hiện bên phải (trên điện thoại: trượt lên từ dưới).
+2. Chọn:
+   - **Thêm con** — người này đã có vợ/chồng thì bấm **Thêm con với …** dưới tên đúng người vợ/chồng.
+   - **Thêm vợ** / **Thêm chồng**
+   - **Thêm cha/mẹ** — chỉ hiện khi người này chưa có cha mẹ trong phả (thường dùng để thêm đời trên thuỷ tổ).
+3. Nhập ít nhất **họ tên**; nên nhập thêm giới tính, năm sinh → bấm nút thêm.
 
-Người mới hiện ngay trên cây, số đời được tính tự động.
+Người mới hiện ngay trên cây và được chọn sẵn; số đời được tính tự động.
 
-**Bắt đầu một cây mới:** cây trống sẽ có nút **Thêm thuỷ tổ** — người đầu tiên, đời 1.
+**Bắt đầu một cây mới:** phả đồ trống sẽ hiện **Bắt đầu từ thuỷ tổ** — nhập người xa nhất còn biết tên, bấm **Thêm vào phả đồ**.
 
-> Hệ thống không cho tạo quan hệ vô lý (ví dụ một người là tổ tiên của chính mình) và sẽ báo nếu năm sinh của con trước năm sinh của cha mẹ.
+> Hệ thống không cho tạo quan hệ vô lý (ví dụ một người là tổ tiên của chính mình, hay kết hôn với chính mình).
 
-## 12. Sửa hồ sơ, ngày tháng, quyền riêng tư
+## 12. Sửa thông tin, ngày tháng, quyền riêng tư
 
-1. Bấm vào người cần sửa → **Sửa hồ sơ**.
-2. Các thẻ: **Thông tin** (tên, tên khác, giới tính, còn sống/đã mất), **Ngày tháng**, **Tiểu sử**, **Ảnh**, **Thông tin thêm** (học vấn, chức vụ, truy phong, nơi an táng…).
-3. **Nhập ngày tháng:** chọn **Dương lịch** hoặc **Âm lịch**. Không biết chính xác thì chọn **Chỉ năm** hoặc **Khoảng năm**. Ngày giỗ được tính từ ngày mất âm lịch; nếu chỉ biết ngày mất dương lịch, hệ thống tự đổi sang âm.
-4. **Quyền riêng tư** của người này:
-   - **Công khai** — ai cũng xem được.
-   - **Chỉ thành viên** — chỉ người đăng nhập trong dòng họ xem được (mặc định cho người còn sống).
-   - **Ẩn** — chỉ quản trị xem.
-5. Bấm **Lưu**.
+1. Bấm vào người cần sửa → **Sửa thông tin**.
+2. Sửa **họ tên**, **giới tính**, **còn sống / đã mất**. *(Tên khác, tiểu sử, ảnh, thông tin thêm: Sắp ra mắt.)*
+3. **Nhập ngày tháng:** gõ ngày, tháng, năm; chọn **Dương lịch** hoặc **Âm lịch** (âm lịch có ô **Tháng nhuận**). Chỉ biết năm thì để trống ngày, tháng; không chắc năm thì tích **Chỉ biết khoảng năm**. Nhập đủ ngày và tháng mất thì hệ thống **tự tính ngày giỗ âm lịch** (kể cả khi bạn nhập ngày mất theo dương lịch).
+4. **Ai được xem thông tin:**
+   - **Mọi người** — cả khách xem website công khai.
+   - **Chỉ thành viên dòng họ** — mặc định cho người còn sống.
+   - **Ẩn** — chỉ ban quản lý thấy; người khác thấy "Thông tin ẩn".
+5. Bấm **Lưu thay đổi**.
 
-> Nếu có người khác vừa sửa cùng hồ sơ trước bạn, app sẽ báo và đề nghị tải lại để không ghi đè lên nhau.
+> Nếu có người khác vừa sửa cùng người này trước bạn, app báo và mời bạn **Xem bản mới nhất** rồi sửa lại, để không ghi đè lên nhau.
+
+**Xoá:** bấm **Xoá** → **Xoá người này**. Người có con thì con cháu vẫn giữ trong phả. Không xoá được thuỷ tổ (đổi thuỷ tổ trong **Cài đặt** trước).
 
 ## 13. Nhiều vợ/chồng, con nuôi, thứ tự con
 
-- **Nhiều vợ/chồng:** bấm **Thêm vợ/chồng** nhiều lần. Kéo thả để sắp thứ tự (vợ cả, vợ hai…).
-- **Con nuôi, con riêng:** khi thêm con, chọn **Quan hệ: Con ruột / Con nuôi / Con riêng**.
-- **Đổi thứ tự con trưởng, con thứ:** bấm vào cha hoặc mẹ → **Sắp xếp con** → kéo thả → **Lưu**. Thứ tự này ảnh hưởng đến cách xưng hô giữa các nhánh, nên hãy nhập đúng.
+- **Nhiều vợ/chồng:** bấm **Thêm vợ/chồng** nhiều lần; thứ tự theo lần thêm. *(Kéo thả đổi thứ tự: Sắp ra mắt.)*
+- **Con nuôi, con riêng** *(Sắp ra mắt trên giao diện)*: hiện mọi con thêm từ giao diện là con ruột.
+- **Thứ tự con trưởng, con thứ:** theo thứ tự thêm vào. *(Màn hình sắp xếp lại: Sắp ra mắt.)* Thứ tự này ảnh hưởng cách xưng hô giữa các nhánh (bác hay chú), nên hãy thêm con theo đúng thứ tự sinh.
 
 ## 14. Nhập gia phả từ file Excel
 
@@ -272,21 +279,34 @@ Vào **Quản trị → Website → Liên hệ**:
 
 ## 21. Người dùng và phân quyền
 
-Vào **Quản trị → Người dùng**:
+Vào thẻ **Cài đặt** (chỉ Quản trị và Chủ sở hữu thấy thẻ này).
 
-- **Mời:** bấm **Mời người dùng**, nhập email hoặc tạo **đường dẫn mời**, chọn vai trò.
-- **Vai trò:**
+**Mời người vào dòng họ**
+
+1. Chọn **vai trò** của người được mời.
+2. Chọn **Link dùng được trong** (1, 7 hoặc 30 ngày) và **Số người dùng được link** (1 người, tối đa 10, hoặc tối đa 50 khi gửi vào nhóm Zalo của họ).
+3. *Tuỳ chọn thêm:* **Chỉ dành cho email** (chỉ tài khoản có email đó nhận được) và **Người được mời là ai trong phả** (gắn sẵn "Đây là tôi").
+4. Bấm **Tạo link mời** → **Sao chép link** và gửi đi. **Link chỉ hiện một lần**; làm mất thì tạo link mới.
+
+Danh sách **Link mời còn hiệu lực** cho biết mỗi link đã dùng mấy lượt, khi nào hết hạn. Bấm **Huỷ link** nếu lỡ gửi nhầm.
+
+**Vai trò**
 
 | Vai trò | Làm được |
 | --- | --- |
-| Thành viên | Xem thông tin dành cho thành viên, tra xưng hô, nhận nhắc, đề xuất sửa |
-| Biên tập viên | Sửa phả đồ, viết bài, quản lý sự kiện và thư viện |
-| Quản trị | Như biên tập viên + người dùng, cài đặt website, liên hệ, thống kê |
-| Chủ sở hữu | Mọi quyền + tên miền riêng, chuyển quyền sở hữu, xoá dòng họ |
+| Thành viên | Xem phả đồ, danh sách, tra xưng hô |
+| Người nhập liệu | Như thành viên + thêm, sửa, xoá người trong phả |
+| Quản trị | Như người nhập liệu + mời và quản lý thành viên, sửa thông tin dòng họ |
+| Chủ sở hữu | Mọi quyền; không ai đổi hoặc xoá được vai trò này |
 
-- **Giới hạn theo chi** *(Sắp ra mắt)*: giao biên tập viên chỉ sửa một chi.
-- **Thu hồi quyền:** bấm vào người dùng → **Gỡ khỏi dòng họ**.
-- **Chuyển quyền sở hữu** (chỉ chủ sở hữu): **Website → Nâng cao → Chuyển quyền sở hữu**.
+Quy tắc: bạn chỉ cấp được vai trò **thấp hơn** vai trò của mình (riêng Chủ sở hữu cấp được Quản trị), và chỉ đổi hoặc xoá được người có vai trò thấp hơn mình. Không ai tự đổi vai trò của chính mình.
+
+**Thành viên:** đổi vai trò bằng ô chọn cạnh tên; bấm **Xoá** → **Xoá khỏi dòng họ** để thu hồi quyền — người đó không vào được dòng họ nữa ngay lập tức.
+
+**Thông tin dòng họ:** sửa tên, họ, quê gốc, **cách xưng hô** (miền Trung, Bắc, Nam) và **đổi thuỷ tổ** — đời của mọi người được tính lại theo thuỷ tổ mới.
+
+- **Giới hạn theo chi** *(Sắp ra mắt)*: giao người nhập liệu chỉ sửa một chi.
+- **Chuyển quyền sở hữu** *(Sắp ra mắt)*.
 
 ## 22. Duyệt đề xuất sửa *(Sắp ra mắt)*
 

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { formatAnniversary, formatFlexibleDate, GENDER_LABEL } from "@/lib/format";
-import { useAddPerson, useDeletePerson, usePerson, useUpdatePerson, type RelativeKind } from "@/lib/queries";
+import { useAddPerson, useDeletePerson, useLinkMe, usePerson, useUpdatePerson, type RelativeKind } from "@/lib/queries";
 import type { Clan, Gender, PersonBrief, PersonDetail } from "@/lib/types";
 import { FormError } from "../field";
 import { PersonForm } from "../person-form";
@@ -94,6 +94,7 @@ function PersonView({
   return (
     <div>
       <h2 className="font-serif text-[1.75rem] leading-tight">{p.fullName}</h2>
+      <ThisIsMe clan={clan} personId={p.id} />
       <dl className="mt-4 grid grid-cols-[7.5rem_1fr] gap-x-3 gap-y-2 text-[0.95rem]">
         {facts.map(([k, v]) => (
           <div key={k} className="contents">
@@ -309,6 +310,30 @@ function DeletePerson({
           Huỷ
         </button>
       </div>
+    </div>
+  );
+}
+
+/** "Đây là tôi": gắn tài khoản với người trong phả — để tra xưng hô từ chính mình. */
+function ThisIsMe({ clan, personId }: { clan: Clan; personId: string }) {
+  const link = useLinkMe(clan.id);
+  if (clan.myPersonId === personId) {
+    return (
+      <p className="mt-1 text-sm text-thep">
+        Đây là bạn.{" "}
+        <button type="button" className="underline underline-offset-2 hover:text-son" onClick={() => link.mutate(null)} disabled={link.isPending}>
+          Không phải tôi
+        </button>
+      </p>
+    );
+  }
+  if (clan.myPersonId) return null;
+  return (
+    <div className="mt-2">
+      <button type="button" className="text-sm font-medium text-son hover:underline" onClick={() => link.mutate(personId)} disabled={link.isPending}>
+        Đây là tôi
+      </button>
+      {link.error && <p className="mt-1 text-sm text-loi">{link.error.message}</p>}
     </div>
   );
 }

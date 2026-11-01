@@ -10,6 +10,8 @@ import { APP_CONFIG, type AppConfig } from "./config.js";
 import { Database } from "./db/database.js";
 import { HealthController } from "./health.controller.js";
 import { InstanceController } from "./instance.controller.js";
+import { InvitationsController, MembersController } from "./members/members.controller.js";
+import { MembersService } from "./members/members.service.js";
 import { PersonsController } from "./persons/persons.controller.js";
 import { PersonsService } from "./persons/persons.service.js";
 import { GraphService } from "./tree/graph.service.js";
@@ -23,7 +25,7 @@ export class AppModule {
   static forRoot(config: AppConfig): DynamicModule {
     return {
       module: AppModule,
-      controllers: [HealthController, InstanceController, AuthController, MeController, ClansController, PersonsController, TreeController],
+      controllers: [HealthController, InstanceController, AuthController, MeController, ClansController, PersonsController, TreeController, MembersController, InvitationsController],
       providers: [
         { provide: APP_CONFIG, useValue: config },
         Database,
@@ -31,6 +33,7 @@ export class AppModule {
         ClansService,
         GraphService,
         PersonsService,
+        MembersService,
         { provide: APP_GUARD, useClass: SessionGuard },
         { provide: APP_GUARD, useClass: TenantGuard },
         { provide: APP_FILTER, useClass: ErrorFilter },

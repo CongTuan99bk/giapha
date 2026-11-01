@@ -96,6 +96,19 @@ test("danh sách: tìm tên không dấu", async () => {
   await expect(panel().getByRole("heading", { name: "Trần Thị Hai" })).toBeVisible();
 });
 
+let inviteUrl = "";
+
+test("tạo link mời trong Cài đặt", async () => {
+  await page.getByRole("link", { name: "Cài đặt" }).click();
+  await expect(page.getByRole("heading", { name: "Cài đặt dòng họ" })).toBeVisible();
+  await page.getByLabel("Số người dùng được link").selectOption("10");
+  await page.getByRole("button", { name: "Tạo link mời" }).click();
+  const link = page.getByLabel("Link mời");
+  await expect(link).toHaveValue(/\/moi\/[A-Za-z0-9_-]{24}$/);
+  inviteUrl = new URL(await link.inputValue()).pathname;
+  await expect(page.getByText(/đã dùng 0\/10/)).toBeVisible();
+});
+
 test("người đăng ký sau chưa vào được dòng họ (chế độ một dòng họ)", async () => {
   await page.getByRole("button", { name: "Đăng xuất" }).click();
   await expect(page).toHaveURL(/\/dang-nhap/);
@@ -105,6 +118,55 @@ test("người đăng ký sau chưa vào được dòng họ (chế độ một 
   await page.getByLabel("Mật khẩu").fill("matkhau-e2e-456");
   await page.getByRole("button", { name: "Tạo tài khoản" }).click();
   await expect(page.getByText(/Bạn chưa là thành viên của Họ Lê Văn – thôn Thử/)).toBeVisible();
+});
+
+test("người đã có tài khoản mở link mời → tham gia với vai trò thành viên (chỉ xem)", async () => {
+  await page.goto(inviteUrl);
+  await expect(page.getByText("Họ Lê Văn – thôn Thử")).toBeVisible();
+  await expect(page.getByText("Bạn đang đăng nhập là nguoimoi@e2e.test.")).toBeVisible();
+  await page.getByRole("button", { name: "Tham gia dòng họ" }).click();
+
+  const root = page.locator(node("Lê Văn Cả"));
+  await expect(root).toBeVisible();
+  await expect(page.getByRole("link", { name: "Cài đặt" })).toHaveCount(0);
+  await root.click();
+  await expect(panel().getByRole("heading", { name: "Lê Văn Cả" })).toBeVisible();
+  await expect(panel().getByRole("button", { name: "Sửa thông tin" })).toHaveCount(0);
+  await panel().getByRole("button", { name: "Đây là tôi" }).click();
+  await expect(panel().getByText("Đây là bạn.")).toBeVisible();
+});
+
+test("người chưa có tài khoản: mở link → tạo tài khoản → quay lại tham gia", async ({ browser }) => {
+  const p = await browser.newPage();
+  await p.goto(inviteUrl);
+  await p.getByRole("link", { name: "Tạo tài khoản để tham gia" }).click();
+  await p.getByLabel("Họ và tên").fill("Lê Thị Cháu");
+  await p.getByLabel("Email").fill("chau@e2e.test");
+  await p.getByLabel("Mật khẩu").fill("matkhau-e2e-789");
+  await p.getByRole("button", { name: "Tạo tài khoản" }).click();
+  await expect(p).toHaveURL(new RegExp(inviteUrl + "$"));
+  await p.getByRole("button", { name: "Tham gia dòng họ" }).click();
+  await expect(p.locator(node("Lê Văn Cả"))).toBeVisible();
+  await p.close();
+});
+
+test("chủ sở hữu thấy thành viên mới và nâng vai trò", async ({ browser }) => {
+  const p = await browser.newPage();
+  await p.goto("/dang-nhap");
+  await p.getByLabel("Email").fill(OWNER.email);
+  await p.getByLabel("Mật khẩu").fill(OWNER.password);
+  await p.getByRole("button", { name: "Đăng nhập" }).click();
+  await p.getByRole("link", { name: "Cài đặt" }).click();
+  await expect(p.getByText("nguoimoi@e2e.test")).toBeVisible();
+  await expect(p.getByText("Trong phả: Lê Văn Cả")).toBeVisible();
+  const role = p.getByLabel("Vai trò của Lê Thị Cháu");
+  await expect(role).toHaveValue("member");
+  await role.selectOption("editor");
+  await expect(role).toHaveValue("editor");
+  await p.reload();
+  await expect(p.getByLabel("Vai trò của Lê Thị Cháu")).toHaveValue("editor");
+  await expect(p.getByText(/đã dùng 2\/10/)).toBeVisible();
+  await p.close();
 });
 
 test("đăng nhập sai mật khẩu báo lỗi rõ ràng", async ({ browser }) => {

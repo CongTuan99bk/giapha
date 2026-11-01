@@ -132,6 +132,7 @@ model Clan {
 
   domains      Domain[]
   members      ClanMember[]
+  invitations  Invitation[]
   persons      Person[]
   siteSettings SiteSettings?
 
@@ -172,6 +173,7 @@ model User {
 
   memberships ClanMember[]
   sessions    Session[]
+  invitationsCreated Invitation[]
 
   @@map("users")
 }
@@ -211,6 +213,31 @@ model ClanMember {
 
   @@unique([clanId, userId])
   @@map("clan_members")
+}
+
+/// Lời mời vào dòng họ bằng link (FR-CLAN-02). Chỉ lưu sha256 của mã trong link.
+model Invitation {
+  id        String    @id @default(uuid()) @db.Uuid
+  clanId    String    @map("clan_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  role      ClanRole  @default(member)
+  /// Nếu có: chỉ tài khoản có email này mới nhận được lời mời
+  email     String?   @db.Citext
+  /// Người được mời là ai trong phả (gắn sẵn "Đây là tôi")
+  personId  String?   @map("person_id") @db.Uuid
+  createdBy String?   @map("created_by") @db.Uuid
+  maxUses   Int       @default(1) @map("max_uses")
+  useCount  Int       @default(0) @map("use_count")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  clan    Clan    @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  person  Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
+  creator User?   @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([clanId])
+  @@map("invitations")
 }
 
 /// Quyền hỗ trợ có thời hạn do chủ sở hữu cấp cho super-admin (FR-PLAT-03)
@@ -284,6 +311,7 @@ model Person {
   unionsAsB  Union[]       @relation("UnionPartnerB")
   parentOf   ParentChild[] @relation("ChildOf")
   members    ClanMember[]
+  invitations Invitation[]
   places     Place[]
 
   @@index([clanId, generation])

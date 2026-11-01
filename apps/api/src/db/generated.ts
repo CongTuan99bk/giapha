@@ -269,6 +269,21 @@ export interface Imports {
   summary: Json | null;
 }
 
+export interface Invitations {
+  clan_id: string;
+  created_at: Generated<Timestamp>;
+  created_by: string | null;
+  email: string | null;
+  expires_at: Timestamp;
+  id: string;
+  max_uses: Generated<number>;
+  person_id: string | null;
+  revoked_at: Timestamp | null;
+  role: Generated<Clanrole>;
+  token_hash: string;
+  use_count: Generated<number>;
+}
+
 export interface Media {
   album_id: string | null;
   caption: string | null;
@@ -435,6 +450,7 @@ export interface DB {
   events: Events;
   exports: Exports;
   imports: Imports;
+  invitations: Invitations;
   media: Media;
   parent_child: ParentChild;
   person_facts: PersonFacts;
