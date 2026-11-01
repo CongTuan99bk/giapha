@@ -1,0 +1,28 @@
+{
+  "name": "@coinguon/db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Schema PostgreSQL (Prisma), migration, Row-Level Security, dữ liệu mẫu",
+  "type": "module",
+  "scripts": {
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "migrate:sql": "bash scripts/apply-sql-migrations.sh",
+    "check-drift": "node scripts/check-drift.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3"
+  },
+  "devDependencies": {
+    "pg": "^8.13.0",
+    "@types/pg": "^8.11.0",
+    "prisma": "6.19.3"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "gia-pha-coi-nguon",
+  "private": true,
+  "description": "Gia Phả Cội Nguồn — nền tảng gia phả online đa dòng họ",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "db:generate": "pnpm --filter @coinguon/db prisma:generate",
+    "db:migrate": "pnpm --filter @coinguon/db migrate:dev",
+    "dev:infra": "docker compose -f infra/docker/compose.dev.yml up -d",
+    "dev:infra:down": "docker compose -f infra/docker/compose.dev.yml down",
+    "db:migrate:deploy": "pnpm --filter @coinguon/db migrate:deploy",
+    "coverage": "turbo run coverage"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.0",
+    "@vitest/coverage-v8": "^3.2.0"
+  }
+}

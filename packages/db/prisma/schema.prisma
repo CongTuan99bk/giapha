@@ -1,0 +1,671 @@
+// Gia Phả Cội Nguồn — schema cơ sở dữ liệu
+// Tài liệu: Tài liệu dự án v1.0 mục 7; PROJECT_CONTEXT.md mục 7.
+// Quy ước: tên bảng/cột snake_case (@@map/@map), model/field camelCase.
+// Mọi bảng nghiệp vụ có clan_id và được bảo vệ bằng Row-Level Security
+// (xem migration "rls_and_extensions"). Xoá mềm bằng deleted_at.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [ltree, pg_trgm, unaccent, citext]
+}
+
+// ───────────────────────────── Enum ─────────────────────────────
+
+enum ClanRole {
+  owner
+  admin
+  editor
+  member
+}
+
+enum Gender {
+  male
+  female
+  unknown
+}
+
+enum Privacy {
+  public
+  members
+  hidden
+}
+
+enum ChildRelation {
+  biological
+  adopted
+  step
+}
+
+enum UnionType {
+  marriage
+  partnership
+  other
+}
+
+enum LineageMode {
+  patrilineal
+  matrilineal
+}
+
+enum KinshipVariant {
+  bac
+  trung
+  nam
+}
+
+enum Day30Rule {
+  day29
+  nextMonthDay1
+}
+
+enum PostStatus {
+  draft
+  scheduled
+  published
+}
+
+enum Visibility {
+  public
+  members
+}
+
+enum EventType {
+  death_anniversary
+  clan_meeting
+  grave_visit
+  festival
+  other
+}
+
+enum PlaceType {
+  ancestral_hall
+  grave
+  other
+}
+
+enum EditRequestStatus {
+  pending
+  approved
+  rejected
+}
+
+enum JobStatus {
+  queued
+  running
+  done
+  failed
+}
+
+enum AnalyticsDimension {
+  page
+  person
+  referrer
+  device
+}
+
+// ─────────────────────── Tài khoản & dòng họ ───────────────────────
+
+model Clan {
+  id             String         @id @default(uuid()) @db.Uuid
+  name           String
+  slug           String         @unique
+  surname        String
+  originPlace    String?        @map("origin_place")
+  lineageMode    LineageMode    @default(patrilineal) @map("lineage_mode")
+  kinshipVariant KinshipVariant @default(bac) @map("kinship_variant")
+  day30Rule      Day30Rule      @default(day29) @map("day30_rule")
+  rootPersonId   String?        @map("root_person_id") @db.Uuid
+  /// Mã xem phả đồ (đã băm); null = không bật chế độ riêng tư
+  treeCodeHash   String?        @map("tree_code_hash")
+  plan           String         @default("free")
+  lockedAt       DateTime?      @map("locked_at") @db.Timestamptz
+  settings       Json           @default("{}")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt      DateTime?      @map("deleted_at") @db.Timestamptz
+
+  domains      Domain[]
+  members      ClanMember[]
+  persons      Person[]
+  siteSettings SiteSettings?
+
+  @@map("clans")
+}
+
+/// Tên miền riêng của dòng họ (FR-SITE-03). Không có RLS: cần tra theo host trước khi biết dòng họ.
+model Domain {
+  id         String    @id @default(uuid()) @db.Uuid
+  clanId     String    @map("clan_id") @db.Uuid
+  hostname   String    @unique
+  verifiedAt DateTime? @map("verified_at") @db.Timestamptz
+  sslStatus  String    @default("pending") @map("ssl_status")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  clan Clan @relation(fields: [clanId], references: [id], onDelete: Cascade)
+
+  @@index([clanId])
+  @@map("domains")
+}
+
+/// Tài khoản đăng nhập, dùng chung cho nhiều dòng họ. Không có RLS.
+model User {
+  id             String    @id @default(uuid()) @db.Uuid
+  email          String    @unique @db.Citext
+  phone          String?
+  name           String
+  passwordHash   String?   @map("password_hash")
+  googleId       String?   @unique @map("google_id")
+  emailVerified  DateTime? @map("email_verified") @db.Timestamptz
+  totpSecret     String?   @map("totp_secret")
+  isPlatformAdmin Boolean  @default(false) @map("is_platform_admin")
+  failedLogins   Int       @default(0) @map("failed_logins")
+  lockedUntil    DateTime? @map("locked_until") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz
+
+  memberships ClanMember[]
+  sessions    Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String   @id
+  userId     String   @map("user_id") @db.Uuid
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  lastSeenAt DateTime @default(now()) @map("last_seen_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model ClanMember {
+  id            String    @id @default(uuid()) @db.Uuid
+  clanId        String    @map("clan_id") @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  role          ClanRole  @default(member)
+  /// Biên tập viên chỉ sửa được chi này (FR-CLAN-03)
+  branchScopeId String?   @map("branch_scope_id") @db.Uuid
+  /// "Đây là tôi" — liên kết tài khoản với người trong cây (FR-CLAN-04)
+  personId      String?   @map("person_id") @db.Uuid
+  personLinkConfirmedAt DateTime? @map("person_link_confirmed_at") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  clan   Clan    @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch Branch? @relation(fields: [branchScopeId], references: [id], onDelete: SetNull)
+  person Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
+
+  contacts Contact[]
+
+  @@unique([clanId, userId])
+  @@map("clan_members")
+}
+
+/// Quyền hỗ trợ có thời hạn do chủ sở hữu cấp cho super-admin (FR-PLAT-03)
+model SupportGrant {
+  id         String    @id @default(uuid()) @db.Uuid
+  clanId     String    @map("clan_id") @db.Uuid
+  grantedBy  String    @map("granted_by") @db.Uuid
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
+  reason     String?
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([clanId, expiresAt])
+  @@map("support_grants")
+}
+
+// ───────────────────────────── Phả hệ ─────────────────────────────
+
+model Branch {
+  id             String   @id @default(uuid()) @db.Uuid
+  clanId         String   @map("clan_id") @db.Uuid
+  name           String
+  rootPersonId   String?  @map("root_person_id") @db.Uuid
+  parentBranchId String?  @map("parent_branch_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  parent   Branch?      @relation("BranchTree", fields: [parentBranchId], references: [id], onDelete: SetNull)
+  children Branch[]     @relation("BranchTree")
+  persons  Person[]
+  editors  ClanMember[]
+
+  @@index([clanId])
+  @@map("branches")
+}
+
+model Person {
+  id              String    @id @default(uuid()) @db.Uuid
+  clanId          String    @map("clan_id") @db.Uuid
+  fullName        String    @map("full_name")
+  /// Tên không dấu, chữ thường — trigger tự cập nhật, dùng tìm kiếm (FR-PERSON-05)
+  nameUnaccent    String    @default("") @map("name_unaccent")
+  otherNames      Json      @default("[]") @map("other_names")
+  gender          Gender    @default(unknown)
+  isLiving        Boolean   @default(true) @map("is_living")
+  /// { calendar, precision, year, month?, day?, isLeapMonth?, raw? } — xem @coinguon/schemas flexibleDateSchema
+  birthDate       Json?     @map("birth_date")
+  deathDate       Json?     @map("death_date")
+  /// { day, month } âm lịch, dùng sinh ngày giỗ hằng năm
+  deathAnnivLunar Json?     @map("death_anniv_lunar")
+  birthYear       Int?      @map("birth_year")
+  generation      Int?
+  inClan          Boolean   @default(true) @map("in_clan")
+  /// Đường dẫn nhánh dạng ltree (vd. 1.2.3) — truy vấn cả nhánh bằng một câu SQL
+  lineagePath     Unsupported("ltree")? @map("lineage_path")
+  branchId        String?   @map("branch_id") @db.Uuid
+  biography       Json?
+  avatarMediaId   String?   @map("avatar_media_id") @db.Uuid
+  privacy         Privacy   @default(members)
+  /// Mã hoá ở tầng ứng dụng (dữ liệu có thể nhạy cảm)
+  bloodTypeEnc    Bytes?    @map("blood_type_enc")
+  /// Khoá lạc quan (BR-TREE-07)
+  version         Int       @default(0)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz
+
+  clan       Clan          @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  branch     Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  facts      PersonFact[]
+  unionsAsA  Union[]       @relation("UnionPartnerA")
+  unionsAsB  Union[]       @relation("UnionPartnerB")
+  parentOf   ParentChild[] @relation("ChildOf")
+  members    ClanMember[]
+  places     Place[]
+
+  @@index([clanId, generation])
+  @@index([clanId, deletedAt])
+  @@index([nameUnaccent(ops: raw("gin_trgm_ops"))], type: Gin, map: "persons_name_unaccent_trgm_idx")
+  // Chỉ mục GiST trên lineage_path (kiểu Unsupported) nằm trong migration rls_search_integrity
+  @@map("persons")
+}
+
+/// Thông tin mở rộng: học vấn, chức vụ, truy phong… (FR-PERSON-04)
+model PersonFact {
+  id        String   @id @default(uuid()) @db.Uuid
+  clanId    String   @map("clan_id") @db.Uuid
+  personId  String   @map("person_id") @db.Uuid
+  type      String
+  value     String
+  dateFrom  Json?    @map("date_from")
+  dateTo    Json?    @map("date_to")
+  sortOrder Int      @default(0) @map("sort_order")
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([personId])
+  @@map("person_facts")
+}
+
+/// Hôn phối (ADR-002). partner_b rỗng = không rõ vợ/chồng.
+model Union {
+  id         String    @id @default(uuid()) @db.Uuid
+  clanId     String    @map("clan_id") @db.Uuid
+  partnerAId String    @map("partner_a_id") @db.Uuid
+  partnerBId String?   @map("partner_b_id") @db.Uuid
+  type       UnionType @default(marriage)
+  /// Vợ cả = 1, vợ hai = 2…
+  orderIndex Int       @default(1) @map("order_index")
+  startDate  Json?     @map("start_date")
+  endDate    Json?     @map("end_date")
+  endReason  String?   @map("end_reason")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz
+
+  partnerA Person        @relation("UnionPartnerA", fields: [partnerAId], references: [id], onDelete: Cascade)
+  partnerB Person?       @relation("UnionPartnerB", fields: [partnerBId], references: [id], onDelete: SetNull)
+  children ParentChild[]
+
+  @@unique([partnerAId, partnerBId])
+  @@index([clanId])
+  @@index([partnerBId])
+  @@map("unions")
+}
+
+model ParentChild {
+  clanId     String        @map("clan_id") @db.Uuid
+  unionId    String        @map("union_id") @db.Uuid
+  childId    String        @map("child_id") @db.Uuid
+  relation   ChildRelation @default(biological)
+  /// Con trưởng = 1 (BR-TREE-05)
+  birthOrder Int           @map("birth_order")
+
+  union Union  @relation(fields: [unionId], references: [id], onDelete: Cascade)
+  child Person @relation("ChildOf", fields: [childId], references: [id], onDelete: Cascade)
+
+  @@id([unionId, childId])
+  @@unique([unionId, birthOrder])
+  @@index([childId])
+  @@map("parent_child")
+}
+
+// ─────────────────────── Nội dung, sự kiện ───────────────────────
+
+model Media {
+  id         String   @id @default(uuid()) @db.Uuid
+  clanId     String   @map("clan_id") @db.Uuid
+  albumId    String?  @map("album_id") @db.Uuid
+  storageKey String   @unique @map("storage_key")
+  mime       String
+  sizeBytes  Int      @map("size_bytes")
+  width      Int?
+  height     Int?
+  caption    String?
+  uploadedBy String?  @map("uploaded_by") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz
+
+  album Album? @relation(fields: [albumId], references: [id], onDelete: SetNull)
+
+  @@index([clanId, albumId])
+  @@map("media")
+}
+
+model Album {
+  id          String     @id @default(uuid()) @db.Uuid
+  clanId      String     @map("clan_id") @db.Uuid
+  title       String
+  description String?
+  visibility  Visibility @default(public)
+  coverId     String?    @map("cover_id") @db.Uuid
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt   DateTime?  @map("deleted_at") @db.Timestamptz
+
+  media Media[]
+
+  @@index([clanId])
+  @@map("albums")
+}
+
+model Category {
+  id        String @id @default(uuid()) @db.Uuid
+  clanId    String @map("clan_id") @db.Uuid
+  name      String
+  slug      String
+  sortOrder Int    @default(0) @map("sort_order")
+
+  posts Post[]
+
+  @@unique([clanId, slug])
+  @@map("categories")
+}
+
+model Post {
+  id          String     @id @default(uuid()) @db.Uuid
+  clanId      String     @map("clan_id") @db.Uuid
+  categoryId  String?    @map("category_id") @db.Uuid
+  title       String
+  slug        String
+  body        Json
+  coverId     String?    @map("cover_id") @db.Uuid
+  status      PostStatus @default(draft)
+  visibility  Visibility @default(public)
+  publishedAt DateTime?  @map("published_at") @db.Timestamptz
+  authorId    String?    @map("author_id") @db.Uuid
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime?  @map("deleted_at") @db.Timestamptz
+
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@unique([clanId, slug])
+  @@index([clanId, status, publishedAt])
+  @@map("posts")
+}
+
+model Event {
+  id          String    @id @default(uuid()) @db.Uuid
+  clanId      String    @map("clan_id") @db.Uuid
+  type        EventType
+  title       String
+  description String?
+  /// Giỗ: người được tưởng niệm
+  personId    String?   @map("person_id") @db.Uuid
+  /// Lặp hằng năm theo âm lịch: { day, month }
+  lunarRule   Json?     @map("lunar_rule")
+  /// Sự kiện một lần hoặc lặp theo dương lịch
+  solarDate   DateTime? @map("solar_date") @db.Date
+  repeatYearly Boolean  @default(false) @map("repeat_yearly")
+  remindDays  Int       @default(3) @map("remind_days")
+  placeId     String?   @map("place_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  occurrences   EventOccurrence[]
+  subscriptions EventSubscription[]
+
+  @@index([clanId, type])
+  @@map("events")
+}
+
+/// Lần diễn ra cụ thể (job events.generate sinh trước 2 năm) — dùng cho lịch và nhắc
+model EventOccurrence {
+  id         String    @id @default(uuid()) @db.Uuid
+  clanId     String    @map("clan_id") @db.Uuid
+  eventId    String    @map("event_id") @db.Uuid
+  solarDate  DateTime  @map("solar_date") @db.Date
+  lunarDate  Json      @map("lunar_date")
+  remindedAt DateTime? @map("reminded_at") @db.Timestamptz
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, solarDate])
+  @@index([clanId, solarDate])
+  @@map("event_occurrences")
+}
+
+model EventSubscription {
+  id          String    @id @default(uuid()) @db.Uuid
+  clanId      String    @map("clan_id") @db.Uuid
+  /// null = đăng ký mọi sự kiện của dòng họ
+  eventId     String?   @map("event_id") @db.Uuid
+  userId      String?   @map("user_id") @db.Uuid
+  email       String    @db.Citext
+  remindDays  Int       @default(3) @map("remind_days")
+  /// Token huỷ đăng ký trong email
+  unsubscribeToken String @unique @map("unsubscribe_token")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  event Event? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([clanId, eventId, email])
+  @@map("event_subscriptions")
+}
+
+model Place {
+  id          String    @id @default(uuid()) @db.Uuid
+  clanId      String    @map("clan_id") @db.Uuid
+  type        PlaceType
+  name        String
+  personId    String?   @map("person_id") @db.Uuid
+  lat         Float?
+  lng         Float?
+  address     String?
+  photoId     String?   @map("photo_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  person Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
+
+  @@index([clanId, type])
+  @@map("places")
+}
+
+// ─────────────────────── Website & liên hệ ───────────────────────
+
+/// Giao diện, menu, thông tin chung, bật bộ đếm công khai (FR-SITE-02, 06; FR-STAT-06)
+model SiteSettings {
+  clanId    String   @id @map("clan_id") @db.Uuid
+  data      Json     @default("{}")
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  clan Clan @relation(fields: [clanId], references: [id], onDelete: Cascade)
+
+  @@map("site_settings")
+}
+
+/// Thông tin liên hệ ban quản lý (FR-SITE-04..08, BR-PRIV-04; ADR-006)
+model Contact {
+  id           String       @id @default(uuid()) @db.Uuid
+  clanId       String       @map("clan_id") @db.Uuid
+  memberId     String?      @map("member_id") @db.Uuid
+  name         String
+  role         String
+  phone        String?
+  email        String?      @db.Citext
+  zalo         String?
+  photoMediaId String?      @map("photo_media_id") @db.Uuid
+  /// Trường được bật công khai: phone, email, zalo, photo
+  publicFields String[]     @default([]) @map("public_fields")
+  /// Thời điểm đồng ý công khai; null = chưa đồng ý → chỉ hiện tên, vai trò
+  consentAt    DateTime?    @map("consent_at") @db.Timestamptz
+  /// Người xác nhận: chính người đó (có tài khoản) hoặc quản trị (kèm ghi chú)
+  consentBy    String?      @map("consent_by") @db.Uuid
+  consentNote  String?      @map("consent_note")
+  sortOrder    Int          @default(0) @map("sort_order")
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  member ClanMember? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+
+  @@index([clanId, sortOrder])
+  @@map("contacts")
+}
+
+model ContactMessage {
+  id        String    @id @default(uuid()) @db.Uuid
+  clanId    String    @map("clan_id") @db.Uuid
+  name      String
+  replyTo   String    @map("reply_to")
+  message   String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  handledAt DateTime? @map("handled_at") @db.Timestamptz
+
+  @@index([clanId, createdAt])
+  @@map("contact_messages")
+}
+
+// ───────────────────── Thống kê truy cập (ADR-004) ─────────────────────
+
+/// Số liệu chốt theo ngày (giờ VN), ghi bằng UPSERT nên chạy lại job không cộng đôi (BR-STAT-06)
+model AnalyticsDaily {
+  clanId         String   @map("clan_id") @db.Uuid
+  date           DateTime @db.Date
+  pageViews      Int      @default(0) @map("page_views")
+  uniqueVisitors Int      @default(0) @map("unique_visitors")
+  memberViews    Int      @default(0) @map("member_views")
+
+  @@id([clanId, date])
+  @@map("analytics_daily")
+}
+
+model AnalyticsDim {
+  clanId    String             @map("clan_id") @db.Uuid
+  date      DateTime           @db.Date
+  dimension AnalyticsDimension
+  key       String
+  views     Int                @default(0)
+
+  @@id([clanId, date, dimension, key])
+  @@map("analytics_dims")
+}
+
+// ─────────────────────── Quản trị, nhật ký ───────────────────────
+
+model AuditLog {
+  id        BigInt   @id @default(autoincrement())
+  clanId    String?  @map("clan_id") @db.Uuid
+  actorId   String?  @map("actor_id") @db.Uuid
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  before    Json?
+  after     Json?
+  /// Thao tác của super-admin qua quyền hỗ trợ (FR-PLAT-03)
+  viaSupport Boolean @default(false) @map("via_support")
+  at        DateTime @default(now()) @db.Timestamptz
+
+  @@index([clanId, at])
+  @@index([clanId, entity, entityId])
+  @@map("audit_logs")
+}
+
+model EditRequest {
+  id          String            @id @default(uuid()) @db.Uuid
+  clanId      String            @map("clan_id") @db.Uuid
+  requesterId String            @map("requester_id") @db.Uuid
+  personId    String            @map("person_id") @db.Uuid
+  diff        Json
+  note        String?
+  status      EditRequestStatus @default(pending)
+  reviewerId  String?           @map("reviewer_id") @db.Uuid
+  reviewNote  String?           @map("review_note")
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  reviewedAt  DateTime?         @map("reviewed_at") @db.Timestamptz
+
+  @@index([clanId, status])
+  @@map("edit_requests")
+}
+
+model Donation {
+  id            String   @id @default(uuid()) @db.Uuid
+  clanId        String   @map("clan_id") @db.Uuid
+  donorPersonId String?  @map("donor_person_id") @db.Uuid
+  donorName     String   @map("donor_name")
+  /// Đơn vị: đồng
+  amount        BigInt
+  purpose       String?
+  date          DateTime @db.Date
+  isPublic      Boolean  @default(true) @map("is_public")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([clanId, date])
+  @@map("donations")
+}
+
+model ImportJob {
+  id          String    @id @default(uuid()) @db.Uuid
+  clanId      String    @map("clan_id") @db.Uuid
+  createdBy   String    @map("created_by") @db.Uuid
+  format      String
+  status      JobStatus @default(queued)
+  summary     Json?
+  errors      Json?
+  /// Danh sách id đã tạo — để hoàn tác trong 24 giờ
+  createdIds  Json?     @map("created_ids")
+  committedAt DateTime? @map("committed_at") @db.Timestamptz
+  revertedAt  DateTime? @map("reverted_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([clanId, createdAt])
+  @@map("imports")
+}
+
+model ExportJob {
+  id         String    @id @default(uuid()) @db.Uuid
+  clanId     String    @map("clan_id") @db.Uuid
+  createdBy  String    @map("created_by") @db.Uuid
+  format     String
+  scope      Json      @default("{}")
+  status     JobStatus @default(queued)
+  storageKey String?   @map("storage_key")
+  error      String?
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt  DateTime? @map("expires_at") @db.Timestamptz
+
+  @@index([clanId, createdAt])
+  @@map("exports")
+}
