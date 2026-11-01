@@ -5,10 +5,10 @@ import { createApp } from "../src/app.js";
 import { loadConfig } from "../src/config.js";
 
 // Database riêng cho test API (coinguon_test_api) để không đụng test RLS của packages/db khi turbo chạy song song.
-const OWNER_URL = process.env.TEST_API_DATABASE_URL ?? "postgresql://coinguon:coinguon@localhost:5432/coinguon_test_api";
-const APP_URL =
+export const OWNER_URL = process.env.TEST_API_DATABASE_URL ?? "postgresql://coinguon:coinguon@localhost:5432/coinguon_test_api";
+export const APP_URL =
   process.env.TEST_API_APP_DATABASE_URL ?? "postgresql://coinguon_app:coinguon_app@localhost:5432/coinguon_test_api";
-const PLATFORM_URL =
+export const PLATFORM_URL =
   process.env.TEST_API_PLATFORM_DATABASE_URL ??
   "postgresql://coinguon_platform:coinguon_platform@localhost:5432/coinguon_test_api";
 
@@ -26,11 +26,13 @@ export async function resetDatabase(): Promise<void> {
   }
 }
 
-export async function bootApp(): Promise<INestApplication> {
+export async function bootApp(env: Record<string, string> = {}): Promise<INestApplication> {
   const config = loadConfig({
     NODE_ENV: "test",
     APP_DATABASE_URL: APP_URL,
     PLATFORM_DATABASE_URL: PLATFORM_URL,
+    CLAN_MODE: "multi",
+    ...env,
   });
   const app = await createApp(config);
   await app.init();

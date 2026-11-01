@@ -32,7 +32,7 @@ describe("Dòng họ", () => {
 
     const mine = await owner.get("/me/clans");
     expect(mine.body).toHaveLength(1);
-    expect(mine.body[0]).toMatchObject({ id: clanId, role: "owner", lineageMode: "patrilineal" });
+    expect(mine.body[0]).toMatchObject({ id: clanId, role: "owner", lineageMode: "patrilineal", kinshipVariant: "trung" });
   });
 
   it("slug trùng → 409 SLUG_TAKEN", async () => {
@@ -121,6 +121,8 @@ describe("Xây phả đồ", () => {
     const res = await owner.get(`/clans/${clanId}/persons?q=duc truong`);
     expect(res.status).toBe(200);
     expect(res.body.items.map((p: { id: string }) => p.id)).toEqual([ids.truong]);
+    const to = await owner.get(`/clans/${clanId}/persons?q=duc to`);
+    expect(to.body.items[0]).toMatchObject({ fullName: "Nguyễn Đức Tổ", deathYear: null, isLiving: false });
     const byGen = await owner.get(`/clans/${clanId}/persons?generation=3`);
     expect(byGen.body.items).toHaveLength(3);
   });
@@ -230,7 +232,7 @@ describe("Phả đồ và xưng hô", () => {
     expect(res.body).toMatchObject({ related: true, aCallsB: "ông nội", bCallsA: "cháu nội" });
   });
 
-  it("xưng hô bên ngoại (biến thể miền Bắc): anh của mẹ là bác, em trai của mẹ là cậu", async () => {
+  it("xưng hô bên ngoại (mặc định miền Trung): anh của mẹ là bác, em trai của mẹ là cậu", async () => {
     const elder = await owner.get(`/clans/${clanId}/kinship?a=${ids.ngoai}&b=${ids.truong}`);
     expect(elder.body.aCallsB).toBe("bác");
     const younger = await owner.get(`/clans/${clanId}/kinship?a=${ids.ngoai}&b=${ids.thu}`);

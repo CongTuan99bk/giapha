@@ -73,8 +73,25 @@ const NAM: KinshipTerms = {
   },
 };
 
-/** Miền Trung: tạm dùng bảng miền Bắc với cha/mẹ gọi "ba/mạ" — cần người am hiểu bổ sung. */
-const TRUNG: KinshipTerms = { ...BAC, father: "ba", mother: "mạ" };
+/**
+ * Miền Trung (mặc định của dự án từ 2026-11-01): cha/mẹ gọi "ba/mạ"; chị và em gái của cha gọi "o",
+ * chồng của o/dì gọi "dượng". Anh/chị của mẹ tạm giữ "bác" như miền Bắc.
+ * Cách gọi rất khác giữa Nghệ Tĩnh, Huế, Quảng Nam… (ví dụ ôn/mệ ở Huế) → CHƯA DUYỆT (KI-001);
+ * dòng họ sẽ được tự sửa bảng xưng hô của mình (KI-013).
+ */
+const TRUNG: KinshipTerms = {
+  ...BAC,
+  father: "ba",
+  mother: "mạ",
+  paternal: { elderMale: "bác", elderFemale: "o", youngerMale: "chú", youngerFemale: "o" },
+  spouseOf: {
+    bác: { ifMale: "bác gái", ifFemale: "bác trai" },
+    chú: { ifMale: "thím" },
+    o: { ifFemale: "dượng" },
+    cậu: { ifMale: "mợ" },
+    dì: { ifFemale: "dượng" },
+  },
+};
 
 export const KINSHIP_TERMS: Readonly<Record<KinshipVariant, KinshipTerms>> = {
   bac: BAC,

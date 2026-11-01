@@ -53,7 +53,7 @@ export class PersonsController {
       const [{ total }, items] = await Promise.all([
         base.select((eb) => eb.fn.countAll<number>().as("total")).executeTakeFirstOrThrow(),
         base
-          .select(["id", "full_name", "gender", "birth_year", "generation", "is_living", "in_clan", "privacy"])
+          .select(["id", "full_name", "gender", "birth_year", "death_date", "generation", "is_living", "in_clan", "privacy"])
           .orderBy("generation", (ob) => ob.asc().nullsLast())
           .orderBy("full_name")
           .limit(pageSize)
@@ -67,6 +67,7 @@ export class PersonsController {
           fullName: hideHidden && p.privacy === "hidden" ? "Thông tin ẩn" : p.full_name,
           gender: p.gender,
           birthYear: hideHidden && p.privacy === "hidden" ? null : p.birth_year,
+          deathYear: hideHidden && p.privacy === "hidden" ? null : yearOf(p.death_date),
           generation: p.generation,
           isLiving: p.is_living,
           inClan: p.in_clan,
@@ -143,4 +144,10 @@ export class PersonsController {
   private actor(m: Membership) {
     return { clanId: m.clanId, userId: m.userId };
   }
+}
+
+/** Năm trong ngày linh hoạt (jsonb) — null nếu không có. */
+function yearOf(date: unknown): number | null {
+  const y = (date as { year?: unknown } | null)?.year;
+  return typeof y === "number" ? y : null;
 }

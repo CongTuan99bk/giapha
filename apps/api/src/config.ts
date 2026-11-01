@@ -16,6 +16,11 @@ const envSchema = z.object({
   COOKIE_SECURE: boolish.default(false),
   /** Domain cookie để dùng chung giữa các subdomain, ví dụ ".coinguon.vn" */
   COOKIE_DOMAIN: z.string().optional(),
+  /**
+   * single: hệ thống dùng riêng cho MỘT dòng họ (quyết định 2026-11-01) — chỉ tạo được dòng họ đầu tiên.
+   * multi: dịch vụ nhiều dòng họ (để sẵn, chưa dùng).
+   */
+  CLAN_MODE: z.enum(["single", "multi"]).default("single"),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;

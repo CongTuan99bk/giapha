@@ -1,0 +1,99 @@
+import { describe, expect, it } from "vitest";
+import { readCookie } from "./api";
+import { emptyDateFields, formatAnniversary, formatFlexibleDate, fromDateFields, lifespan, slugify, toDateFields } from "./format";
+
+describe("lifespan", () => {
+  it("hiển thị năm sinh – năm mất", () => {
+    expect(lifespan({ birthYear: 1920, deathYear: 1990, isLiving: false })).toBe("1920 – 1990");
+    expect(lifespan({ birthYear: 1990, isLiving: true })).toBe("sinh 1990");
+    expect(lifespan({ birthYear: null, deathYear: 1990, isLiving: false })).toBe("? – 1990");
+    expect(lifespan({ birthYear: null, deathYear: null, isLiving: false })).toBe("đã mất");
+    expect(lifespan({ birthYear: null, isLiving: true })).toBe("");
+  });
+});
+
+describe("formatFlexibleDate", () => {
+  it("dương lịch theo độ chính xác", () => {
+    expect(formatFlexibleDate({ calendar: "solar", precision: "day", year: 1950, month: 3, day: 12 })).toBe("12/3/1950");
+    expect(formatFlexibleDate({ calendar: "solar", precision: "month", year: 1950, month: 3 })).toBe("tháng 3/1950");
+    expect(formatFlexibleDate({ calendar: "solar", precision: "approx", year: 1950 })).toBe("khoảng 1950");
+    expect(formatFlexibleDate(null)).toBe("");
+  });
+  it("âm lịch có can chi, tháng Giêng, nhuận", () => {
+    expect(formatFlexibleDate({ calendar: "lunar", precision: "day", year: 2025, month: 1, day: 1 })).toBe(
+      "mùng 1 tháng Giêng năm Ất Tỵ (2025), âm lịch",
+    );
+    expect(formatFlexibleDate({ calendar: "lunar", precision: "month", year: 2025, month: 6, isLeapMonth: true })).toBe(
+      "tháng 6 nhuận năm Ất Tỵ (2025), âm lịch",
+    );
+  });
+  it("ngày giỗ", () => {
+    expect(formatAnniversary({ day: 15, month: 12, isLeapMonth: false })).toBe("ngày 15 tháng Chạp (âm lịch)");
+    expect(formatAnniversary(null)).toBe("");
+  });
+});
+
+describe("fromDateFields", () => {
+  const f = (o: Partial<ReturnType<typeof emptyDateFields>>) => ({ ...emptyDateFields(), ...o });
+  it("bỏ trống → null", () => expect(fromDateFields(f({}))).toBeNull());
+  it("chỉ năm / tháng năm / đủ ngày", () => {
+    expect(fromDateFields(f({ year: "1945" }))).toEqual({ calendar: "solar", precision: "year", year: 1945 });
+    expect(fromDateFields(f({ year: "1945", month: "9" }))).toEqual({ calendar: "solar", precision: "month", year: 1945, month: 9 });
+    expect(fromDateFields(f({ year: "1945", month: "9", day: "2" }))).toEqual({
+      calendar: "solar",
+      precision: "day",
+      year: 1945,
+      month: 9,
+      day: 2,
+    });
+  });
+  it("khoảng năm, âm lịch nhuận", () => {
+    expect(fromDateFields(f({ year: "1900", approx: true }))).toEqual({ calendar: "solar", precision: "approx", year: 1900 });
+    expect(fromDateFields(f({ calendar: "lunar", year: "2025", month: "6", day: "30", isLeapMonth: true }))).toEqual({
+      calendar: "lunar",
+      precision: "day",
+      year: 2025,
+      month: 6,
+      day: 30,
+      isLeapMonth: true,
+    });
+  });
+  it("báo lỗi dễ hiểu", () => {
+    expect(fromDateFields(f({ month: "3" }))).toBe("Cần nhập năm");
+    expect(fromDateFields(f({ year: "19a5" }))).toBe("Năm phải là số, ví dụ 1945");
+    expect(fromDateFields(f({ year: "1945", day: "2" }))).toBe("Có ngày thì cần nhập tháng");
+    expect(fromDateFields(f({ year: "1945", month: "13" }))).toBe("Tháng từ 1 đến 12");
+    expect(fromDateFields(f({ year: "1945", month: "2", day: "31", calendar: "lunar" }))).toBe("Ngày từ 1 đến 30");
+  });
+  it("toDateFields ↔ fromDateFields khứ hồi", () => {
+    const d = { calendar: "lunar" as const, precision: "day" as const, year: 1960, month: 4, day: 8, isLeapMonth: true };
+    expect(fromDateFields(toDateFields(d))).toEqual(d);
+  });
+});
+
+describe("readCookie", () => {
+  it("đọc đúng cookie, giải mã", () => {
+    expect(readCookie("csrf", "sid=abc; csrf=x%3Dy; other=1")).toBe("x=y");
+    expect(readCookie("missing", "a=1")).toBeNull();
+  });
+});
+
+describe("slugify", () => {
+  it("bỏ dấu tiếng Việt, đ → d", () => {
+    expect(slugify("Họ Nguyễn Đức – Làng Đông Ngạc")).toBe("ho-nguyen-duc-lang-dong-ngac");
+    expect(slugify("  !!! ")).toBe("");
+  });
+});
+
+describe("trang trợ giúp", async () => {
+  const { stripForReaders, tableOfContents } = await import("./help");
+  it("bỏ frontmatter và ghi chú HTML", () => {
+    expect(stripForReaders("---\ntitle: x\n---\n<!-- bí mật -->\n# Tiêu đề\nNội dung")).toBe("# Tiêu đề\nNội dung");
+  });
+  it("mục lục từ ##, bỏ qua code", () => {
+    expect(tableOfContents("# A\n## 1. Đăng nhập\n```\n## không phải\n```\n## **Phả đồ**")).toEqual([
+      { id: "1-dang-nhap", title: "1. Đăng nhập" },
+      { id: "pha-do", title: "Phả đồ" },
+    ]);
+  });
+});

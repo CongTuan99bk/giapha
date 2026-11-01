@@ -5,10 +5,10 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.4.0 |
+| Phiên bản file | 0.5.0 |
 | Cập nhật lần cuối | 2026-11-01 |
 | Người cập nhật | TuanLC, Claude |
-| Giai đoạn hiện tại | **MVP phần 1 — API phả đồ xong; tiếp theo: giao diện web** |
+| Giai đoạn hiện tại | **MVP phần 1 — API + giao diện web phả đồ xong; tiếp theo: mời thành viên** |
 | Mã nguồn | https://github.com/CongTuan99bk/giapha (nhánh `main`, CI xanh) |
 | Tài liệu đặc tả đầy đủ | "Tài liệu dự án: Hệ thống Gia Phả Cội Nguồn" v1.0 — https://claude.ai/artifact/1Wy2PqEVYSLqycMLH8LMzG |
 | Bản thảo kỹ thuật | https://claude.ai/artifact/T24kXNyJ9UkUPdRwMzBkFd |
@@ -29,11 +29,12 @@
 
 ## 1. Tóm tắt dự án
 
-Nền tảng gia phả online **đa dòng họ (multi-tenant)**. Mỗi dòng họ có:
+Hệ thống gia phả online. **Hiện dùng riêng cho MỘT dòng họ** (chốt 2026-11-01, `CLAN_MODE=single`); kiến trúc vẫn giữ
+khả năng đa dòng họ (RLS theo `clan_id`) để sau này mở thành dịch vụ mà không phải viết lại. Dòng họ có:
 - Trang quản trị: dựng phả đồ, quản lý thành viên, bài viết, sự kiện, thư viện, người dùng, thống kê truy cập.
 - Website công khai riêng (subdomain hoặc tên miền riêng): phả ký, phả đồ, tin tức, thư viện, lịch giỗ, bản đồ, **thông tin liên hệ ban quản lý**, bộ đếm truy cập.
-- PWA cho con cháu trên điện thoại: xem cây, tra xưng hô, nhận nhắc ngày giỗ.
-- Super-admin quản lý toàn nền tảng.
+- Trên điện thoại: **PWA** (cài từ trình duyệt) và **app iOS/Android** đóng gói cùng mã web bằng Capacitor (ADR-012): xem cây, tra xưng hô, nhận nhắc ngày giỗ.
+- Super-admin quản lý toàn nền tảng (chỉ cần khi chuyển sang nhiều dòng họ).
 
 Tham chiếu tính năng (chỉ ý tưởng, **không sao chép** code/giao diện/nội dung/thương hiệu): https://giaphadaiviet.vn/tinh-nang/
 
@@ -50,16 +51,17 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Tài liệu đặc tả – phân tích – thiết kế v1.0 | Xong (2026-11-01) | FR/NFR/BR, use case, ERD, API, UI, thống kê, bảo mật, test, vận hành |
 | Sổ tay chủ sở hữu & Hướng dẫn sử dụng v1.0 | Xong (2026-11-01) | Viết theo thiết kế; đối chiếu lại tên nút, thêm ảnh chụp khi có giao diện |
 | Giai đoạn 0 — Nền móng (tuần 1–2) | **Xong (2026-11-01)** | Monorepo, CI, schema + RLS, genealogy-core, lunar-vn, schemas — 126 test xanh |
-| MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Đang làm** | API xong (2026-11-01): đăng nhập, dòng họ, người/quan hệ, phả đồ, xưng hô — 33 test e2e. Còn: mời thành viên, giao diện web |
+| MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Đang làm** | API + web xong (2026-11-01): đăng nhập, tạo dòng họ, phả đồ kéo/phóng to, thêm/sửa/xoá người, danh sách, xưng hô, trợ giúp, PWA — 186 test + 11 test trình duyệt. Còn: mời thành viên, vai trò |
 | MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | Chưa bắt đầu | |
 | Phase 2 (tuần 15–24), Phase 3 (tuần 25–32) | Chưa bắt đầu | |
 
 ### 2.2. Việc đang làm
-- MVP phần 1 — `apps/web` (Next.js): đăng nhập, danh sách dòng họ, trình chỉnh sửa phả đồ dùng `GET /tree`.
+- MVP phần 1 — mời thành viên vào dòng họ (KI-014).
 
 ### 2.3. Việc tiếp theo
-1. `apps/web`: đăng nhập/đăng ký, chọn dòng họ, phả đồ (pan/zoom, bấm người → thêm cha mẹ/vợ chồng/con, sửa, xoá), tra xưng hô.
-2. API: mời thành viên + đổi vai trò (FR-CLAN), rate limit (KI-010), OTP email (KI-009), seed dữ liệu mẫu (30 người, 5 đời).
+1. API + web: **mời thành viên** bằng link/mã (KI-014), đổi vai trò, trang cài đặt dòng họ (đổi thuỷ tổ, biến thể xưng hô).
+2. Rate limit (KI-010); OTP email (KI-009); sửa bảng xưng hô riêng của dòng họ (KI-013).
+3. Docker Compose production cho VPS 4 GB + hướng dẫn demo bằng Cloudflare Tunnel.
 3. (Tuỳ chọn) chuyển kho GitHub về riêng tư.
 4. Chốt các câu hỏi còn lại ở mục 3.2.
 
@@ -79,14 +81,18 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 - **Tên sản phẩm: "Gia Phả Cội Nguồn"** (chốt 2026-11-01). Tên package: `@coinguon/*`. Tên miền hệ thống: chưa chọn (cần tra cứu nhãn hiệu).
 - Prisma 6.19 chỉ để quản lý schema/migration (ADR-008); API truy vấn bằng **Kysely** + NestJS 12 (ADR-010); 3 role DB: `coinguon` (migration), `coinguon_app` (bị RLS), `coinguon_platform` (BYPASSRLS) — ADR-009.
 
+- **Chốt 2026-11-01 (chủ dự án trả lời):**
+  - Dùng riêng cho **một dòng họ** → `CLAN_MODE=single` (ADR-011). Chưa làm thu phí, gói cước.
+  - Máy chủ ở **Việt Nam** (Bizfly / Viettel IDC / VNPT). Ngân sách: **0 USD khi demo**, **~10 USD/tháng khi chạy thật** (ADR-007 sửa đổi).
+  - Xưng hô mặc định **miền Trung** (`kinship_variant` mặc định `trung`, ADR-013).
+  - Dữ liệu thử: **dữ liệu giả** (`pnpm --filter @coinguon/api seed`); chủ dự án bổ sung dữ liệu thật sau.
+  - Điện thoại: làm **cả PWA, app Android và app iOS** (ADR-012).
+
 ### 3.2. Chưa chốt (cần chủ dự án trả lời)
-- [ ] Dùng riêng cho một dòng họ hay làm dịch vụ nhiều dòng họ có thu phí?
-- [ ] Nơi đặt máy chủ: Việt Nam (Bizfly / Viettel IDC / VNPT) hay Singapore (DigitalOcean)?
-- [ ] Ngân sách hạ tầng: 0 USD (demo) hay ~30–40 USD/tháng?
-- [ ] Biến thể xưng hô mặc định: Bắc / Trung / Nam?
-- [ ] Có dữ liệu gia phả thật để làm bộ test không?
-- [ ] Có cần app iOS/Android hay PWA là đủ?
-- [x] Tên sản phẩm: Gia Phả Cội Nguồn. - [ ] Tên miền hệ thống (cần tra cứu nhãn hiệu trước).
+- [ ] Tên miền (cần tra cứu nhãn hiệu trước).
+- [ ] Phí cửa hàng ứng dụng: Apple Developer 99 USD/năm, Google Play 25 USD một lần — vượt ngân sách ~10 USD/tháng; chủ dự án quyết định khi đến bước phát hành app.
+- [ ] Bảng xưng hô miền Trung cần người trong họ duyệt (KI-001) — mỗi vùng gọi khác nhau.
+- [x] Tên sản phẩm: Gia Phả Cội Nguồn.
 
 ---
 
@@ -110,6 +116,11 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 
 ## 5. Kiến trúc
 
+**Triển khai thật (~10 USD/tháng, ADR-007):** 1 VPS Bizfly Cloud 4 GB RAM / 40 GB SSD (~240.000 đ/tháng chưa VAT, tra 2026-11-01)
+chạy Docker Compose: Caddy, web, api, worker, PostgreSQL, Redis. **Không dùng R2/MinIO lúc đầu**: ảnh lưu trên ổ VPS (volume `media`),
+sao lưu hằng đêm (`pg_dump` + ảnh) sang Google Drive miễn phí bằng rclone. Cloudflare gói miễn phí cho DNS/CDN.
+**Demo (0 USD):** chạy Docker Compose trên máy cá nhân + Cloudflare Tunnel miễn phí để có đường link chia sẻ.
+
 ```
 Trình duyệt (máy tính / điện thoại PWA / khách xem website)
         │
@@ -131,8 +142,10 @@ Trình duyệt (máy tính / điện thoại PWA / khách xem website)
 ```
 gia-pha-coi-nguon/
 ├── apps/
-│   ├── api/                 # ✅ @coinguon/api — NestJS + Kysely: src/{auth,clans,persons,tree,common,db}, test/*.e2e.test.ts
-│   └── web/, worker/        # (MVP) Next.js, BullMQ
+│   ├── api/                 # ✅ @coinguon/api — NestJS + Kysely: src/{auth,clans,persons,tree,common,db}, seed.ts, test/*.e2e.test.ts
+│   ├── web/                 # ✅ @coinguon/web — Next.js 16 + Tailwind 4 + TanStack Query: app/, components/{tree,…}, lib/, e2e/ (Playwright); PWA
+│   ├── mobile/              # (sau) Capacitor bọc web thành app iOS/Android (ADR-012)
+│   └── worker/              # (MVP phần 2) BullMQ
 ├── packages/
 │   ├── lunar-vn/            # ✅ @coinguon/lunar-vn — âm lịch VN, tháng nhuận, ngày giỗ, can chi
 │   ├── genealogy-core/      # ✅ @coinguon/genealogy-core — FamilyIndex, validateGraph, computeLineage, kinship, layoutTree
@@ -197,7 +210,9 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | analytics | Heartbeat, page view, online realtime (SSE), báo cáo ngày | FR-STAT | Chưa làm |
 | audit, trash | Nhật ký, thùng rác | FR-ADMIN | Chưa làm |
 | platform, billing | Super-admin, gói cước (P3), quyền hỗ trợ có thời hạn, ẩn nội dung vi phạm | FR-PLAT | Chưa làm |
-| help (apps/web) | Trang Trợ giúp `/tro-giup` render `content/help/*.md` | — | Chưa làm |
+| help (apps/web) | Trang Trợ giúp `/tro-giup` render `content/help/*.md` | — | **Xong** (mục lục tự động, ẩn frontmatter/ghi chú) |
+| web: phả đồ | `TreeCanvas` (SVG, kéo/chụm/cuộn, lề "Đời n", chỉ vẽ phần nhìn thấy khi > 300 người), `PersonPanel` (xem/sửa/thêm/xoá), `PersonForm` (ngày âm/dương, khoảng năm, tháng nhuận) | FR-TREE | **Xong** |
+| web: PWA | `app/manifest.ts`, `public/sw.js` (không cache `/api`), trang offline, icon | NFR | **Xong**; app iOS/Android (Capacitor) chưa |
 
 ---
 
@@ -213,9 +228,10 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | Method & đường dẫn | Quyền | Ghi chú |
 | --- | --- | --- |
 | `GET /health` | công khai | healthcheck |
+| `GET /instance` | công khai | `{clanMode, clan: {id,name,slug,surname} \| null}` — web biết cần "tạo dòng họ" hay vào thẳng |
 | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` | công khai / đã đăng nhập | trả `{user, csrfToken}`; lỗi `EMAIL_TAKEN`, `INVALID_CREDENTIALS`, `ACCOUNT_LOCKED` (423) |
 | `GET /me`, `GET /me/clans` | đã đăng nhập | |
-| `POST /clans` | đã đăng nhập | người tạo = owner; `SLUG_TAKEN` |
+| `POST /clans` | đã đăng nhập | người tạo = owner; `SLUG_TAKEN`; chế độ single đã có dòng họ → `SINGLE_CLAN_EXISTS` |
 | `GET /clans/:clanId`, `PATCH /clans/:clanId` | member / admin | đổi `rootPersonId`/`lineageMode` → tính lại đời |
 | `GET /clans/:clanId/persons?q&generation&living&page&pageSize` | member | tìm không dấu; người `hidden` chỉ admin thấy |
 | `GET/POST/PATCH/DELETE /clans/:clanId/persons[/:personId]` | member xem, editor sửa | PATCH cần `version` → `PERSON_VERSION_CONFLICT`; DELETE có con cần `?confirm=true` (`HAS_DESCENDANTS`), không xoá thuỷ tổ (`IS_ROOT_PERSON`) |
@@ -244,6 +260,8 @@ Không phải thành viên → **404** (không lộ dòng họ có tồn tại).
 - Argon2id, 2FA cho owner/super-admin, khoá tạm sau 5 lần sai, rate limit mã xem phả đồ 10 lần/15 phút/IP.
 - Tuân thủ Luật BVDLCN 91/2025/QH15 + NĐ 356/2025/NĐ-CP: riêng tư mặc định, đồng ý trước khi công khai liên hệ, quyền xem/sửa/xoá dữ liệu.
 - Sở hữu trí tuệ: không sao chép web tham chiếu; chỉ dùng thư viện MIT/Apache/BSD/ISC; không GPL/AGPL/"non-commercial".
+  Ngoại lệ đã xem xét (ghi trong `scripts/check-licenses.mjs`): font OFL-1.1 (Alegreya, Be Vietnam Pro), `caniuse-lite` CC-BY-4.0 (dữ liệu lúc build),
+  `@img/sharp-libvips-*` LGPL-3.0 (thư viện ảnh tuỳ chọn của Next.js, liên kết động, không sửa).
 
 ---
 
@@ -270,6 +288,10 @@ pnpm build && pnpm typecheck && pnpm test
 pnpm coverage                  # ngưỡng 90% cho lunar-vn, genealogy-core
 pnpm --filter @coinguon/api dev      # API tại http://localhost:4000/api/v1 (cần APP_DATABASE_URL, PLATFORM_DATABASE_URL)
 pnpm --filter @coinguon/api db:types # sinh lại src/db/generated.ts sau khi đổi schema
+pnpm --filter @coinguon/api seed     # dữ liệu GIẢ ~60 người (chỉ chạy khi chưa có dòng họ); in ra email/mật khẩu
+pnpm --filter @coinguon/web dev      # giao diện tại http://localhost:3000 (gọi API qua /api/v1)
+pnpm --filter @coinguon/web test:e2e # Playwright: tự chạy API + web, DB riêng coinguon_e2e (cần pnpm build trước)
+node scripts/check-licenses.mjs      # kiểm tra giấy phép mọi gói production
 ```
 
 Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE_URL`, `TEST_PLATFORM_DATABASE_URL` (DB `coinguon_test`);
@@ -282,6 +304,9 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 
 | Biến | Dùng cho |
 | --- | --- |
+| CLAN_MODE | `single` (mặc định — một dòng họ) / `multi` |
+| SEED_EMAIL, SEED_PASSWORD | Tài khoản cho dữ liệu mẫu (`seed`) |
+| API_ORIGIN | (web) địa chỉ API mà Next chuyển tiếp `/api/v1` tới, mặc định `http://localhost:4000` |
 | DATABASE_URL | PostgreSQL — role chủ, chạy migration |
 | APP_DATABASE_URL | Role `coinguon_app` (bị RLS) — dùng trong api/web |
 | PLATFORM_DATABASE_URL | Role `coinguon_platform` (BYPASSRLS) — worker, super-admin |
@@ -308,8 +333,11 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | ADR-004 | 2026-11-01 | Tự xây thống kê truy cập (Redis + rollup) | Online realtime theo dòng họ, không gửi dữ liệu ra bên thứ ba | Google Analytics, Plausible, Umami |
 | ADR-005 | 2026-11-01 | HyperLogLog cho khách duy nhất | 12 KB/ngày/dòng họ, sai số ~0,8% chấp nhận được | Lưu từng visitor_id |
 | ADR-006 | 2026-11-01 | Liên hệ ban quản lý trong bảng `contacts` riêng, công khai từng trường + consent | Tuân thủ luật dữ liệu cá nhân, linh hoạt nhiều người | Gộp vào site_settings |
-| ADR-007 | 2026-11-01 | Một VPS + Docker Compose + Caddy giai đoạn đầu | Chi phí ~30–40 USD/tháng, tên miền riêng có SSL tự động | Vercel + dịch vụ managed |
+| ADR-007 | 2026-11-01 (sửa) | Một VPS **ở Việt Nam** (Bizfly Cloud 4 GB ~240.000 đ/tháng) + Docker Compose + Caddy; ảnh lưu ổ đĩa VPS, sao lưu sang Google Drive; demo chạy máy cá nhân + Cloudflare Tunnel | Ngân sách ~10 USD/tháng, dữ liệu ở trong nước, chủ dự án chọn | Viettel IDC (gói 4 GB ~599.000 đ/tháng — vượt ngân sách), Singapore, R2 |
 | ADR-008 | 2026-11-01 | Prisma 6.19 (chưa lên 7/8) | Ổn định, ít thay đổi cấu hình; Prisma 7 bắt buộc driver adapter + prisma.config.ts — cân nhắc nâng cấp khi làm api | Prisma 7.10, Drizzle |
+| ADR-013 | 2026-11-01 | Xưng hô mặc định miền Trung: ba/mạ, chị-em gái của cha là "o", chồng o/dì là "dượng" | Chủ dự án chọn; bảng tạm, sẽ cho dòng họ tự sửa (KI-013) | Bắc làm mặc định |
+| ADR-012 | 2026-11-01 | Điện thoại: PWA trước, rồi **Capacitor** đóng gói chính web app thành app iOS/Android, thêm tính năng gốc (thông báo đẩy ngày giỗ, chụp ảnh, xem offline) | Một mã nguồn, chi phí thấp; App Store yêu cầu app có tính năng gốc, không chỉ bọc web | React Native/Expo (viết lại giao diện), Flutter |
+| ADR-011 | 2026-11-01 | `CLAN_MODE=single`: chỉ tạo được dòng họ đầu tiên, `GET /instance` cho web biết dòng họ chính; vẫn giữ RLS đa dòng họ | Chủ dự án dùng riêng cho một dòng họ; giữ đường mở rộng | Bỏ hẳn `clan_id` / RLS |
 | ADR-010 | 2026-11-01 | API dùng **Kysely** (query builder có kiểu) thay Prisma Client; Prisma chỉ giữ schema + migration. NestJS 12 ESM | Đặt `set_config('app.clan_id')` trong cùng transaction cho RLS rõ ràng; ltree, CTE đệ quy, `update … from (values …)` viết thẳng SQL; không cần engine nhị phân của Prisma | Prisma Client + `$extends` cho RLS, Drizzle |
 | ADR-009 | 2026-11-01 | Ràng buộc phả hệ cả ở DB (trigger chặn vòng lặp, tự làm cha mẹ, nối chéo dòng họ) ngoài kiểm tra ở `genealogy-core` | Phòng thủ nhiều lớp; FK không xét RLS nên cần trigger chặn nối người khác dòng họ | Chỉ kiểm tra ở service |
 
@@ -318,6 +346,21 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.5.0] — 2026-11-01 — Áp dụng quyết định của chủ dự án
+### Thêm
+- `CLAN_MODE` (mặc định `single`) và `GET /instance`; tách `ClansService`.
+- Dữ liệu mẫu giả: `pnpm --filter @coinguon/api seed` → 1 tài khoản, "Họ Phan Văn – làng Mẫu (dữ liệu giả)", ~60 người, 6 đời, ngày mất âm/dương lịch.
+- `apps/web` (Next.js 16, Tailwind 4, TanStack Query; font Alegreya + Be Vietnam Pro; màu sơn then – son – vàng thếp – men ngọc):
+  đăng nhập/đăng ký, tạo dòng họ lần đầu (`/bat-dau`), phả đồ (`/dong-ho/:id`, người chọn nằm trên URL `?nguoi=`), danh sách tìm không dấu,
+  tra xưng hô, trợ giúp, PWA (manifest, service worker, trang offline). Next chuyển tiếp `/api/v1` sang API → cookie cùng origin.
+- API: danh sách người trả thêm `deathYear`.
+- Test: 23 test đơn vị web, 11 test Playwright (desktop + điện thoại) chạy trong CI.
+- `scripts/check-licenses.mjs` thay `license-checker` (công cụ cũ không đọc được node_modules của pnpm nên thực tế chỉ kiểm tra rất ít gói).
+### Sửa
+- Xưng hô mặc định chuyển sang miền Trung (migration `20261101000200_default_kinship_trung`); bảng miền Trung thêm "o", "dượng".
+### Ghi chú
+- Hosting: Bizfly Cloud 4 GB thay cho kế hoạch 30–40 USD/tháng; bỏ R2 ở giai đoạn đầu.
 
 ## [0.4.0] — 2026-11-01 — MVP phần 1: API phả đồ
 ### Thêm
@@ -387,6 +430,10 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-010 | Chưa có rate limit theo IP cho đăng nhập/đăng ký (mới có khoá theo tài khoản) | Trung bình | Thêm cùng Redis ở MVP phần 2 |
 | KI-011 | Phân quyền theo chi (editor chỉ sửa chi được giao) chưa làm — editor sửa được cả cây | Thấp | Phase 2 theo kế hoạch |
 | KI-012 | `GET /tree` tính bố cục mỗi lần gọi (chưa cache); ổn với vài nghìn người | Thấp | Cache theo `clan.tree_version` khi cây > 5.000 người |
+| KI-013 | Xưng hô khác nhau theo vùng/gia đình: cần màn hình cho ban quản lý sửa bảng xưng hô riêng của dòng họ (lưu JSON trong cài đặt) | Trung bình | MVP phần 2 |
+| KI-014 | Chế độ một dòng họ: người đăng ký mới chưa vào được dòng họ cho tới khi có chức năng mời thành viên | Cao | Làm ngay sau giao diện phả đồ |
+| KI-015 | `API_ORIGIN` của web được "đóng" vào lúc build (rewrites của Next) — đổi địa chỉ API phải build lại | Thấp | Docker build truyền `API_ORIGIN`; hoặc Caddy chuyển thẳng `/api` sang API |
+| KI-016 | Danh sách người hiện tối đa 50 người đầu, chưa có phân trang trên giao diện | Thấp | Thêm "Xem thêm" khi dòng họ > 50 người |
 | KI-008 | Bố cục phả đồ hiện là dạng "khối căn giữa", chưa nén nhánh kiểu Reingold–Tilford (cây rộng hơn cần thiết) | Thấp | Tối ưu khi làm trình chỉnh sửa phả đồ nếu cây quá rộng |
 
 ---

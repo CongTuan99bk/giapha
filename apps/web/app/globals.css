@@ -1,0 +1,101 @@
+@import "tailwindcss";
+@import "@fontsource-variable/alegreya/wght.css";
+@import "@fontsource/be-vietnam-pro/400.css";
+@import "@fontsource/be-vietnam-pro/500.css";
+@import "@fontsource/be-vietnam-pro/600.css";
+
+/*
+ * Bảng màu lấy từ đồ thờ và gốm Việt:
+ *   then  — sơn then (nâu đen của hoành phi, câu đối) cho chữ
+ *   son   — son đỏ sơn mài cho thao tác chính, người trong họ
+ *   thep  — vàng thếp cho thuỷ tổ, người đang chọn
+ *   ngoc  — men ngọc (celadon) cho nền, dải đời
+ *   reu   — xanh rêu cho chữ phụ
+ */
+@theme {
+  --color-then: #241a17;
+  --color-son: #8e2b21;
+  --color-son-dam: #6e1f18;
+  --color-son-nhat: #f3e3df;
+  --color-thep: #a8792a;
+  --color-thep-nhat: #f4ead6;
+  --color-ngoc-50: #f1f4ef;
+  --color-ngoc-100: #e5ebe2;
+  --color-ngoc-200: #d3ddd0;
+  --color-ngoc-300: #b5c5b2;
+  --color-reu: #4d5f55;
+  --color-giay: #fbfcfa;
+  --color-loi: #a3261b;
+
+  --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
+  --font-serif: "Alegreya Variable", "Alegreya", Georgia, serif;
+
+  --radius-the: 3px; /* góc thẻ người: gần vuông như bài vị */
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-ngoc-50 text-then font-sans antialiased;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-thep);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Tiện ích riêng (Tailwind 4 dùng @utility để có thể @apply lồng nhau) */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-[0.95rem] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  min-height: 2.75rem; /* vùng chạm 44px cho điện thoại */
+}
+@utility btn-chinh {
+  @apply btn bg-son text-white hover:bg-son-dam;
+}
+@utility btn-phu {
+  @apply btn border border-ngoc-300 bg-giay text-then hover:bg-ngoc-100;
+}
+@utility btn-nguy {
+  @apply btn border border-loi/40 bg-giay text-loi hover:bg-son-nhat;
+}
+@utility o-nhap {
+  @apply w-full rounded-md border border-ngoc-300 bg-giay px-3 py-2 text-then placeholder:text-reu/60 focus:border-thep focus:outline-none;
+  min-height: 2.75rem;
+}
+@utility nhan {
+  @apply mb-1 block text-sm font-medium text-reu;
+}
+
+/* Văn bản hướng dẫn (markdown) */
+.tro-giup {
+  & h1 { @apply font-serif text-[2.25rem] leading-tight; }
+  & h2 { @apply mt-12 border-t border-ngoc-200 pt-6 font-serif text-[1.6rem] leading-snug; }
+  & h3 { @apply mt-8 font-serif text-xl; }
+  & p, & ul, & ol, & table, & blockquote { @apply mt-4; }
+  & ul { @apply list-disc pl-6; }
+  & ol { @apply list-decimal pl-6; }
+  & li + li { @apply mt-1; }
+  & a { @apply text-son underline underline-offset-4; }
+  & strong { @apply font-semibold; }
+  & table { @apply block w-full overflow-x-auto border-collapse text-[0.95rem]; }
+  & th, & td { @apply border border-ngoc-200 px-3 py-2 text-left align-top; }
+  & th { @apply bg-ngoc-100 font-medium; }
+  & blockquote { @apply border-l-4 border-thep bg-thep-nhat/50 px-4 py-2; }
+  & code { @apply rounded bg-ngoc-100 px-1 text-[0.9em]; }
+  & hr { @apply my-10 border-ngoc-200; }
+}

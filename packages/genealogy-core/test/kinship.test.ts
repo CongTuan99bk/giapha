@@ -3,7 +3,7 @@ import { FamilyIndex, kinship } from "../src/index.js";
 import { sampleFamily, tree } from "./fixtures.js";
 
 const index = new FamilyIndex(sampleFamily());
-const call = (a: string, b: string, variant: "bac" | "nam" = "bac") => kinship(index, a, b, { variant })?.term;
+const call = (a: string, b: string, variant: "bac" | "trung" | "nam" = "bac") => kinship(index, a, b, { variant })?.term;
 
 describe("Xưng hô trực hệ (BR-KIN-04)", () => {
   it("cha mẹ, ông bà nội ngoại", () => {
@@ -66,6 +66,17 @@ describe("Bác, chú, cô, cậu, dì — miền Bắc", () => {
     expect(call("BacCa", "Toi")).toBe("cháu");
     expect(call("Cau", "Toi")).toBe("cháu");
     expect(call("Chi", "Chau")).toBe("cháu");
+  });
+});
+
+describe("Biến thể miền Trung — mặc định của dự án (FR-KIN-02)", () => {
+  it("ba mạ, em gái của cha gọi o, chồng o gọi dượng", () => {
+    expect(call("Toi", "Bo", "trung")).toBe("ba");
+    expect(call("Toi", "Me", "trung")).toBe("mạ");
+    expect(call("Toi", "Co", "trung")).toBe("o");
+    expect(call("Toi", "Duong", "trung")).toBe("dượng");
+    expect(call("Con", "Co", "trung")).toBe("bà o");
+    expect(call("Toi", "Cau", "trung")).toBe("cậu");
   });
 });
 

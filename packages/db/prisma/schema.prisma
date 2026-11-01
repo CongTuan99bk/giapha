@@ -118,7 +118,7 @@ model Clan {
   surname        String
   originPlace    String?        @map("origin_place")
   lineageMode    LineageMode    @default(patrilineal) @map("lineage_mode")
-  kinshipVariant KinshipVariant @default(bac) @map("kinship_variant")
+  kinshipVariant KinshipVariant @default(trung) @map("kinship_variant")
   day30Rule      Day30Rule      @default(day29) @map("day30_rule")
   rootPersonId   String?        @map("root_person_id") @db.Uuid
   /// Mã xem phả đồ (đã băm); null = không bật chế độ riêng tư

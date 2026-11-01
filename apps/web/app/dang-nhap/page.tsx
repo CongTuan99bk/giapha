@@ -1,0 +1,71 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState, type FormEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { AuthShell } from "@/components/auth-shell";
+import { Field, FormError } from "@/components/field";
+import { api, ApiError } from "@/lib/api";
+import { keys } from "@/lib/queries";
+import type { User } from "@/lib/types";
+
+function LoginForm() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const qc = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    setPending(true);
+    setError(null);
+    try {
+      const res = await api<{ user: User }>("POST", "/auth/login", {
+        email: String(form.get("email") ?? ""),
+        password: String(form.get("password") ?? ""),
+      });
+      qc.setQueryData(keys.me, res.user);
+      const next = params.get("tiep");
+      router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
+    } catch (err) {
+      setError(
+        err instanceof ApiError && err.code === "INVALID_CREDENTIALS"
+          ? "Email hoặc mật khẩu chưa đúng."
+          : err instanceof Error
+            ? err.message
+            : "Không đăng nhập được.",
+      );
+      setPending(false);
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-5" noValidate>
+      <FormError message={error} />
+      <Field label="Email" name="email" type="email" autoComplete="email" required />
+      <Field label="Mật khẩu" name="password" type="password" autoComplete="current-password" required />
+      <button type="submit" className="btn-chinh w-full" disabled={pending}>
+        {pending ? "Đang đăng nhập…" : "Đăng nhập"}
+      </button>
+      <p className="text-sm text-reu">
+        Chưa có tài khoản?{" "}
+        <Link href="/dang-ky" className="font-medium text-son underline-offset-4 hover:underline">
+          Tạo tài khoản
+        </Link>
+      </p>
+    </form>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <AuthShell title="Đăng nhập">
+      <Suspense>
+        <LoginForm />
+      </Suspense>
+    </AuthShell>
+  );
+}

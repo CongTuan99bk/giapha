@@ -1,12 +1,12 @@
-import { randomUUID } from "node:crypto";
 import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
 import { clanSlugSchema, idSchema } from "@coinguon/schemas";
 import { z } from "zod";
 import { audit } from "../common/audit.js";
 import { CurrentMembership, CurrentUser, type Membership, MinRole, type SessionUser } from "../common/context.js";
-import { conflict, unprocessable } from "../common/errors.js";
+import { unprocessable } from "../common/errors.js";
 import { Database } from "../db/database.js";
 import { GraphService } from "../tree/graph.service.js";
+import { ClansService } from "./clans.service.js";
 
 const createClanSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -69,33 +69,13 @@ export class ClansController {
   constructor(
     private readonly db: Database,
     private readonly graph: GraphService,
+    private readonly clans: ClansService,
   ) {}
 
   /** FR-CLAN-01: tạo dòng họ — người tạo là chủ sở hữu */
   @Post("clans")
   async create(@Body() body: unknown, @CurrentUser() user: SessionUser) {
-    const input = createClanSchema.parse(body);
-    const clanId = randomUUID();
-    const taken = await this.db.app.selectFrom("clans").select("id").where("slug", "=", input.slug).executeTakeFirst();
-    if (taken) throw conflict("SLUG_TAKEN", "Tên miền con này đã có dòng họ dùng");
-
-    await this.db.app
-      .insertInto("clans")
-      .values({
-        id: clanId,
-        name: input.name,
-        slug: input.slug,
-        surname: input.surname,
-        origin_place: input.originPlace ?? null,
-        updated_at: new Date(),
-      })
-      .execute();
-    await this.db.withClan({ clanId, userId: user.id }, async (trx) => {
-      await trx.insertInto("clan_members").values({ id: randomUUID(), clan_id: clanId, user_id: user.id, role: "owner" }).execute();
-      await trx.insertInto("site_settings").values({ clan_id: clanId, data: "{}", updated_at: new Date() }).execute();
-      await audit(trx, { clanId, actorId: user.id, action: "clan.create", entity: "clan", entityId: clanId, after: input });
-    });
-    return { id: clanId, ...input, role: "owner" };
+    return this.clans.create(user.id, createClanSchema.parse(body));
   }
 
   /** FR-CLAN-06: các dòng họ tôi tham gia */
