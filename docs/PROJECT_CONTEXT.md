@@ -5,11 +5,11 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.3.0 |
+| Phiên bản file | 0.3.1 |
 | Cập nhật lần cuối | 2026-11-01 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **Giai đoạn 0 (nền móng) xong — chuẩn bị MVP phần 1** |
-| Mã nguồn | Monorepo `gia-pha-coi-nguon` (chưa đẩy lên GitHub — xem mục 2.3) |
+| Mã nguồn | https://github.com/CongTuan99bk/giapha (nhánh `main`, CI xanh) |
 | Tài liệu đặc tả đầy đủ | "Tài liệu dự án: Hệ thống Gia Phả Cội Nguồn" v1.0 — https://claude.ai/artifact/1Wy2PqEVYSLqycMLH8LMzG |
 | Bản thảo kỹ thuật | https://claude.ai/artifact/T24kXNyJ9UkUPdRwMzBkFd |
 | Sổ tay chủ sở hữu & vận hành | https://claude.ai/artifact/L9RDuYLadf1AdrDHigLtc1 |
@@ -58,7 +58,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 - (trống)
 
 ### 2.3. Việc tiếp theo
-1. Tạo kho GitHub riêng tư, đẩy mã nguồn, xác nhận CI xanh (bước `check-drift` kiểm tra migration SQL viết tay khớp schema — KI-006).
+1. (Tuỳ chọn) chuyển kho GitHub về riêng tư.
 2. Chạy `prisma generate` + seed dữ liệu mẫu (cây 30 người, 5 đời) trên máy dev.
 3. MVP phần 1: `apps/api` (common: TenantGuard đặt `app.clan_id`, auth, clans/members, persons/unions/tree, kinship) và `apps/web` (đăng nhập, trình chỉnh sửa phả đồ dùng `layoutTree`).
 4. Chốt các câu hỏi còn lại ở mục 3.2.
@@ -295,6 +295,12 @@ Test DB tích hợp cần `TEST_DATABASE_URL`, `TEST_APP_DATABASE_URL`, `TEST_PL
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
 
+## [0.3.1] — 2026-11-01
+### Bảo mật
+- CI `pnpm audit` phát hiện 2 lỗ hổng mức cao: nâng `zod` 3.25 → 4.6.7 (GHSA-mrhx-c7xc-m3w5); ép `deepmerge-ts` ^8.0.2 qua `overrides` trong `pnpm-workspace.yaml` cho Prisma 6.19 (GHSA-ggr8-5vv4-36mx). Bỏ override khi nâng lên Prisma 7.
+### Hạ tầng
+- Mã nguồn lên https://github.com/CongTuan99bk/giapha; CI chạy đủ: giấy phép, audit, prisma validate, migrate, check-drift, build, typecheck, 126 test.
+
 ## [0.3.0] — 2026-11-01 — Giai đoạn 0: nền móng
 ### Thêm
 - Monorepo pnpm + Turborepo, TypeScript strict, Vitest, CI GitHub Actions.
@@ -339,7 +345,7 @@ Test DB tích hợp cần `TEST_DATABASE_URL`, `TEST_APP_DATABASE_URL`, `TEST_PL
 | KI-003 | Redis mất dữ liệu làm mất số liệu ngày đang chạy | Thấp | Bật AOF |
 | KI-004 | Thời hạn phản hồi yêu cầu dữ liệu cá nhân (NĐ 356/2025) chưa được luật sư xác nhận | Trung bình | Trước khi mở dịch vụ — điền vào sổ tay mục 11 |
 | KI-005 | Hướng dẫn sử dụng viết theo thiết kế, chưa có ảnh chụp màn hình | Thấp | Cập nhật cuối mỗi giai đoạn MVP |
-| KI-006 | Migration SQL khởi tạo viết tay (môi trường phát triển ban đầu bị chặn tải Prisma engine); đã chạy thật trên PostgreSQL 16 | Trung bình | CI `check-drift` xác nhận khớp schema; lệch thì sinh lại bằng `migrate dev --create-only` |
+| KI-006 | ~~Migration SQL khởi tạo viết tay~~ — **đã xác nhận** khớp schema.prisma qua CI `check-drift` (2026-11-01) | Đã xử lý | Giữ bước check-drift trong CI |
 | KI-007 | `clan_id` ở nhiều bảng nội dung chưa có khoá ngoại tới `clans` (chỉ dựa RLS + xoá theo clan_id) | Thấp | Job xoá cứng dòng họ phải xoá mọi bảng theo `clan_id` |
 | KI-008 | Bố cục phả đồ hiện là dạng "khối căn giữa", chưa nén nhánh kiểu Reingold–Tilford (cây rộng hơn cần thiết) | Thấp | Tối ưu khi làm trình chỉnh sửa phả đồ nếu cây quá rộng |
 
