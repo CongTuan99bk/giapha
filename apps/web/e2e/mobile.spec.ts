@@ -4,7 +4,7 @@ import { node, OWNER } from "./data";
 test("điện thoại: đăng nhập, xem phả đồ, chạm vào người mở bảng thông tin", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/dang-nhap/);
-  await page.getByLabel("Email").fill(OWNER.email);
+  await page.getByLabel("Số điện thoại hoặc email").fill(OWNER.email);
   await page.getByLabel("Mật khẩu").fill(OWNER.password);
   await page.getByRole("button", { name: "Đăng nhập" }).click();
 

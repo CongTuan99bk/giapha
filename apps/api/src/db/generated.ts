@@ -27,6 +27,8 @@ export type Int8 = ColumnType<string, bigint | number | string, bigint | number 
 
 export type Jobstatus = "done" | "failed" | "queued" | "running";
 
+export type Joinrequeststatus = "approved" | "pending" | "rejected";
+
 export type Json = JsonValue;
 
 export type JsonArray = JsonValue[];
@@ -284,6 +286,17 @@ export interface Invitations {
   use_count: Generated<number>;
 }
 
+export interface JoinRequests {
+  clan_id: string;
+  created_at: Generated<Timestamp>;
+  decided_at: Timestamp | null;
+  decided_by: string | null;
+  id: string;
+  message: string | null;
+  status: Generated<Joinrequeststatus>;
+  user_id: string;
+}
+
 export interface Media {
   album_id: string | null;
   caption: string | null;
@@ -427,7 +440,7 @@ export interface Unions {
 export interface Users {
   created_at: Generated<Timestamp>;
   deleted_at: Timestamp | null;
-  email: string;
+  email: string | null;
   email_verified: Timestamp | null;
   failed_logins: Generated<number>;
   google_id: string | null;
@@ -461,6 +474,7 @@ export interface DB {
   exports: Exports;
   imports: Imports;
   invitations: Invitations;
+  join_requests: JoinRequests;
   media: Media;
   parent_child: ParentChild;
   password_resets: PasswordResets;

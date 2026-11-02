@@ -48,7 +48,11 @@ export default function ForgotPasswordPage() {
         </div>
       ) : (
         <form onSubmit={onSubmit} className="space-y-5" noValidate>
-          <p className="-mt-4 text-reu">Nhập email bạn dùng để đăng nhập. Chúng tôi gửi link để bạn đặt mật khẩu mới.</p>
+          <p className="-mt-4 text-reu">Nhập email của tài khoản. Chúng tôi gửi link để bạn đặt mật khẩu mới.</p>
+          <p className="rounded-md border border-ngoc-300 bg-ngoc-100 px-3 py-2 text-sm">
+            Đăng nhập bằng số điện thoại và không có email? Nhờ ban quản lý dòng họ vào <strong>Cài đặt → Thành viên</strong> tạo link đặt lại
+            mật khẩu rồi gửi cho bạn qua Zalo.
+          </p>
           <FormError message={error} />
           <Field label="Email" name="email" type="email" autoComplete="email" required error={fields.email} />
           <button type="submit" className="btn-chinh w-full" disabled={!hydrated || pending}>

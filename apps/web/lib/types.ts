@@ -15,7 +15,8 @@ export interface FlexibleDate {
 
 export interface User {
   id: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   name: string;
 }
 
@@ -148,10 +149,30 @@ export interface Member {
   id: string;
   userId: string;
   name: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
+  /** Tài khoản do quản trị tạo, người dùng chưa đặt mật khẩu lần đầu */
+  passwordPending: boolean;
   role: ClanRole;
   person: { id: string; fullName: string } | null;
   joinedAt: string;
+}
+
+/** Người tự đăng ký đang chờ quản trị duyệt */
+export interface JoinRequest {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  message: string | null;
+  createdAt: string;
+}
+
+export interface MyJoinRequest {
+  status: "pending" | "approved" | "rejected";
+  message: string | null;
+  createdAt: string;
+  decidedAt: string | null;
 }
 
 export type InvitationStatus = "active" | "expired" | "revoked" | "used";
@@ -172,6 +193,7 @@ export interface Invitation {
 }
 
 export interface InvitationPreview {
+  clanId: string;
   clanName: string;
   surname: string;
   role: GrantableRole;

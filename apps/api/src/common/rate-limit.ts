@@ -1,3 +1,4 @@
+import { parseLoginId } from "@coinguon/schemas";
 import { type CanActivate, type ExecutionContext, Inject, Injectable, type OnModuleDestroy, SetMetadata } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import type { Request, Response } from "express";
@@ -8,8 +9,8 @@ export interface RateRule {
   /** Số lần tối đa trong cửa sổ */
   limit: number;
   windowSec: number;
-  /** Đếm thêm theo một trường trong body (vd. "email") — chặn dò một tài khoản từ nhiều IP */
-  bodyField?: string;
+  /** Đếm thêm theo một trường trong body (vd. "email"; nhiều tên thì lấy trường đầu tiên có giá trị) — chặn dò một tài khoản từ nhiều IP */
+  bodyField?: string | string[];
   /** Giới hạn riêng cho bucket theo trường body (mặc định = limit) */
   fieldLimit?: number;
 }
@@ -77,9 +78,13 @@ export class RateLimitGuard implements CanActivate {
     const ip = clientIp(req, this.config.CLIENT_IP_HEADER);
     let wait = this.store.hit(`${rule.name}:ip:${ip}`, rule.limit, rule.windowSec);
     if (!wait && rule.bodyField) {
-      const raw = (req.body as Record<string, unknown> | undefined)?.[rule.bodyField];
-      if (typeof raw === "string" && raw.trim()) {
-        wait = this.store.hit(`${rule.name}:${rule.bodyField}:${raw.trim().toLowerCase()}`, rule.fieldLimit ?? rule.limit, rule.windowSec);
+      const body = req.body as Record<string, unknown> | undefined;
+      const raw = [rule.bodyField].flat().map((f) => body?.[f]).find((v) => typeof v === "string" && v.trim());
+      if (typeof raw === "string") {
+        // cùng một tài khoản dù gõ "0912 345 678" hay "+84912345678"
+        const id = parseLoginId(raw);
+        const key = id?.email ?? id?.phone ?? raw.trim().toLowerCase();
+        wait = this.store.hit(`${rule.name}:field:${key}`, rule.fieldLimit ?? rule.limit, rule.windowSec);
       }
     }
     if (wait) {

@@ -106,3 +106,17 @@ export function slugify(text: string): string {
     .slice(0, 40)
     .replace(/-+$/g, "");
 }
+
+/** "+84912345678" → "0912 345 678" (số Việt Nam); số quốc tế giữ nguyên. */
+export function formatPhone(phone: string | null | undefined): string {
+  if (!phone) return "";
+  const m = /^\+84(\d+)$/.exec(phone);
+  if (!m) return phone;
+  const local = `0${m[1]}`;
+  return local.length === 10 ? `${local.slice(0, 4)} ${local.slice(4, 7)} ${local.slice(7)}` : local;
+}
+
+/** Tên đăng nhập để hiển thị: số điện thoại (dễ nhận ra với người lớn tuổi) hoặc email. */
+export function loginLabel(u: { email: string | null; phone: string | null }): string {
+  return [formatPhone(u.phone), u.email].filter(Boolean).join(" · ");
+}

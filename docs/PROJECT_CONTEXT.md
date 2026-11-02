@@ -5,7 +5,7 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.8.1 |
+| Phiên bản file | 0.9.0 |
 | Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **Sẵn sàng demo: `pnpm demo` chạy trên máy cá nhân có link chia sẻ; tiếp theo: lịch giỗ** |
@@ -375,6 +375,16 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.9.0] — 2026-11-02 — Đăng nhập bằng số điện thoại, duyệt thành viên, nền phả đồ mới
+### Thêm
+- Đăng nhập/đăng ký bằng **số điện thoại hoặc email** (ít nhất một). Migration `20261103000000_phone_login_join_requests`: `users.email` thành tuỳ chọn, `users.phone` unique (dạng +84…), CHECK có ít nhất một. `parseLoginId`/`loginIdSchema`/`phoneSchema` ở `@coinguon/schemas`; API `POST /auth/login` nhận `identifier` (vẫn nhận `email` cũ). Giới hạn tần suất theo tài khoản dùng khoá đã chuẩn hoá.
+- **Tự đăng ký → chờ duyệt** (chế độ một dòng họ): bảng `join_requests` (RLS theo dòng họ); `GET/POST /instance/join-request`; quản trị `GET /clans/:id/join-requests`, `POST …/:id/approve {role, personId?}`, `POST …/:id/reject`. Web: trang chờ duyệt tự vào khi được duyệt; mục "Yêu cầu tham gia" trong Cài đặt; số yêu cầu hiện trên thẻ Cài đặt.
+- **Quản trị tạo tài khoản** cho người mới theo vai trò: `POST /clans/:id/members {name, phone?, email?, role, personId?}` → tài khoản chưa có mật khẩu + link đặt mật khẩu 7 ngày; giao diện soạn sẵn tin nhắn Zalo. Không gắn tài khoản đã có sẵn (tránh quản trị chiếm tài khoản người khác qua link đặt lại mật khẩu).
+- Nút **Hiện/Ẩn mật khẩu** ở mọi ô mật khẩu (`components/field.tsx`).
+- Nền phả đồ: giấy dó + hoạ tiết chìm "lưỡng long chầu nguyệt" tự vẽ (`scripts/ve-hoa-van.mjs` → `public/hoa-van/luong-long.svg`), lề "Đời" sơn then chữ thếp, khung viền thếp đôi, vạch ngăn đời thay cho dải màu.
+### Sửa
+- Mở link mời khi đang đăng nhập tài khoản đã là thành viên (thường là quản trị tự thử link): trước đây bấm "Tham gia" là vào luôn bằng tài khoản quản trị nên tưởng link cấp sai vai trò. Nay trang mời nói rõ đang dùng tài khoản nào, vai trò gì, có nút "Đăng xuất để dùng tài khoản khác"; API trả thêm `role`. Thanh trên cùng luôn hiện "Tên · Vai trò".
 
 ## [0.8.1] — 2026-11-02 — Demo chạy ổn trên Windows
 ### Sửa

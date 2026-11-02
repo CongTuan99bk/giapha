@@ -6,7 +6,8 @@ export const ROLE_RANK: Record<ClanRole, number> = { member: 0, editor: 1, admin
 
 export interface SessionUser {
   id: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   name: string;
   isPlatformAdmin: boolean;
   sessionId: string;

@@ -21,6 +21,14 @@ export function canManage(actor: ClanRole, target: ClanRole): boolean {
   return ROLE_RANK[target] < ROLE_RANK[actor];
 }
 
+export interface CreateAccountInput {
+  name: string;
+  email?: string | undefined;
+  phone?: string | undefined;
+  role: GrantableRole;
+  personId?: string | undefined;
+}
+
 export interface CreateInvitationInput {
   role: GrantableRole;
   email?: string | undefined;
@@ -55,7 +63,7 @@ export class MembersService {
       .selectFrom("clan_members as m")
       .innerJoin("users as u", "u.id", "m.user_id")
       .leftJoin("persons as p", (j) => j.onRef("p.id", "=", "m.person_id").on("p.deleted_at", "is", null))
-      .select(["m.id", "m.user_id", "m.role", "m.person_id", "m.created_at", "u.name", "u.email", "p.full_name as person_name"])
+      .select(["m.id", "m.user_id", "m.role", "m.person_id", "m.created_at", "u.name", "u.email", "u.phone", "u.password_hash", "p.full_name as person_name"])
       .orderBy(sql`case m.role when 'owner' then 0 when 'admin' then 1 when 'editor' then 2 else 3 end`)
       .orderBy("u.name")
       .execute();
@@ -64,6 +72,9 @@ export class MembersService {
       userId: r.user_id,
       name: r.name,
       email: r.email,
+      phone: r.phone,
+      /** Tài khoản do quản trị tạo, người dùng chưa đặt mật khẩu lần đầu */
+      passwordPending: r.password_hash === null,
       role: r.role,
       person: r.person_id && r.person_name ? { id: r.person_id, fullName: r.person_name } : null,
       joinedAt: r.created_at,
@@ -253,6 +264,7 @@ export class MembersService {
     const inv = await this.findByToken(token);
     if (!inv || inv.clan_deleted_at) throw new AppError(404, "INVITE_NOT_FOUND", "Không tìm thấy lời mời. Kiểm tra lại đường link.");
     return {
+      clanId: inv.clan_id,
       clanName: inv.clan_name,
       surname: inv.surname,
       role: inv.role,
@@ -264,7 +276,7 @@ export class MembersService {
   }
 
   /** Nhận lời mời: thêm vào dòng họ với vai trò đã định. Đã là thành viên → trả về dòng họ, không tốn lượt. */
-  async accept(token: string, user: { id: string; email: string }) {
+  async accept(token: string, user: { id: string; email: string | null }) {
     const inv = await this.findByToken(token);
     if (!inv || inv.clan_deleted_at) throw new AppError(404, "INVITE_NOT_FOUND", "Không tìm thấy lời mời. Kiểm tra lại đường link.");
     const status = statusOf(inv);
@@ -272,13 +284,14 @@ export class MembersService {
       const [code, message] = STATUS_ERROR[status];
       throw new AppError(410, code, message);
     }
-    if (inv.email && inv.email.toLowerCase() !== user.email.toLowerCase()) {
+    if (inv.email && inv.email.toLowerCase() !== user.email?.toLowerCase()) {
       throw forbidden("INVITE_EMAIL_MISMATCH", "Lời mời này dành cho một email khác. Hãy đăng nhập đúng tài khoản được mời.");
     }
 
     return this.db.withClan({ clanId: inv.clan_id, userId: user.id }, async (trx) => {
-      const existing = await trx.selectFrom("clan_members").select("id").where("user_id", "=", user.id).where("clan_id", "=", inv.clan_id).executeTakeFirst();
-      if (existing) return { clanId: inv.clan_id, alreadyMember: true };
+      // Đã là thành viên (vd. quản trị tự mở link mời của mình): giữ nguyên vai trò, không tốn lượt
+      const existing = await trx.selectFrom("clan_members").select(["id", "role"]).where("user_id", "=", user.id).where("clan_id", "=", inv.clan_id).executeTakeFirst();
+      if (existing) return { clanId: inv.clan_id, alreadyMember: true, role: existing.role };
 
       // Trừ lượt có điều kiện để hai người bấm cùng lúc không vượt số lượt
       const used = await trx
@@ -317,7 +330,146 @@ export class MembersService {
         entityId: memberId,
         after: { role: inv.role, invitationId: inv.id },
       });
-      return { clanId: inv.clan_id, alreadyMember: false };
+      await this.closeJoinRequest(trx, user.id, "approved", user.id);
+      return { clanId: inv.clan_id, alreadyMember: false, role: inv.role };
     });
+  }
+
+  // ───────────── Tài khoản do quản trị tạo ─────────────
+
+  /**
+   * Quản trị tạo tài khoản mới cho người chưa có tài khoản và thêm ngay vào dòng họ.
+   * Tài khoản chưa có mật khẩu: người dùng tự đặt qua link do quản trị gửi (controller tạo link sau khi commit).
+   * KHÔNG gắn tài khoản đã có sẵn — nếu gắn được, quản trị sẽ tạo được link đặt lại mật khẩu cho tài khoản của người khác.
+   */
+  async createAccount(trx: Tx, actor: Membership, input: CreateAccountInput) {
+    if (!canGrant(actor.role, input.role)) throw forbidden("ROLE_TOO_LOW", "Bạn không cấp được vai trò này");
+    if (input.personId) await this.assertPersonLinkable(trx, input.personId, null);
+    if (input.email && (await trx.selectFrom("users").select("id").where("email", "=", input.email).executeTakeFirst())) {
+      throw conflict("EMAIL_TAKEN", "Email này đã có tài khoản", [
+        { path: "email", message: "Email này đã có tài khoản — hãy gửi link mời cho người đó, hoặc duyệt yêu cầu tham gia của họ" },
+      ]);
+    }
+    if (input.phone && (await trx.selectFrom("users").select("id").where("phone", "=", input.phone).executeTakeFirst())) {
+      throw conflict("PHONE_TAKEN", "Số điện thoại này đã có tài khoản", [
+        { path: "phone", message: "Số này đã có tài khoản — hãy gửi link mời cho người đó, hoặc duyệt yêu cầu tham gia của họ" },
+      ]);
+    }
+    const userId = randomUUID();
+    await trx
+      .insertInto("users")
+      .values({ id: userId, name: input.name, email: input.email ?? null, phone: input.phone ?? null, password_hash: null, updated_at: new Date() })
+      .execute();
+    const memberId = randomUUID();
+    await trx
+      .insertInto("clan_members")
+      .values({
+        id: memberId,
+        clan_id: actor.clanId,
+        user_id: userId,
+        role: input.role,
+        person_id: input.personId ?? null,
+        person_link_confirmed_at: input.personId ? new Date() : null,
+      })
+      .execute();
+    await audit(trx, {
+      clanId: actor.clanId,
+      actorId: actor.userId,
+      action: "member.create_account",
+      entity: "clan_member",
+      entityId: memberId,
+      after: { role: input.role, personId: input.personId ?? null, email: input.email ? "(có)" : null, phone: input.phone ? "(có)" : null },
+    });
+    const member = (await this.list(trx)).find((m) => m.id === memberId)!;
+    return { member, userId };
+  }
+
+  // ───────────── Yêu cầu tham gia (tự đăng ký, chờ duyệt) ─────────────
+
+  /** Người đã đăng nhập xin vào dòng họ (trx đặt ngữ cảnh dòng họ đó + người dùng). Gửi lại sau khi bị từ chối thì thành chờ duyệt lại. */
+  async requestToJoin(trx: Tx, clanId: string, userId: string, message: string | null) {
+    const member = await trx.selectFrom("clan_members").select("id").where("user_id", "=", userId).executeTakeFirst();
+    if (member) throw conflict("ALREADY_MEMBER", "Bạn đã là thành viên của dòng họ này");
+    const id = randomUUID();
+    await trx
+      .insertInto("join_requests")
+      .values({ id, clan_id: clanId, user_id: userId, message })
+      .onConflict((oc) =>
+        oc.columns(["clan_id", "user_id"]).doUpdateSet({
+          message,
+          status: "pending",
+          decided_by: null,
+          decided_at: null,
+          created_at: new Date(),
+        }),
+      )
+      .execute();
+    await audit(trx, { clanId, actorId: userId, action: "join_request.create", entity: "join_request", entityId: id });
+    return (await this.myJoinRequest(trx, userId))!;
+  }
+
+  async myJoinRequest(trx: Tx, userId: string) {
+    const r = await trx
+      .selectFrom("join_requests")
+      .select(["status", "message", "created_at", "decided_at"])
+      .where("user_id", "=", userId)
+      .executeTakeFirst();
+    return r ? { status: r.status, message: r.message, createdAt: r.created_at, decidedAt: r.decided_at } : null;
+  }
+
+  async listJoinRequests(trx: Tx) {
+    const rows = await trx
+      .selectFrom("join_requests as j")
+      .innerJoin("users as u", "u.id", "j.user_id")
+      .select(["j.id", "j.message", "j.created_at", "u.name", "u.email", "u.phone"])
+      .where("j.status", "=", "pending")
+      .where("u.deleted_at", "is", null)
+      .orderBy("j.created_at")
+      .execute();
+    return rows.map((r) => ({ id: r.id, name: r.name, email: r.email, phone: r.phone, message: r.message, createdAt: r.created_at }));
+  }
+
+  private async pendingRequest(trx: Tx, id: string) {
+    const r = await trx.selectFrom("join_requests").select(["id", "user_id", "status"]).where("id", "=", id).executeTakeFirst();
+    if (!r) throw notFound("Không tìm thấy yêu cầu");
+    if (r.status !== "pending") throw conflict("REQUEST_DECIDED", "Yêu cầu này đã được xử lý");
+    return r;
+  }
+
+  async approveJoinRequest(trx: Tx, actor: Membership, id: string, input: { role: GrantableRole; personId?: string | undefined }) {
+    if (!canGrant(actor.role, input.role)) throw forbidden("ROLE_TOO_LOW", "Bạn không cấp được vai trò này");
+    const r = await this.pendingRequest(trx, id);
+    if (input.personId) await this.assertPersonLinkable(trx, input.personId, null);
+    const memberId = randomUUID();
+    await trx
+      .insertInto("clan_members")
+      .values({
+        id: memberId,
+        clan_id: actor.clanId,
+        user_id: r.user_id,
+        role: input.role,
+        person_id: input.personId ?? null,
+        person_link_confirmed_at: input.personId ? new Date() : null,
+      })
+      .onConflict((oc) => oc.columns(["clan_id", "user_id"]).doNothing())
+      .execute();
+    await this.closeJoinRequest(trx, r.user_id, "approved", actor.userId);
+    await audit(trx, { clanId: actor.clanId, actorId: actor.userId, action: "join_request.approve", entity: "join_request", entityId: id, after: input });
+  }
+
+  async rejectJoinRequest(trx: Tx, actor: Membership, id: string) {
+    const r = await this.pendingRequest(trx, id);
+    await this.closeJoinRequest(trx, r.user_id, "rejected", actor.userId);
+    await audit(trx, { clanId: actor.clanId, actorId: actor.userId, action: "join_request.reject", entity: "join_request", entityId: id });
+  }
+
+  /** Đóng yêu cầu đang chờ của một người (khi được duyệt, bị từ chối, hoặc vào bằng link mời). */
+  private async closeJoinRequest(trx: Tx, userId: string, status: "approved" | "rejected", decidedBy: string) {
+    await trx
+      .updateTable("join_requests")
+      .set({ status, decided_by: decidedBy, decided_at: new Date() })
+      .where("user_id", "=", userId)
+      .where("status", "=", "pending")
+      .execute();
   }
 }

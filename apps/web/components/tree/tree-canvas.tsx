@@ -153,7 +153,7 @@ export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus }: Prop
   return (
     <div
       ref={box}
-      className="absolute inset-0 cursor-grab touch-none select-none overflow-hidden bg-ngoc-50 outline-none active:cursor-grabbing"
+      className="nen-giay-do absolute inset-0 cursor-grab touch-none select-none overflow-hidden outline-none active:cursor-grabbing"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -163,6 +163,13 @@ export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus }: Prop
       role="application"
       aria-label="Phả đồ. Dùng phím mũi tên để di chuyển, phím cộng trừ để phóng to thu nhỏ, phím Tab để đi qua từng người."
     >
+      {/* Nền chìm "lưỡng long chầu nguyệt" + khung viền thếp đôi — đứng yên khi kéo phả đồ */}
+      <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 left-14">
+        <div className="absolute inset-0 bg-[url(/hoa-van/luong-long.svg)] bg-[length:clamp(640px,92%,1100px)_auto] bg-center bg-no-repeat opacity-[0.075]" />
+        <div className="absolute inset-3 rounded-sm border border-thep/25">
+          <div className="absolute inset-1.5 rounded-sm border border-thep/15" />
+        </div>
+      </div>
       {view && (
         <svg className="absolute inset-0 h-full w-full" aria-hidden={false}>
           <defs>
@@ -172,20 +179,16 @@ export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus }: Prop
             </clipPath>
           </defs>
           <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
-            {/* Dải màu xen kẽ theo đời */}
-            {[...rows.entries()].map(([depth, r]) =>
-              depth % 2 === 1 ? (
-                <rect
-                  key={depth}
-                  x={-view.x / view.k - 10}
-                  width={size.w / view.k + 20}
-                  y={r.top - 24}
-                  height={r.bottom - r.top + 48}
-                  className="fill-ngoc-100"
-                />
-              ) : null,
-            )}
-            <g className="fill-none stroke-then/35" strokeWidth={1.5}>
+            {/* Vạch mảnh ngăn các đời (giữa đáy đời trên và đỉnh đời dưới) */}
+            <g className="stroke-then/10" strokeWidth={1 / view.k} aria-hidden>
+              {[...rows.entries()].map(([depth, r]) => {
+                const next = rows.get(depth + 1);
+                if (!next) return null;
+                const y = (r.bottom + next.top) / 2;
+                return <line key={depth} x1={-view.x / view.k} x2={(size.w - view.x) / view.k} y1={y} y2={y} />;
+              })}
+            </g>
+            <g className="fill-none stroke-[#6b5443]/60" strokeWidth={1.6} strokeLinejoin="round">
               {couples.map((c) => (
                 <line key={c.key} x1={c.x1} x2={c.x2} y1={c.y} y2={c.y} />
               ))}
@@ -216,28 +219,34 @@ export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus }: Prop
 
       {/* Lề "Đời n" */}
       {view && (
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-14 border-r border-ngoc-200 bg-ngoc-50" aria-hidden>
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-14 border-r-2 border-thep/50 bg-then" aria-hidden>
           {[...rows.entries()].map(([depth, r]) => {
             const y = ((r.top + r.bottom) / 2) * view.k + view.y;
+            const next = rows.get(depth + 1) ?? rows.get(depth - 1);
+            // thu nhỏ nhiều: các đời sát nhau → chỉ còn con số, bỏ chữ "Đời"
+            const compact = next ? Math.abs(next.top - r.top) * view.k < 64 : false;
             if (y < -40 || y > size.h + 40) return null;
             return (
               <div key={depth} className="absolute left-0 w-14 -translate-y-1/2 text-center leading-none" style={{ top: y }}>
-                <span className="block text-[0.7rem] text-reu">Đời</span>
-                <span className="block font-serif text-2xl text-then">{rootGeneration + depth}</span>
+                {!compact && <span className="block text-[0.7rem] tracking-wide text-thep-nhat/70">Đời</span>}
+                <span className={`block font-serif font-medium text-[#d9b061] ${compact ? "text-lg" : "text-2xl"}`}>{rootGeneration + depth}</span>
               </div>
             );
           })}
         </div>
       )}
 
-      <div className="absolute bottom-4 left-18 flex gap-1 rounded-lg border border-ngoc-200 bg-giay/95 p-1 shadow-sm" onPointerDown={(e) => e.stopPropagation()}>
+      <div
+        className="absolute bottom-4 left-18 flex gap-1 rounded-lg border border-do-dam bg-the/95 p-1 shadow-[0_2px_8px_rgb(60_40_20/0.12)]"
+        onPointerDown={(e) => e.stopPropagation()}
+      >
         <IconButton label="Phóng to" onClick={() => zoomBy(1.25)}>
           +
         </IconButton>
         <IconButton label="Thu nhỏ" onClick={() => zoomBy(1 / 1.25)}>
           −
         </IconButton>
-        <button type="button" className="rounded px-3 text-sm text-then hover:bg-ngoc-100" onClick={fitAll}>
+        <button type="button" className="rounded px-3 text-sm text-then hover:bg-do" onClick={fitAll}>
           Xem cả cây
         </button>
       </div>
@@ -249,7 +258,7 @@ const RAIL = 56; // độ rộng lề "Đời n"
 
 function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: string }) {
   return (
-    <button type="button" aria-label={label} title={label} onClick={onClick} className="h-10 w-10 rounded text-xl leading-none text-then hover:bg-ngoc-100">
+    <button type="button" aria-label={label} title={label} onClick={onClick} className="h-10 w-10 rounded text-xl leading-none text-then hover:bg-do">
       {children}
     </button>
   );
@@ -307,7 +316,7 @@ const PersonNode = memo(function PersonNode({
       aria-label={label}
       aria-pressed={selected}
       data-person-id={node.personId}
-      className="cursor-pointer outline-none [&:focus-visible>rect:first-child]:stroke-thep [&:focus-visible>rect:first-child]:stroke-[3]"
+      className="cursor-pointer outline-none [&:focus-visible>.khung]:stroke-thep [&:focus-visible>.khung]:stroke-[3]"
       onClick={() => onSelect(node.personId)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -316,11 +325,13 @@ const PersonNode = memo(function PersonNode({
         }
       }}
     >
+      {/* bóng đổ giả bằng một ô lệch xuống — rẻ hơn filter khi kéo phả đồ có hàng trăm người */}
+      {!outside && <rect x={1} y={2} width={node.width} height={node.height} rx={3} className="fill-[#5a4330]/10" />}
       <rect
         width={node.width}
         height={node.height}
         rx={3}
-        className={selected ? "fill-thep-nhat stroke-thep" : outside ? "fill-ngoc-50 stroke-ngoc-300" : "fill-giay stroke-ngoc-300"}
+        className={`khung ${selected ? "fill-thep-nhat stroke-thep" : outside ? "fill-do stroke-[#b9a888]" : "fill-the stroke-[#d6c9ae]"}`}
         strokeWidth={selected ? 2.5 : 1}
         strokeDasharray={outside && !selected ? "4 3" : undefined}
       />

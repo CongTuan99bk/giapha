@@ -8,6 +8,9 @@ import {
   flexibleDateSchema,
   heartbeatSchema,
   isBotUserAgent,
+  loginIdSchema,
+  normalizePhone,
+  parseLoginId,
   maskEmail,
   normalizeVnPhone,
   pageViewSchema,
@@ -21,6 +24,26 @@ const UA_IPHONE =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
 const UA_ZALO_INAPP =
   "Mozilla/5.0 (Linux; Android 13; SM-A536E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36 Zalo android/12100519 ZaloTheme/light";
+
+describe("Đăng nhập bằng email hoặc số điện thoại", () => {
+  it("nhận số Việt Nam ở nhiều cách viết và số quốc tế có dấu +", () => {
+    expect(parseLoginId("0912 345 678")).toEqual({ phone: "+84912345678" });
+    expect(parseLoginId("84912345678")).toEqual({ phone: "+84912345678" });
+    expect(normalizePhone("+1 (415) 555-0100")).toBe("+14155550100");
+    expect(normalizePhone("+84 123")).toBeNull();
+    expect(normalizePhone("12345")).toBeNull();
+  });
+  it("có @ thì là email (chữ thường)", () => {
+    expect(parseLoginId(" An@Example.COM ")).toEqual({ email: "an@example.com" });
+    expect(parseLoginId("an@")).toBeNull();
+  });
+  it("báo lỗi dễ hiểu", () => {
+    const r = loginIdSchema.safeParse("0912");
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0]?.message).toContain("Số điện thoại không hợp lệ");
+    expect(loginIdSchema.safeParse("").error?.issues[0]?.message).toBe("Nhập email hoặc số điện thoại");
+  });
+});
 
 describe("Số điện thoại, email", () => {
   it("chuẩn hoá số Việt Nam về +84", () => {

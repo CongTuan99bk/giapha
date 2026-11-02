@@ -7,7 +7,7 @@ import { Suspense, useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AuthShell } from "@/components/auth-shell";
 import { Field, FormError } from "@/components/field";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, fieldErrors } from "@/lib/api";
 import { keys } from "@/lib/queries";
 import { safeNext } from "@/lib/redirect";
 import type { User } from "@/lib/types";
@@ -27,7 +27,7 @@ function LoginForm() {
     setError(null);
     try {
       const res = await api<{ user: User }>("POST", "/auth/login", {
-        email: String(form.get("email") ?? ""),
+        identifier: String(form.get("identifier") ?? ""),
         password: String(form.get("password") ?? ""),
       });
       qc.setQueryData(keys.me, res.user);
@@ -35,7 +35,9 @@ function LoginForm() {
     } catch (err) {
       setError(
         err instanceof ApiError && err.code === "INVALID_CREDENTIALS"
-          ? "Email hoặc mật khẩu chưa đúng."
+          ? "Số điện thoại/email hoặc mật khẩu chưa đúng."
+          : err instanceof ApiError && err.code === "VALIDATION_FAILED"
+            ? (fieldErrors(err).identifier ?? err.message)
           : err instanceof Error
             ? err.message
             : "Không đăng nhập được.",
@@ -52,7 +54,16 @@ function LoginForm() {
         </p>
       )}
       <FormError message={error} />
-      <Field label="Email" name="email" type="email" autoComplete="email" required />
+      <Field
+        label="Số điện thoại hoặc email"
+        name="identifier"
+        type="text"
+        autoComplete="username"
+        autoCapitalize="none"
+        spellCheck={false}
+        required
+        hint="Ví dụ 0912 345 678"
+      />
       <Field label="Mật khẩu" name="password" type="password" autoComplete="current-password" required />
       <p className="-mt-3 text-right text-sm">
         <Link href="/quen-mat-khau" className="text-son underline-offset-4 hover:underline">

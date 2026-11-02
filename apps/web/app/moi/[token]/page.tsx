@@ -7,7 +7,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthShell } from "@/components/auth-shell";
 import { FormError } from "@/components/field";
 import { api, ApiError } from "@/lib/api";
-import { keys, useMe } from "@/lib/queries";
+import { loginLabel } from "@/lib/format";
+import { keys, useMe, useMyClans } from "@/lib/queries";
 import { ROLE_HINT, ROLE_LABEL } from "@/lib/roles";
 import type { InvitationPreview } from "@/lib/types";
 
@@ -17,7 +18,11 @@ const STATUS_TEXT = {
   used: "Lời mời này đã được dùng hết lượt.",
 } as const;
 
-/** Trang mở từ link mời: xem mình được mời vào đâu, đăng nhập/đăng ký rồi tham gia. */
+/**
+ * Trang mở từ link mời: xem mình được mời vào đâu, đăng nhập/đăng ký rồi tham gia.
+ * Đang đăng nhập sẵn (thường là quản trị tự mở thử link mình vừa tạo) thì nói rõ đang dùng tài khoản nào,
+ * vai trò hiện tại là gì, và cho đăng xuất để dùng link như người được mời.
+ */
 export default function InvitationPage() {
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
@@ -31,6 +36,14 @@ export default function InvitationPage() {
   const [pending, setPending] = useState(false);
   const here = `/moi/${token}`;
   const loggedIn = Boolean(me.data);
+  const myClans = useMyClans(loggedIn);
+  const existing = invite.data ? myClans.data?.find((c) => c.id === invite.data.clanId) : undefined;
+
+  async function logout() {
+    await api("POST", "/auth/logout").catch(() => undefined);
+    // tải lại đúng trang mời, giờ là khách: hiện nút tạo tài khoản / đăng nhập
+    window.location.assign(here);
+  }
 
   async function accept() {
     setPending(true);
@@ -84,10 +97,33 @@ export default function InvitationPage() {
       <div className="mt-8 space-y-4">
         {!usable ? (
           <FormError message={`${STATUS_TEXT[inv.status as keyof typeof STATUS_TEXT]} Hãy nhờ ban quản lý gửi lời mời mới.`} />
-        ) : me.isPending ? null : loggedIn ? (
+        ) : me.isPending || (loggedIn && myClans.isPending) ? null : loggedIn && existing ? (
+          <div role="status" className="space-y-4">
+            <p className="rounded-md border border-thep bg-thep-nhat/60 px-3 py-2">
+              Bạn đang đăng nhập bằng tài khoản <strong>{me.data!.name}</strong> ({loginLabel(me.data!)}) — tài khoản này đã là{" "}
+              <strong>{ROLE_LABEL[existing.role].toLowerCase()}</strong> của dòng họ. Mở link mời không đổi vai trò của bạn.
+            </p>
+            <p className="text-sm text-reu">
+              Link này dành cho người khác: hãy gửi cho họ. Muốn tự thử như người được mời, bấm Đăng xuất (hoặc mở link trong cửa sổ ẩn danh).
+            </p>
+            <div className="flex flex-col gap-3">
+              <Link href={`/dong-ho/${existing.id}`} className="btn-chinh w-full">
+                Vào dòng họ
+              </Link>
+              <button type="button" className="btn-phu w-full" onClick={logout}>
+                Đăng xuất để dùng tài khoản khác
+              </button>
+            </div>
+          </div>
+        ) : loggedIn ? (
           <>
             <FormError message={error} />
-            <p className="text-sm text-reu">Bạn đang đăng nhập là {me.data!.email}.</p>
+            <p className="text-sm text-reu">
+              Bạn đang đăng nhập là <strong className="text-then">{me.data!.name}</strong> ({loginLabel(me.data!)}).{" "}
+              <button type="button" onClick={logout} className="font-medium text-son underline-offset-4 hover:underline">
+                Không phải bạn?
+              </button>
+            </p>
             <button type="button" className="btn-chinh w-full" onClick={accept} disabled={pending}>
               {pending ? "Đang tham gia…" : "Tham gia dòng họ"}
             </button>

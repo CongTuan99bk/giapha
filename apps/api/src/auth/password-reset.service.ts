@@ -48,7 +48,7 @@ export class PasswordResetService {
       .where("email", "=", email)
       .where("deleted_at", "is", null)
       .executeTakeFirst();
-    if (!user) return;
+    if (!user?.email) return;
     const { token } = await this.issue(user.id, EMAIL_TTL_MIN * 60_000, null);
     const link = `${this.config.PUBLIC_URL?.replace(/\/$/, "") ?? ""}${resetPath(token)}`;
     await this.mail.send({
@@ -66,12 +66,15 @@ export class PasswordResetService {
     });
   }
 
-  /** Quản trị tạo link hộ một thành viên (đã kiểm tra quyền ở MembersService). */
-  issueForMember(userId: string, adminId: string) {
-    return this.issue(userId, ADMIN_TTL_HOURS * 3_600_000, adminId);
+  /**
+   * Quản trị tạo link hộ một thành viên (đã kiểm tra quyền ở MembersService).
+   * Tài khoản mới do quản trị tạo dùng link này để tự đặt mật khẩu lần đầu (hạn dài hơn).
+   */
+  issueForMember(userId: string, adminId: string, ttlHours = ADMIN_TTL_HOURS) {
+    return this.issue(userId, ttlHours * 3_600_000, adminId);
   }
 
-  async reset(token: string, password: string): Promise<{ email: string }> {
+  async reset(token: string, password: string): Promise<{ email: string | null }> {
     const row = await this.db.app
       .selectFrom("password_resets as r")
       .innerJoin("users as u", "u.id", "r.user_id")

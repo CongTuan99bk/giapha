@@ -19,7 +19,7 @@ const panel = () => page.getByRole("complementary", { name: "Thông tin người
 test("người đầu tiên đăng ký và tạo dòng họ", async () => {
   await page.goto("/dang-ky");
   await page.getByLabel("Họ và tên").fill(OWNER.name);
-  await page.getByLabel("Email").fill(OWNER.email);
+  await page.getByLabel("Email (không bắt buộc)").fill(OWNER.email);
   await page.getByLabel("Mật khẩu").fill(OWNER.password);
   await page.getByRole("button", { name: "Tạo tài khoản" }).click();
 
@@ -165,29 +165,40 @@ let inviteUrl = "";
 test("tạo link mời trong Cài đặt", async () => {
   await page.getByRole("link", { name: "Cài đặt" }).click();
   await expect(page.getByRole("heading", { name: "Cài đặt dòng họ" })).toBeVisible();
+  await page.getByText("Gửi link mời", { exact: true }).click();
   await page.getByLabel("Số người dùng được link").selectOption("10");
   await page.getByRole("button", { name: "Tạo link mời" }).click();
-  const link = page.getByLabel("Link mời");
+  const link = page.getByRole("textbox", { name: "Link mời" });
   await expect(link).toHaveValue(/\/moi\/[A-Za-z0-9_-]{24}$/);
   inviteUrl = new URL(await link.inputValue()).pathname;
   await expect(page.getByText(/đã dùng 0\/10/)).toBeVisible();
 });
 
-test("người đăng ký sau chưa vào được dòng họ (chế độ một dòng họ)", async () => {
+test("quản trị tự mở link mời của mình: thấy rõ đang dùng tài khoản nào, vai trò không đổi", async () => {
+  await page.goto(inviteUrl);
+  await expect(page.getByText(/tài khoản này đã là chủ sở hữu của dòng họ/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Tham gia dòng họ" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Đăng xuất để dùng tài khoản khác" })).toBeVisible();
+  await page.getByRole("link", { name: "Vào dòng họ" }).click();
+  await expect(page.getByText(`${OWNER.name} · Chủ sở hữu`)).toBeVisible();
+});
+
+test("người tự đăng ký sau chưa vào được dòng họ, phải chờ duyệt (chế độ một dòng họ)", async () => {
   await page.getByRole("button", { name: "Đăng xuất" }).click();
   await expect(page).toHaveURL(/\/dang-nhap/);
   await page.goto("/dang-ky");
+  await expect(page.getByText(/Ban quản lý Họ Lê Văn – thôn Thử sẽ duyệt tài khoản/)).toBeVisible();
   await page.getByLabel("Họ và tên").fill("Người Mới");
-  await page.getByLabel("Email").fill("nguoimoi@e2e.test");
+  await page.getByLabel("Email (không bắt buộc)").fill("nguoimoi@e2e.test");
   await page.getByLabel("Mật khẩu").fill("matkhau-e2e-456");
-  await page.getByRole("button", { name: "Tạo tài khoản" }).click();
-  await expect(page.getByText(/Bạn chưa là thành viên của Họ Lê Văn – thôn Thử/)).toBeVisible();
+  await page.getByRole("button", { name: "Tạo tài khoản và gửi yêu cầu" }).click();
+  await expect(page.getByRole("heading", { name: "Đang chờ duyệt" })).toBeVisible();
 });
 
 test("người đã có tài khoản mở link mời → tham gia với vai trò thành viên (chỉ xem)", async () => {
   await page.goto(inviteUrl);
   await expect(page.getByText("Họ Lê Văn – thôn Thử")).toBeVisible();
-  await expect(page.getByText("Bạn đang đăng nhập là nguoimoi@e2e.test.")).toBeVisible();
+  await expect(page.getByText(/Bạn đang đăng nhập là Người Mới \(nguoimoi@e2e.test\)/)).toBeVisible();
   await page.getByRole("button", { name: "Tham gia dòng họ" }).click();
   // vào trang chủ dòng họ (có banner), rồi mở phả đồ
   await expect(page.getByRole("heading", { level: 1, name: "Họ Lê Văn – thôn Thử" })).toBeVisible();
@@ -208,7 +219,7 @@ test("người chưa có tài khoản: mở link → tạo tài khoản → quay
   await p.goto(inviteUrl);
   await p.getByRole("link", { name: "Tạo tài khoản để tham gia" }).click();
   await p.getByLabel("Họ và tên").fill("Lê Thị Cháu");
-  await p.getByLabel("Email").fill("chau@e2e.test");
+  await p.getByLabel("Email (không bắt buộc)").fill("chau@e2e.test");
   await p.getByLabel("Mật khẩu").fill("matkhau-e2e-789");
   await p.getByRole("button", { name: "Tạo tài khoản" }).click();
   await expect(p).toHaveURL(new RegExp(inviteUrl + "$"));
@@ -221,7 +232,7 @@ test("người chưa có tài khoản: mở link → tạo tài khoản → quay
 test("chủ sở hữu thấy thành viên mới và nâng vai trò", async ({ browser }) => {
   const p = await browser.newPage();
   await p.goto("/dang-nhap");
-  await p.getByLabel("Email").fill(OWNER.email);
+  await p.getByLabel("Số điện thoại hoặc email").fill(OWNER.email);
   await p.getByLabel("Mật khẩu").fill(OWNER.password);
   await p.getByRole("button", { name: "Đăng nhập" }).click();
   await p.getByRole("link", { name: "Cài đặt" }).click();
@@ -233,6 +244,7 @@ test("chủ sở hữu thấy thành viên mới và nâng vai trò", async ({ b
   await expect(role).toHaveValue("editor");
   await p.reload();
   await expect(p.getByLabel("Vai trò của Lê Thị Cháu")).toHaveValue("editor");
+  await p.getByText("Gửi link mời", { exact: true }).click();
   await expect(p.getByText(/đã dùng 2\/10/)).toBeVisible();
 
   // quản trị tạo link đặt lại mật khẩu hộ (gửi qua Zalo), người nhận đặt mật khẩu mới
@@ -244,7 +256,7 @@ test("chủ sở hữu thấy thành viên mới và nâng vai trò", async ({ b
   await q.getByLabel("Nhập lại mật khẩu mới").fill("cháu-đổi-mật-khẩu");
   await q.getByRole("button", { name: "Đặt mật khẩu mới" }).click();
   await expect(q.getByText("Đã đặt mật khẩu mới.")).toBeVisible();
-  await q.getByLabel("Email").fill("chau@e2e.test");
+  await q.getByLabel("Số điện thoại hoặc email").fill("chau@e2e.test");
   await q.getByLabel("Mật khẩu").fill("cháu-đổi-mật-khẩu");
   await q.getByRole("button", { name: "Đăng nhập" }).click();
   await expect(q.getByRole("heading", { level: 1, name: "Họ Lê Văn – thôn Thử" })).toBeVisible();
@@ -273,9 +285,78 @@ test("quên mật khẩu: trang gửi yêu cầu không tiết lộ email có t�
 test("đăng nhập sai mật khẩu báo lỗi rõ ràng", async ({ browser }) => {
   const p = await browser.newPage();
   await p.goto("/dang-nhap");
-  await p.getByLabel("Email").fill(OWNER.email);
+  await p.getByLabel("Số điện thoại hoặc email").fill(OWNER.email);
   await p.getByLabel("Mật khẩu").fill("sai-mat-khau");
   await p.getByRole("button", { name: "Đăng nhập" }).click();
-  await expect(p.getByRole("alert").filter({ hasText: "Email" })).toHaveText("Email hoặc mật khẩu chưa đúng.");
+  await expect(p.getByRole("alert").filter({ hasText: "mật khẩu" })).toHaveText("Số điện thoại/email hoặc mật khẩu chưa đúng.");
   await p.close();
+});
+
+async function loginOwner(p: Page) {
+  await p.goto("/dang-nhap");
+  await p.getByLabel("Số điện thoại hoặc email").fill(OWNER.email);
+  await p.getByLabel("Mật khẩu").fill(OWNER.password);
+  await p.getByRole("button", { name: "Đăng nhập" }).click();
+  await expect(p.getByRole("heading", { level: 1, name: "Họ Lê Văn – thôn Thử" })).toBeVisible();
+}
+
+test("tự đăng ký bằng số điện thoại → quản trị duyệt → vào được với vai trò đã chọn", async ({ browser }) => {
+  const p = await browser.newPage();
+  await p.goto("/dang-ky");
+  await p.getByLabel("Họ và tên").fill("Lê Văn Số");
+  await p.getByLabel("Số điện thoại").fill("0912 000 111");
+  await p.getByLabel("Mật khẩu").fill("matkhau-so-111");
+  await p.getByLabel("Bạn là ai trong họ?").fill("Cháu nội cụ Cả");
+  await p.getByRole("button", { name: "Tạo tài khoản và gửi yêu cầu" }).click();
+  await expect(p.getByRole("heading", { name: "Đang chờ duyệt" })).toBeVisible();
+  await expect(p.getByText("Lời nhắn của bạn: Cháu nội cụ Cả")).toBeVisible();
+
+  const o = await browser.newPage();
+  await loginOwner(o);
+  await expect(o.getByRole("link", { name: /Cài đặt\s*, có 1 yêu cầu tham gia chờ duyệt/ })).toBeVisible();
+  await o.getByRole("link", { name: /Cài đặt/ }).click();
+  await expect(o.getByRole("heading", { name: "Yêu cầu tham gia (1)" })).toBeVisible();
+  await expect(o.getByText("0912 000 111", { exact: false })).toBeVisible();
+  await o.getByLabel("Vai trò cho Lê Văn Số").selectOption("editor");
+  await o.getByRole("button", { name: "Duyệt Lê Văn Số" }).click();
+  await expect(o.getByRole("heading", { name: /Yêu cầu tham gia/ })).toHaveCount(0);
+  await expect(o.getByLabel("Vai trò của Lê Văn Số")).toHaveValue("editor");
+
+  await p.reload();
+  await expect(p.getByRole("heading", { level: 1, name: "Họ Lê Văn – thôn Thử" })).toBeVisible();
+  await expect(p.getByText("Lê Văn Số · Người nhập liệu")).toBeVisible();
+  await p.close();
+  await o.close();
+});
+
+test("quản trị tạo tài khoản bằng số điện thoại; người nhận đặt mật khẩu (có nút hiện mật khẩu) rồi đăng nhập", async ({ browser }) => {
+  const o = await browser.newPage();
+  await loginOwner(o);
+  await o.getByRole("link", { name: "Cài đặt" }).click();
+  await o.getByLabel("Họ và tên").fill("Lê Văn Cụ");
+  await o.getByLabel("Số điện thoại").fill("0905 222 333");
+  await o.getByRole("button", { name: "Tạo tài khoản", exact: true }).click();
+  const message = await o.getByLabel("Tin nhắn gửi kèm link đặt mật khẩu").inputValue();
+  expect(message).toContain("đăng nhập bằng 0905 222 333");
+  const url = new URL(/https?:\/\/\S+/.exec(message)![0]);
+  await expect(o.getByRole("listitem").filter({ hasText: "Lê Văn Cụ" }).getByText("Chưa đặt mật khẩu lần đầu")).toBeVisible();
+
+  const q = await browser.newPage();
+  await q.goto(url.pathname + url.search);
+  const pw = q.getByLabel("Mật khẩu mới", { exact: true });
+  await pw.fill("mat-khau-cua-cu");
+  await expect(pw).toHaveAttribute("type", "password");
+  await q.getByRole("button", { name: "Hiện mật khẩu" }).first().click();
+  await expect(pw).toHaveAttribute("type", "text");
+  await expect(q.getByRole("button", { name: "Ẩn mật khẩu" }).first()).toHaveAttribute("aria-pressed", "true");
+  await q.getByLabel("Nhập lại mật khẩu mới").fill("mat-khau-cua-cu");
+  await q.getByRole("button", { name: "Đặt mật khẩu mới" }).click();
+  await expect(q.getByText("Đã đặt mật khẩu mới.")).toBeVisible();
+  await q.getByLabel("Số điện thoại hoặc email").fill("0905222333");
+  await q.getByLabel("Mật khẩu").fill("mat-khau-cua-cu");
+  await q.getByRole("button", { name: "Đăng nhập" }).click();
+  await expect(q.getByRole("heading", { level: 1, name: "Họ Lê Văn – thôn Thử" })).toBeVisible();
+  await expect(q.getByText("Lê Văn Cụ · Thành viên")).toBeVisible();
+  await q.close();
+  await o.close();
 });

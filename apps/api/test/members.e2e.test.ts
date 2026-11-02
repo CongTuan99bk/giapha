@@ -61,10 +61,10 @@ describe("Lời mời", () => {
   it("nhận lời mời → vào dòng họ với đúng vai trò, nhận lại lần nữa không tốn lượt", async () => {
     const res = await join("bien-tap", editorToken);
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ clanId, alreadyMember: false });
+    expect(res.body).toEqual({ clanId, alreadyMember: false, role: "editor" });
 
     const again = await users["bien-tap"]!.post(`/invitations/${editorToken}/accept`);
-    expect(again.body).toEqual({ clanId, alreadyMember: true });
+    expect(again.body).toEqual({ clanId, alreadyMember: true, role: "editor" });
 
     const clan = await users["bien-tap"]!.get(`/clans/${clanId}`);
     expect(clan.body.role).toBe("editor");

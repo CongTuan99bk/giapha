@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readCookie } from "./api";
-import { emptyDateFields, formatAnniversary, formatFlexibleDate, fromDateFields, lifespan, slugify, toDateFields } from "./format";
+import { emptyDateFields, formatAnniversary, formatFlexibleDate, formatPhone, fromDateFields, lifespan, loginLabel, slugify, toDateFields } from "./format";
 
 describe("lifespan", () => {
   it("hiển thị năm sinh – năm mất", () => {
@@ -126,5 +126,19 @@ describe("xem ảnh lớn: quay vòng chỉ số", async () => {
     expect(wrapIndex(-1, 3)).toBe(2);
     expect(wrapIndex(3, 3)).toBe(0);
     expect(wrapIndex(1, 3)).toBe(1);
+  });
+});
+
+describe("Số điện thoại", () => {
+  it("hiện số Việt Nam theo cách người dùng quen đọc", () => {
+    expect(formatPhone("+84912345678")).toBe("0912 345 678");
+    expect(formatPhone("+842438261234")).toBe("02438261234");
+    expect(formatPhone("+14155550100")).toBe("+14155550100");
+    expect(formatPhone(null)).toBe("");
+  });
+  it("tên đăng nhập: số điện thoại và/hoặc email", () => {
+    expect(loginLabel({ phone: "+84912345678", email: null })).toBe("0912 345 678");
+    expect(loginLabel({ phone: null, email: "a@b.vn" })).toBe("a@b.vn");
+    expect(loginLabel({ phone: "+84912345678", email: "a@b.vn" })).toBe("0912 345 678 · a@b.vn");
   });
 });

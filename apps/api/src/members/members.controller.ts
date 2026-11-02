@@ -1,4 +1,4 @@
-import { emailSchema, idSchema } from "@coinguon/schemas";
+import { emailSchema, idSchema, phoneSchema } from "@coinguon/schemas";
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from "@nestjs/common";
 import { z } from "zod";
 import { CurrentMembership, CurrentUser, type Membership, MinRole, Public, type SessionUser } from "../common/context.js";
@@ -18,6 +18,25 @@ const createInvitationSchema = z
     maxUses: z.number().int().min(1).max(100).default(1),
   })
   .strict();
+
+/** Chuỗi rỗng từ form = không nhập */
+const optional = <T extends z.ZodTypeAny>(s: T) => z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), s.optional());
+
+const createAccountSchema = z
+  .object({
+    name: z.string().trim().min(1, { message: "Nhập họ và tên" }).max(120),
+    phone: optional(phoneSchema),
+    email: optional(emailSchema),
+    role: grantableRole.default("member"),
+    personId: idSchema.optional(),
+  })
+  .strict()
+  .refine((v) => v.email || v.phone, { message: "Nhập số điện thoại hoặc email để người này đăng nhập", path: ["phone"] });
+
+const approveSchema = z.object({ role: grantableRole.default("member"), personId: idSchema.optional() }).strict();
+
+/** Tài khoản mới do quản trị tạo: link đặt mật khẩu lần đầu có hạn 7 ngày */
+const NEW_ACCOUNT_LINK_HOURS = 7 * 24;
 
 const updateMemberSchema = z
   .object({ role: grantableRole.optional(), personId: idSchema.nullable().optional() })
@@ -55,6 +74,37 @@ export class MembersController {
   @HttpCode(204)
   async remove(@CurrentMembership() m: Membership, @Param("memberId") memberId: string) {
     await this.db.withClan(this.ctx(m), (trx) => this.members.remove(trx, m, idSchema.parse(memberId)));
+  }
+
+  /** Quản trị tạo tài khoản cho người mới (đăng nhập bằng số điện thoại/email) + link để họ tự đặt mật khẩu */
+  @Post("members")
+  @MinRole("admin")
+  async createAccount(@CurrentMembership() m: Membership, @Body() body: unknown) {
+    const input = createAccountSchema.parse(body);
+    const { member, userId } = await this.db.withClan(this.ctx(m), (trx) => this.members.createAccount(trx, m, input));
+    const { token, expiresAt } = await this.resets.issueForMember(userId, m.userId, NEW_ACCOUNT_LINK_HOURS);
+    return { member, setPassword: { path: resetPath(token), expiresAt } };
+  }
+
+  @Get("join-requests")
+  @MinRole("admin")
+  joinRequests(@CurrentMembership() m: Membership) {
+    return this.db.withClan(this.ctx(m), (trx) => this.members.listJoinRequests(trx));
+  }
+
+  @Post("join-requests/:requestId/approve")
+  @MinRole("admin")
+  @HttpCode(204)
+  async approve(@CurrentMembership() m: Membership, @Param("requestId") id: string, @Body() body: unknown) {
+    const input = approveSchema.parse(body ?? {});
+    await this.db.withClan(this.ctx(m), (trx) => this.members.approveJoinRequest(trx, m, idSchema.parse(id), input));
+  }
+
+  @Post("join-requests/:requestId/reject")
+  @MinRole("admin")
+  @HttpCode(204)
+  async reject(@CurrentMembership() m: Membership, @Param("requestId") id: string) {
+    await this.db.withClan(this.ctx(m), (trx) => this.members.rejectJoinRequest(trx, m, idSchema.parse(id)));
   }
 
   /** Quản trị tạo link đặt lại mật khẩu hộ thành viên (gửi qua Zalo) — chỉ với người có vai trò thấp hơn */

@@ -6,10 +6,14 @@ import { Field, FormError } from "@/components/field";
 import { HomeSettingsForm } from "@/components/home-settings-form";
 import { PersonPicker } from "@/components/person-picker";
 import { api, fieldErrors } from "@/lib/api";
+import { formatPhone, loginLabel } from "@/lib/format";
 import {
   useClan,
+  useCreateAccount,
   useCreateInvitation,
+  useDecideJoinRequest,
   useInvitations,
+  useJoinRequests,
   useMe,
   useMembers,
   usePerson,
@@ -19,7 +23,7 @@ import {
   useUpdateMember,
 } from "@/lib/queries";
 import { canManage, grantableRoles, ROLE_HINT, ROLE_LABEL, ROLE_RANK } from "@/lib/roles";
-import type { Clan, GrantableRole, Invitation, PersonListItem } from "@/lib/types";
+import type { Clan, GrantableRole, Invitation, JoinRequest, PersonListItem } from "@/lib/types";
 
 export default function SettingsPage() {
   const { clanId } = useParams<{ clanId: string }>();
@@ -32,9 +36,9 @@ export default function SettingsPage() {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-3xl px-4 pb-20 pt-8">
         <h1 className="font-serif text-3xl">Cài đặt dòng họ</h1>
-        <Section title="Mời người vào dòng họ" lead="Tạo link rồi gửi qua Zalo, Messenger hoặc email. Người nhận mở link, tạo tài khoản là vào được.">
-          <InviteForm clan={clan.data} />
-          <ActiveInvitations clanId={clanId} />
+        <JoinRequestsSection clan={clan.data} />
+        <Section id="them-nguoi" title="Thêm người vào dòng họ">
+          <AddPeople clan={clan.data} />
         </Section>
         <Section id="trang-chu" title="Trang chủ" lead="Ảnh banner tự trượt, câu đối và khẩu hiệu hiện ở thẻ Trang chủ cho mọi thành viên.">
           <HomeSettingsForm clanId={clanId} />
@@ -70,6 +74,207 @@ function Chip({ active, children, ...rest }: { active: boolean; children: ReactN
       <input type="radio" className="sr-only" checked={active} {...rest} />
       {children}
     </label>
+  );
+}
+
+// ───────────── Yêu cầu tham gia ─────────────
+
+function JoinRequestsSection({ clan }: { clan: Clan }) {
+  const list = useJoinRequests(clan.id);
+  if (!list.data || list.data.length === 0) return null;
+  return (
+    <Section
+      id="yeu-cau"
+      title={`Yêu cầu tham gia (${list.data.length})`}
+      lead="Những người tự tạo tài khoản và xin vào dòng họ. Duyệt thì họ vào được ngay với vai trò bạn chọn."
+    >
+      <ul className="divide-y divide-ngoc-200 border-y border-ngoc-200">
+        {list.data.map((r) => (
+          <JoinRequestRow key={r.id} clan={clan} request={r} />
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
+function JoinRequestRow({ clan, request: r }: { clan: Clan; request: JoinRequest }) {
+  const decide = useDecideJoinRequest(clan.id);
+  const roles = grantableRoles(clan.role);
+  const [role, setRole] = useState<GrantableRole>("member");
+  const [person, setPerson] = useState<PersonListItem | null>(null);
+  return (
+    <li className="space-y-3 py-4">
+      <div>
+        <p className="font-serif text-lg">{r.name}</p>
+        <p className="text-sm text-reu">
+          {loginLabel(r)}, gửi lúc {new Date(r.createdAt).toLocaleString("vi-VN")}
+        </p>
+        {r.message && <p className="mt-1 border-l-2 border-thep pl-3">{r.message}</p>}
+      </div>
+      <details>
+        <summary className="cursor-pointer text-sm font-medium text-son">Gắn với người trong phả</summary>
+        <div className="mt-3">
+          <PersonPicker clanId={clan.id} label={`${r.name} là ai trong phả`} value={person} onChange={setPerson} />
+        </div>
+      </details>
+      <FormError message={decide.error?.message} />
+      <div className="flex flex-wrap items-center gap-2">
+        <select aria-label={`Vai trò cho ${r.name}`} className="o-nhap w-auto" value={role} onChange={(e) => setRole(e.target.value as GrantableRole)}>
+          {roles.map((x) => (
+            <option key={x} value={x}>
+              {ROLE_LABEL[x]}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="btn-chinh"
+          disabled={decide.isPending}
+          onClick={() => decide.mutate({ id: r.id, approve: true, role, ...(person && { personId: person.id }) })}
+        >
+          Duyệt {r.name}
+        </button>
+        <button type="button" className="btn-nguy" disabled={decide.isPending} onClick={() => decide.mutate({ id: r.id, approve: false })}>
+          Từ chối
+        </button>
+      </div>
+    </li>
+  );
+}
+
+// ───────────── Thêm người: tạo tài khoản hộ hoặc gửi link mời ─────────────
+
+function AddPeople({ clan }: { clan: Clan }) {
+  const [mode, setMode] = useState<"account" | "invite">("account");
+  return (
+    <>
+      <fieldset className="mb-6">
+        <legend className="sr-only">Cách thêm người</legend>
+        <div className="flex flex-wrap gap-2">
+          <Chip name="cach-them" active={mode === "account"} onChange={() => setMode("account")}>
+            <span className="font-medium">Tạo tài khoản giúp</span>
+            <span className="text-sm text-reu">Cho người lớn tuổi, ít dùng điện thoại</span>
+          </Chip>
+          <Chip name="cach-them" active={mode === "invite"} onChange={() => setMode("invite")}>
+            <span className="font-medium">Gửi link mời</span>
+            <span className="text-sm text-reu">Người nhận tự tạo tài khoản</span>
+          </Chip>
+        </div>
+      </fieldset>
+      {mode === "account" ? (
+        <AccountForm clan={clan} />
+      ) : (
+        <>
+          <InviteForm clan={clan} />
+          <ActiveInvitations clanId={clan.id} />
+        </>
+      )}
+    </>
+  );
+}
+
+function AccountForm({ clan }: { clan: Clan }) {
+  const create = useCreateAccount(clan.id);
+  const roles = grantableRoles(clan.role);
+  const [role, setRole] = useState<GrantableRole>("member");
+  const [person, setPerson] = useState<PersonListItem | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [created, setCreated] = useState<{ name: string; login: string; url: string; expiresAt: string } | null>(null);
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    setErrors({});
+    setFormError(null);
+    try {
+      const res = await create.mutateAsync({
+        name: String(form.get("name") ?? ""),
+        phone: String(form.get("phone") ?? ""),
+        email: String(form.get("email") ?? ""),
+        role,
+        ...(person ? { personId: person.id } : {}),
+      });
+      setCreated({
+        name: res.member.name,
+        login: res.member.phone ? formatPhone(res.member.phone) : (res.member.email ?? ""),
+        url: `${window.location.origin}${res.setPassword.path}`,
+        expiresAt: res.setPassword.expiresAt,
+      });
+      setPerson(null);
+    } catch (err) {
+      const fe = fieldErrors(err);
+      setErrors(fe);
+      if (Object.keys(fe).length === 0) setFormError(err instanceof Error ? err.message : "Không tạo được tài khoản.");
+    }
+  }
+
+  if (created) return <CreatedAccount {...created} clanName={clan.name} onDone={() => setCreated(null)} />;
+
+  return (
+    <form onSubmit={submit} className="space-y-5 rounded-lg border border-ngoc-200 bg-giay p-5" noValidate>
+      <FormError message={formError} />
+      <Field label="Họ và tên" name="name" required error={errors.name} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Số điện thoại" name="phone" type="tel" inputMode="tel" error={errors.phone} hint="Người này đăng nhập bằng số này." />
+        <Field label="Email (không bắt buộc)" name="email" type="email" error={errors.email} />
+      </div>
+      <fieldset>
+        <legend className="nhan">Vai trò</legend>
+        <div className="flex flex-wrap gap-2">
+          {roles.map((r) => (
+            <Chip key={r} name="vai-tro-tai-khoan" active={role === r} onChange={() => setRole(r)}>
+              <span className="font-medium">{ROLE_LABEL[r]}</span>
+              <span className="text-sm text-reu">{ROLE_HINT[r]}</span>
+            </Chip>
+          ))}
+        </div>
+      </fieldset>
+      <PersonPicker clanId={clan.id} label="Người này là ai trong phả (không bắt buộc)" value={person} onChange={setPerson} />
+      {errors.personId && <p className="text-sm text-loi">{errors.personId}</p>}
+      <button type="submit" className="btn-chinh" disabled={create.isPending}>
+        {create.isPending ? "Đang tạo…" : "Tạo tài khoản"}
+      </button>
+    </form>
+  );
+}
+
+/** Tài khoản vừa tạo: soạn sẵn tin nhắn kèm link đặt mật khẩu để gửi qua Zalo */
+function CreatedAccount({ name, login, url, expiresAt, clanName, onDone }: { name: string; login: string; url: string; expiresAt: string; clanName: string; onDone: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const until = new Date(expiresAt).toLocaleDateString("vi-VN");
+  const text = `Chào ${name}, ban quản lý đã tạo tài khoản gia phả ${clanName} cho bạn.\nBước 1: mở link sau để đặt mật khẩu (dùng được tới ${until}):\n${url}\nBước 2: đăng nhập bằng ${login} và mật khẩu vừa đặt.`;
+  const canShare = typeof navigator !== "undefined" && "share" in navigator;
+  return (
+    <div className="rounded-lg border border-thep bg-thep-nhat/60 p-5" role="status">
+      <p className="font-serif text-xl">Đã tạo tài khoản cho {name}</p>
+      <p className="mt-1 text-sm text-reu">
+        Gửi tin nhắn dưới đây qua Zalo. Link chỉ hiện một lần; làm mất thì vào danh sách Thành viên, bấm “Tạo link đặt mật khẩu”.
+      </p>
+      <textarea aria-label="Tin nhắn gửi kèm link đặt mật khẩu" readOnly rows={5} value={text} onFocus={(e) => e.currentTarget.select()} className="o-nhap mt-4 text-sm" />
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="btn-chinh"
+          onClick={() =>
+            navigator.clipboard
+              .writeText(text)
+              .then(() => setCopied(true))
+              .catch(() => setCopied(false))
+          }
+        >
+          {copied ? "Đã sao chép" : "Sao chép tin nhắn"}
+        </button>
+        {canShare && (
+          <button type="button" className="btn-phu" onClick={() => navigator.share({ title: "Tài khoản gia phả", text }).catch(() => undefined)}>
+            Gửi…
+          </button>
+        )}
+        <button type="button" className="btn-phu" onClick={onDone}>
+          Tạo tài khoản khác
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -270,9 +475,10 @@ function MemberList({ clan }: { clan: Clan }) {
                   {m.name}
                   {self && <span className="ml-2 font-sans text-sm text-reu">(bạn)</span>}
                 </p>
-                <p className="truncate text-sm text-reu">{m.email}</p>
+                <p className="truncate text-sm text-reu">{loginLabel(m)}</p>
                 {m.person && <p className="text-sm text-reu">Trong phả: {m.person.fullName}</p>}
-                {editable && <ResetLink clanId={clan.id} memberId={m.id} name={m.name} />}
+                {m.passwordPending && <p className="text-sm font-medium text-son-dam">Chưa đặt mật khẩu lần đầu</p>}
+                {editable && <ResetLink clanId={clan.id} memberId={m.id} name={m.name} firstTime={m.passwordPending} />}
               </div>
               <div className="flex items-center gap-2">
                 {editable ? (
@@ -405,7 +611,7 @@ function ClanInfoForm({ clan }: { clan: Clan }) {
 }
 
 /** Tạo link đặt lại mật khẩu hộ thành viên — gửi qua Zalo cho người không dùng email. */
-function ResetLink({ clanId, memberId, name }: { clanId: string; memberId: string; name: string }) {
+function ResetLink({ clanId, memberId, name, firstTime }: { clanId: string; memberId: string; name: string; firstTime: boolean }) {
   const [link, setLink] = useState<{ url: string; expiresAt: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -428,7 +634,7 @@ function ResetLink({ clanId, memberId, name }: { clanId: string; memberId: strin
     return (
       <div className="mt-2 rounded-md border border-thep bg-thep-nhat/60 p-3 text-sm" role="status">
         <p>
-          Link đặt lại mật khẩu cho {name}, dùng được tới {new Date(link.expiresAt).toLocaleString("vi-VN")}. Chỉ hiện một lần:
+          Link {firstTime ? "đặt mật khẩu" : "đặt lại mật khẩu"} cho {name}, dùng được tới {new Date(link.expiresAt).toLocaleString("vi-VN")}. Chỉ hiện một lần:
         </p>
         <input
           aria-label={`Link đặt lại mật khẩu của ${name}`}
@@ -455,7 +661,7 @@ function ResetLink({ clanId, memberId, name }: { clanId: string; memberId: strin
   return (
     <div className="mt-1">
       <button type="button" className="text-sm text-son hover:underline" onClick={create} disabled={pending}>
-        {pending ? "Đang tạo…" : "Tạo link đặt lại mật khẩu"}
+        {pending ? "Đang tạo…" : firstTime ? "Tạo link đặt mật khẩu" : "Tạo link đặt lại mật khẩu"}
       </button>
       {error && <p className="text-sm text-loi">{error}</p>}
     </div>

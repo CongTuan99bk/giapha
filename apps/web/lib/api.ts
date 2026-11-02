@@ -54,7 +54,8 @@ export async function api<T>(method: Method, path: string, body?: unknown): Prom
 
 /** Lấy thông báo lỗi theo từng trường từ lỗi 422 VALIDATION_FAILED (zod issues). */
 export function fieldErrors(err: unknown): Record<string, string> {
-  if (!(err instanceof ApiError) || err.code !== "VALIDATION_FAILED" || !Array.isArray(err.details)) return {};
+  // Lỗi kiểm tra dữ liệu (422) và lỗi trùng (409 EMAIL_TAKEN…) đều có thể kèm danh sách { path, message } theo từng ô
+  if (!(err instanceof ApiError) || !Array.isArray(err.details)) return {};
   const out: Record<string, string> = {};
   for (const issue of err.details as Array<{ path?: string | Array<string | number>; message?: string }>) {
     const key = Array.isArray(issue.path) ? issue.path.join(".") : (issue.path ?? "");

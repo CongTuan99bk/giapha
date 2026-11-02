@@ -43,7 +43,7 @@ export class SessionGuard implements CanActivate {
     const row = await this.db.app
       .selectFrom("sessions as s")
       .innerJoin("users as u", "u.id", "s.user_id")
-      .select(["s.id as sessionId", "u.id", "u.email", "u.name", "u.is_platform_admin"])
+      .select(["s.id as sessionId", "u.id", "u.email", "u.phone", "u.name", "u.is_platform_admin"])
       .where("s.id", "=", sha256(token))
       .where("s.expires_at", ">", new Date())
       .where("u.deleted_at", "is", null)
@@ -60,6 +60,7 @@ export class SessionGuard implements CanActivate {
     req.user = {
       id: row.id,
       email: row.email,
+      phone: row.phone,
       name: row.name,
       isPlatformAdmin: row.is_platform_admin,
       sessionId: row.sessionId,

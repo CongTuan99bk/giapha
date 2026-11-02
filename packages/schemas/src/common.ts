@@ -23,6 +23,57 @@ export const vnPhoneSchema = z
 
 export const emailSchema = z.string().trim().toLowerCase().email({ message: "Email không hợp lệ" }).max(254);
 
+/** Số điện thoại đăng nhập: số Việt Nam (chuẩn hoá +84…) hoặc số quốc tế dạng +<mã nước><số>. */
+export function normalizePhone(input: string): string | null {
+  const vn = normalizeVnPhone(input);
+  if (vn) return vn;
+  const cleaned = input.replace(/[\s.\-()]/g, "");
+  if (cleaned.startsWith("+84")) return null; // số +84 phải đúng định dạng Việt Nam
+  return /^\+[1-9]\d{7,14}$/.test(cleaned) ? cleaned : null;
+}
+
+export const phoneSchema = z
+  .string()
+  .trim()
+  .transform((v, ctx) => {
+    const normalized = normalizePhone(v);
+    if (!normalized) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Số điện thoại không hợp lệ" });
+      return z.NEVER;
+    }
+    return normalized;
+  });
+
+export type LoginId = { email: string; phone?: undefined } | { phone: string; email?: undefined };
+
+/** Nhận "email hoặc số điện thoại" người dùng gõ vào một ô; có "@" thì coi là email. */
+export function parseLoginId(input: string): LoginId | null {
+  const v = input.trim();
+  if (v.includes("@")) {
+    const r = emailSchema.safeParse(v);
+    return r.success ? { email: r.data } : null;
+  }
+  const phone = normalizePhone(v);
+  return phone ? { phone } : null;
+}
+
+export const loginIdSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Nhập email hoặc số điện thoại" })
+  .max(254)
+  .transform((v, ctx) => {
+    const id = parseLoginId(v);
+    if (!id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: v.includes("@") ? "Email không hợp lệ" : "Số điện thoại không hợp lệ (ví dụ 0912 345 678)",
+      });
+      return z.NEVER;
+    }
+    return id;
+  });
+
 export const genderSchema = z.enum(["male", "female", "unknown"]);
 
 /** Mức riêng tư của một người (BR-PRIV-01) */

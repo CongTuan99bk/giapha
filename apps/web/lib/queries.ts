@@ -7,6 +7,7 @@ import type {
   GrantableRole,
   HomeSettings,
   Invitation,
+  JoinRequest,
   KinshipResult,
   Member,
   Page,
@@ -28,8 +29,14 @@ export const keys = {
   kinship: (clanId: string, a: string, b: string) => ["clan", clanId, "kinship", a, b] as const,
 };
 
+export interface Instance {
+  clanMode: "single" | "multi";
+  clan: { id: string; name: string; surname: string } | null;
+}
+export const useInstance = () => useQuery({ queryKey: ["instance"], queryFn: () => api<Instance>("GET", "/instance") });
+
 export const useMe = () => useQuery({ queryKey: keys.me, queryFn: () => api<User>("GET", "/me"), retry: false });
-export const useMyClans = () => useQuery({ queryKey: keys.clans, queryFn: () => api<Clan[]>("GET", "/me/clans") });
+export const useMyClans = (enabled = true) => useQuery({ queryKey: keys.clans, queryFn: () => api<Clan[]>("GET", "/me/clans"), enabled });
 export const useClan = (id: string) => useQuery({ queryKey: keys.clan(id), queryFn: () => api<Clan>("GET", `/clans/${id}`) });
 export const useTree = (clanId: string) =>
   useQuery({ queryKey: keys.tree(clanId), queryFn: () => api<TreeLayout>("GET", `/clans/${clanId}/tree`) });
@@ -108,7 +115,40 @@ export function useUpdateClan(clanId: string) {
 export const memberKeys = {
   members: (clanId: string) => ["clan", clanId, "members"] as const,
   invitations: (clanId: string) => ["clan", clanId, "invitations"] as const,
+  joinRequests: (clanId: string) => ["clan", clanId, "join-requests"] as const,
 };
+
+/** Yêu cầu tham gia chờ duyệt — `enabled` = chỉ hỏi khi là quản trị (người khác bị 403) */
+export const useJoinRequests = (clanId: string, enabled = true) =>
+  useQuery({
+    queryKey: memberKeys.joinRequests(clanId),
+    queryFn: () => api<JoinRequest[]>("GET", `/clans/${clanId}/join-requests`),
+    enabled,
+    refetchInterval: 60_000,
+  });
+
+export function useDecideJoinRequest(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; approve: boolean; role?: GrantableRole; personId?: string }) =>
+      v.approve
+        ? api<void>("POST", `/clans/${clanId}/join-requests/${v.id}/approve`, { role: v.role ?? "member", ...(v.personId && { personId: v.personId }) })
+        : api<void>("POST", `/clans/${clanId}/join-requests/${v.id}/reject`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: memberKeys.joinRequests(clanId) });
+      void qc.invalidateQueries({ queryKey: memberKeys.members(clanId) });
+    },
+  });
+}
+
+export function useCreateAccount(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { name: string; phone?: string; email?: string; role: GrantableRole; personId?: string }) =>
+      api<{ member: Member; setPassword: { path: string; expiresAt: string } }>("POST", `/clans/${clanId}/members`, v),
+    onSuccess: () => qc.invalidateQueries({ queryKey: memberKeys.members(clanId) }),
+  });
+}
 
 export const useMembers = (clanId: string) =>
   useQuery({ queryKey: memberKeys.members(clanId), queryFn: () => api<Member[]>("GET", `/clans/${clanId}/members`) });
