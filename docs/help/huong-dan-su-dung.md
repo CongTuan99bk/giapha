@@ -1,6 +1,6 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.5
+version: 1.6
 updated: 2026-11-02
 audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
@@ -97,10 +97,12 @@ Nếu bạn đã đăng nhập và liên kết tài khoản với chính mình t
 
 ## 5. Lịch giỗ và nhận nhắc
 
-1. Bấm **Sự kiện** để xem lịch theo tháng. Mỗi ngày hiện cả ngày dương và ngày âm.
-2. Ngày giỗ được tính tự động từ ngày mất âm lịch, năm nào cũng có.
-3. Để nhận email nhắc: bấm vào một sự kiện → **Nhắc tôi**, nhập email (nếu chưa đăng nhập) → **Đăng ký**. Mặc định email đến trước 3 ngày.
-4. Huỷ nhắc: bấm đường dẫn **Huỷ nhận nhắc** ở cuối email.
+1. Bấm thẻ **Lịch giỗ**: các ngày giỗ trong 12 tháng tới, chia theo tháng. Mỗi dòng có tờ lịch nhỏ ghi ngày dương, thứ, ngày âm; tên người (bấm để mở trên phả đồ); **giỗ đầu**, **giỗ hết** hoặc **giỗ lần thứ mấy**; và **còn bao nhiêu ngày**.
+2. Ngày giỗ được tính tự động từ ngày mất đã ghi trong phả — ghi âm lịch hay dương lịch đều được, miễn đủ **ngày và tháng**. Ngày mất ghi dương lịch được đổi sang âm lịch để tính giỗ.
+3. **Trang chủ** của dòng họ có khung **Giỗ sắp tới** (60 ngày tới).
+4. **Nhắc trên điện thoại:** ở thẻ Lịch giỗ bấm **Thêm vào lịch điện thoại** → mở file vừa tải (iPhone: chạm vào file → **Thêm tất cả**; Android: mở bằng Google Lịch). Lịch có các ngày giỗ hai năm tới, nhắc trước 3 ngày. Đầu mỗi năm nên tải lại để cập nhật người mới ghi.
+5. Cuối trang báo có bao nhiêu người đã mất nhưng **chưa ghi đủ ngày, tháng mất** — những người này chưa có trong lịch.
+6. *(Sắp ra mắt)* Nhận email nhắc giỗ.
 
 ## 6. Liên hệ ban liên lạc
 
@@ -131,13 +133,19 @@ Không cần tải từ kho ứng dụng; cài thẳng từ trình duyệt:
 
 ## 8. Đăng ký, đăng nhập
 
-**Đăng ký:** thường bạn nhận **link mời** từ ban quản lý (xem mục 9). Mở link → **Tạo tài khoản để tham gia** → nhập họ tên, email, mật khẩu (ít nhất 8 ký tự). *(Mã xác minh gửi về email: Sắp ra mắt.)*
+Có ba cách để có tài khoản:
 
-**Đăng nhập:** dùng email và mật khẩu. *(Tiếp tục với Google: Sắp ra mắt.)*
+1. **Mở link mời** ban quản lý gửi (xem mục 9) → **Tạo tài khoản để tham gia**. Vào dòng họ ngay, không phải chờ duyệt.
+2. **Tự đăng ký:** vào trang web của dòng họ → **Tạo tài khoản** → nhập họ tên, **số điện thoại** (hoặc email), mật khẩu (ít nhất 8 ký tự), và có thể ghi *Bạn là ai trong họ* (ví dụ "con ông Tư, chi hai") → **Tạo tài khoản và gửi yêu cầu**. Màn hình báo **Đang chờ duyệt**; khi ban quản lý duyệt, trang tự mở gia phả.
+3. **Ban quản lý tạo giúp** (hợp với ông bà, cô bác ít dùng điện thoại): bạn nhận tin nhắn có link → mở link, đặt mật khẩu → đăng nhập bằng số điện thoại.
+
+Email **không bắt buộc**, nhưng có email thì tự lấy lại được mật khẩu khi quên. *(Mã xác minh gửi về email/điện thoại: Sắp ra mắt.)*
+
+**Đăng nhập:** ở ô **Số điện thoại hoặc email**, gõ số điện thoại (viết `0912 345 678` hay `+84912345678` đều được) hoặc email, rồi nhập mật khẩu. Bấm **Hiện** ở cuối ô mật khẩu để xem mình gõ đúng chưa, bấm **Ẩn** để che lại. *(Tiếp tục với Google: Sắp ra mắt.)*
 
 **Quên mật khẩu:** có hai cách:
 1. Bấm **Quên mật khẩu?** dưới ô mật khẩu → nhập email → **Gửi link đặt lại mật khẩu** → mở email, bấm link (dùng được 30 phút) → nhập mật khẩu mới hai lần → **Đặt mật khẩu mới**. Không thấy email thì xem thư mục Spam.
-2. Không dùng email, hoặc dòng họ chưa bật gửi email: **nhờ ban quản lý tạo link đặt lại mật khẩu** và gửi cho bạn qua Zalo (link dùng được 24 giờ).
+2. Đăng nhập bằng số điện thoại, không dùng email, hoặc dòng họ chưa bật gửi email: **nhờ ban quản lý tạo link đặt lại mật khẩu** và gửi cho bạn qua Zalo (link dùng được 24 giờ).
 
 Đặt mật khẩu mới xong, bạn được đăng xuất khỏi mọi thiết bị khác; tài khoản đang bị khoá vì nhập sai cũng được mở khoá. Mỗi link chỉ dùng một lần; yêu cầu link mới thì link cũ hết hiệu lực.
 
@@ -152,6 +160,8 @@ Không cần tải từ kho ứng dụng; cài thẳng từ trình duyệt:
 1. Ban quản lý gửi cho bạn một **đường link mời** (qua Zalo, Messenger hoặc email). Mở link, bạn sẽ thấy tên dòng họ, người mời và vai trò của bạn.
 2. Chưa có tài khoản: bấm **Tạo tài khoản để tham gia**. Đã có: bấm **Tôi đã có tài khoản** và đăng nhập. Xong sẽ quay lại trang lời mời.
 3. Bấm **Tham gia dòng họ** → phả đồ hiện ra.
+
+**Đang đăng nhập sẵn tài khoản khác?** Trang lời mời luôn ghi bạn đang dùng tài khoản nào. Nếu tài khoản đó đã là thành viên (thường gặp khi người quản lý tự mở thử link mình vừa tạo trên cùng máy), mở link **không đổi vai trò** của bạn; muốn dùng link như người được mời, bấm **Đăng xuất để dùng tài khoản khác** hoặc mở link trong cửa sổ ẩn danh. Góc trên mọi trang cũng ghi *Tên · Vai trò* của tài khoản đang dùng.
 
 Link mời có hạn dùng và số lượt. Nếu báo *hết hạn*, *đã bị huỷ* hoặc *đã dùng hết lượt*, hãy nhờ ban quản lý gửi link mới. Có link chỉ dành cho một email — khi đó hãy đăng nhập đúng email được mời.
 
@@ -312,7 +322,24 @@ Vào **Quản trị → Website → Liên hệ**:
 
 Vào thẻ **Cài đặt** (chỉ Quản trị và Chủ sở hữu thấy thẻ này).
 
-**Mời người vào dòng họ**
+**Yêu cầu tham gia (duyệt người tự đăng ký)**
+
+Khi có người tự đăng ký xin vào, thẻ **Cài đặt** hiện số yêu cầu đang chờ. Mục **Yêu cầu tham gia** ở đầu trang Cài đặt ghi tên, số điện thoại/email, lời nhắn và thời gian gửi của từng người.
+
+1. Chọn **vai trò** trong ô cạnh tên (mặc định Thành viên). Có thể mở **Gắn với người trong phả** để chọn người đó trong cây.
+2. Bấm **Duyệt [tên]** — người đó vào được dòng họ ngay. Hoặc bấm **Từ chối**; họ thấy thông báo và có thể gửi lại kèm lời nhắn rõ hơn.
+
+**Thêm người vào dòng họ** — chọn một trong hai cách:
+
+*Tạo tài khoản giúp* (cho người lớn tuổi, ít dùng điện thoại):
+
+1. Nhập **Họ và tên**, **Số điện thoại** (người này đăng nhập bằng số này) — hoặc email —, chọn **Vai trò**, và nếu muốn chọn **Người này là ai trong phả**.
+2. Bấm **Tạo tài khoản**. Màn hình hiện sẵn một **tin nhắn** có link đặt mật khẩu (dùng được 7 ngày) và cách đăng nhập → **Sao chép tin nhắn** → gửi qua Zalo.
+3. Người nhận mở link, đặt mật khẩu, rồi đăng nhập bằng số điện thoại. Trước khi họ đặt mật khẩu, danh sách Thành viên ghi *Chưa đặt mật khẩu lần đầu*; làm mất tin nhắn thì bấm **Tạo link đặt mật khẩu** dưới tên họ.
+
+Số điện thoại hoặc email **đã có tài khoản** thì không tạo được nữa — hãy gửi link mời cho người đó, hoặc duyệt yêu cầu tham gia của họ.
+
+*Gửi link mời* (người nhận tự tạo tài khoản):
 
 1. Chọn **vai trò** của người được mời.
 2. Chọn **Link dùng được trong** (1, 7 hoặc 30 ngày) và **Số người dùng được link** (1 người, tối đa 10, hoặc tối đa 50 khi gửi vào nhóm Zalo của họ).
@@ -373,6 +400,12 @@ Người còn sống được bảo vệ thông tin; bạn cần đăng nhập v
 
 **Tôi thấy thông tin sai về gia đình tôi.**
 Dùng **Đề xuất sửa** (mục 10) hoặc liên hệ ban liên lạc (mục 6).
+
+**Tôi gửi link mời vai trò Thành viên, nhưng mở link lại vào được như Quản trị?**
+Vì bạn mở link trên máy đang đăng nhập tài khoản quản trị của chính bạn — link không đổi vai trò của tài khoản đã là thành viên. Người nhận mở link trên máy của họ sẽ có đúng vai trò Thành viên. Muốn tự thử, bấm **Đăng xuất để dùng tài khoản khác** trên trang lời mời, hoặc mở link trong cửa sổ ẩn danh.
+
+**Tôi không có email, đăng ký được không?**
+Được. Đăng ký và đăng nhập bằng số điện thoại. Quên mật khẩu thì nhờ ban quản lý tạo link đặt lại mật khẩu.
 
 **Ngày giỗ hiển thị khác với ngày nhà tôi vẫn cúng.**
 Kiểm tra ngày mất âm lịch đã nhập đúng chưa. Nếu người mất vào tháng nhuận, app tính giỗ vào tháng thường cùng số; nếu mất ngày 30 mà năm nay tháng đó chỉ có 29 ngày, app lấy ngày 29. Dòng họ có thể đổi cách tính này trong cài đặt.

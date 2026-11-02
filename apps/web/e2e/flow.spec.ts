@@ -360,3 +360,18 @@ test("quản trị tạo tài khoản bằng số điện thoại; người nh�
   await q.close();
   await o.close();
 });
+
+test("lịch giỗ: ngày giỗ thuỷ tổ tự tính từ ngày mất, tải được file lịch", async ({ browser }) => {
+  const p = await browser.newPage();
+  await loginOwner(p);
+  await p.getByRole("link", { name: "Lịch giỗ" }).click();
+  await expect(p.getByRole("heading", { level: 1, name: "Lịch giỗ" })).toBeVisible();
+  const row = p.getByRole("listitem").filter({ hasText: "Lê Văn Cả" });
+  // mất 10/2/2024 (dương) = mùng 1 Tết → giỗ mùng 1 tháng Giêng hằng năm
+  await expect(row.getByText("mùng 1 tháng Giêng", { exact: false }).first()).toBeVisible();
+  await expect(row.getByText(/Còn \d+ ngày|Hôm nay|Ngày mai|Ngày kia/)).toBeVisible();
+  const download = p.waitForEvent("download");
+  await p.getByRole("link", { name: "Thêm vào lịch điện thoại" }).click();
+  expect((await download).suggestedFilename()).toBe("lich-gio-ho-le-van-thon-thu.ics");
+  await p.close();
+});

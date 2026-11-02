@@ -5,7 +5,7 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.9.0 |
+| Phiên bản file | 0.10.0 |
 | Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **Sẵn sàng demo: `pnpm demo` chạy trên máy cá nhân có link chia sẻ; tiếp theo: lịch giỗ** |
@@ -51,18 +51,19 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Tài liệu đặc tả – phân tích – thiết kế v1.0 | Xong (2026-11-01) | FR/NFR/BR, use case, ERD, API, UI, thống kê, bảo mật, test, vận hành |
 | Sổ tay chủ sở hữu & Hướng dẫn sử dụng v1.0 | Xong (2026-11-01) | Viết theo thiết kế; đối chiếu lại tên nút, thêm ảnh chụp khi có giao diện |
 | Giai đoạn 0 — Nền móng (tuần 1–2) | **Xong (2026-11-01)** | Monorepo, CI, schema + RLS, genealogy-core, lunar-vn, schemas — 126 test xanh |
-| MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Đang làm** | API + web xong (2026-11-01): đăng nhập, tạo dòng họ, phả đồ kéo/phóng to, thêm/sửa/xoá người, danh sách, xưng hô, trợ giúp, PWA — 186 test + 11 test trình duyệt. Còn: mời thành viên, vai trò |
+| MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Xong phần chính (2026-11-02)** | Đăng nhập email/số điện thoại, tạo dòng họ, phả đồ, thêm/sửa/xoá người, danh sách, xưng hô, mời/duyệt thành viên, vai trò, ảnh, trang chủ, lịch giỗ, PWA, demo Docker — 95 test API + 22 test trình duyệt. Còn: hoàn thiện nhập phả (KI-017) |
 | MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | Chưa bắt đầu | |
 | Phase 2 (tuần 15–24), Phase 3 (tuần 25–32) | Chưa bắt đầu | |
 
 ### 2.2. Việc đang làm
 - (trống)
 
-### 2.3. Việc tiếp theo
-1. Lịch giỗ: "ngày giỗ sắp tới" trên trang chủ, lịch âm theo tháng, nhắc trước (email khi có SMTP).
-1b. Thư viện ảnh/tư liệu theo album (KI-022).
-2. Rate limit theo IP cho đăng nhập/đăng ký/xem lời mời (KI-010); quên mật khẩu + OTP email (KI-009).
-3. Giao diện: sắp xếp thứ tự con, con nuôi/con riêng, nhiều vợ/chồng (API đã có một phần — KI-017).
+### 2.3. Việc tiếp theo (thứ tự chủ dự án đã chốt)
+1. ~~Lịch giỗ~~ — xong 0.10.0 (còn: nhắc qua email khi có SMTP, sự kiện họp họ/chạp mả).
+2. Hoàn thiện nhập phả: sắp thứ tự con, con nuôi/con riêng, nhiều vợ/chồng, tên huý, tiểu sử (API đã có một phần — KI-017).
+3. Website công khai + thống kê truy cập + thông tin liên hệ.
+3b. Thư viện ảnh/tư liệu theo album (KI-022); nhập Excel / xuất PDF.
+4. Ứng dụng iOS/Android (Capacitor bọc PWA).
 4. Sửa bảng xưng hô riêng của dòng họ (KI-013); "Tôi gọi người này là gì?" từ người đã gắn "Đây là tôi".
 5. (Tuỳ chọn) chuyển kho GitHub về riêng tư. Chốt các câu hỏi còn lại ở mục 3.2.
 
@@ -230,7 +231,12 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | --- | --- | --- |
 | `GET /health` | công khai | healthcheck |
 | `GET /instance` | công khai | `{clanMode, clan: {id,name,slug,surname} \| null}` — web biết cần "tạo dòng họ" hay vào thẳng |
-| `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` | công khai / đã đăng nhập | trả `{user, csrfToken}`; lỗi `EMAIL_TAKEN`, `INVALID_CREDENTIALS`, `ACCOUNT_LOCKED` (423) |
+| `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` | công khai / đã đăng nhập | register `{name, password, phone?, email?}` (ít nhất một); login `{identifier, password}` (identifier = email hoặc số điện thoại; vẫn nhận `email`); trả `{user {id,email,phone,name}, csrfToken}`; lỗi `EMAIL_TAKEN`/`PHONE_TAKEN` 409 (details theo ô), `INVALID_CREDENTIALS`, `ACCOUNT_LOCKED` (423) |
+| `GET /instance/join-request` · `POST` | đã đăng nhập | chế độ single: yêu cầu tham gia của tôi `{request: {status, message, createdAt, decidedAt} \| null}`; POST `{message?}` (gửi lại sau khi bị từ chối → chờ duyệt lại); `ALREADY_MEMBER` 409, `NO_MAIN_CLAN` 404 |
+| `GET /clans/:clanId/join-requests` · `POST …/:id/approve` `{role, personId?}` · `POST …/:id/reject` | admin | duyệt người tự đăng ký; `REQUEST_DECIDED` 409 |
+| `POST /clans/:clanId/members` | admin | tạo tài khoản mới `{name, phone?, email?, role, personId?}` → `{member, setPassword {path, expiresAt}}` (link đặt mật khẩu 7 ngày); số/email đã có tài khoản → `PHONE_TAKEN`/`EMAIL_TAKEN` (không gắn tài khoản có sẵn) |
+| `GET /clans/:clanId/anniversaries?from=YYYY-MM-DD&days=1..800` | member | `{from, days, items[{personId, fullName, generation, inClan, deathYear, lunar, solarDate, weekday, daysUntil, nth, adjustments}], missingDeathDay}`; mặc định từ hôm nay giờ VN, 365 ngày; người `hidden` chỉ admin thấy |
+| `GET /clans/:clanId/anniversaries.ics?years=1..5` | member | file lịch RFC 5545, sự kiện cả ngày, nhắc trước 3 ngày; tên file `lich-gio-<slug>.ics` |
 | `GET /me`, `GET /me/clans` | đã đăng nhập | |
 | `POST /auth/forgot-password` | công khai | `{email}` → luôn 202 (không lộ email có tài khoản); gửi link 30 phút qua SMTP hoặc ghi log |
 | `POST /auth/reset-password` | công khai | `{token, password}` → `{email}`; dùng một lần, mở khoá tài khoản, xoá mọi phiên; `RESET_LINK_INVALID` 410 |
@@ -251,8 +257,8 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | `PATCH/DELETE /clans/:clanId/media/:id` | editor | sửa chú thích; xoá (gỡ khỏi ảnh chân dung, banner tự bỏ, xoá file sau commit) |
 | `PUT /clans/:clanId/persons/:id/avatar` | editor | `{mediaId \| null}` — không tăng `version`; ảnh phải cùng dòng họ (`MEDIA_NOT_FOUND`) |
 | `GET /clans/:clanId/site/home` · `PUT` (admin) | member | `{banners[], couplet {left,right} \| null, motto, stats {people, generations}}`; lưu trong `site_settings.data.home` |
-| `GET /invitations/:token` | công khai | xem trước `{clanName, role, invitedBy, expiresAt, forSpecificEmail, status}` |
-| `POST /invitations/:token/accept` | đã đăng nhập | `{clanId, alreadyMember}`; lỗi `INVITE_NOT_FOUND` 404, `INVITE_EXPIRED`/`INVITE_REVOKED`/`INVITE_USED` 410, `INVITE_EMAIL_MISMATCH` 403 |
+| `GET /invitations/:token` | công khai | xem trước `{clanId, clanName, role, invitedBy, expiresAt, forSpecificEmail, status}` |
+| `POST /invitations/:token/accept` | đã đăng nhập | `{clanId, alreadyMember, role}` (đã là thành viên → giữ vai trò cũ, không tốn lượt); đóng yêu cầu tham gia đang chờ; lỗi `INVITE_NOT_FOUND` 404, `INVITE_EXPIRED`/`INVITE_REVOKED`/`INVITE_USED` 410, `INVITE_EMAIL_MISMATCH` 403 |
 
 Không phải thành viên → **404** (không lộ dòng họ có tồn tại). Mã lỗi DB: trigger `ANCESTOR_CYCLE`/`SELF_PARENT`/`CROSS_CLAN_REFERENCE` → 422.
 
@@ -375,6 +381,14 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.10.0] — 2026-11-02 — Lịch giỗ
+### Thêm
+- API `GET /clans/:id/anniversaries` và `…/anniversaries.ics` (`apps/api/src/anniversaries/`): tính giỗ trên đường đi từ `persons.death_anniv_lunar` (không lưu bảng riêng) bằng `anniversariesBetween` của `@coinguon/lunar-vn`; theo `clans.day30_rule`; tháng nhuận → tháng thường; "giỗ lần thứ" = năm âm của lần giỗ − năm âm lúc mất (1 = giỗ đầu, 2 = giỗ hết); "hôm nay" theo giờ Việt Nam.
+- Web: thẻ **Lịch giỗ** (12 tháng tới, chia theo tháng, ô ngày kiểu tờ lịch bloc có ngày âm), nút **Thêm vào lịch điện thoại** (.ics hai năm, nhắc trước 3 ngày), khung **Giỗ sắp tới** (60 ngày) ở trang chủ, nhắc số người chưa đủ ngày/tháng mất.
+- Hướng dẫn sử dụng v1.6: lịch giỗ, đăng nhập bằng số điện thoại, duyệt thành viên, tạo tài khoản giúp, câu hỏi về link mời.
+### Ghi chú
+- Tên file .ics chỉ dùng slug không dấu: Chrome bỏ cả tên file khi `filename*` có dấu.
 
 ## [0.9.0] — 2026-11-02 — Đăng nhập bằng số điện thoại, duyệt thành viên, nền phả đồ mới
 ### Thêm
@@ -544,6 +558,8 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-023 | Quick Tunnel: link đổi mỗi lần khởi động lại, không cam kết hoạt động — chỉ để demo | Thấp | Chạy thật: Oracle Free/Bizfly + Caddy, hoặc Cloudflare Tunnel có tên (cần tài khoản + tên miền) |
 | KI-024 | Image `cloudflare/cloudflared:latest` chưa ghim phiên bản | Thấp | Ghim tag cụ thể khi chạy lâu dài |
 | KI-025 | Sao lưu nằm trên cùng máy; chưa tự đẩy sang Google Drive | Trung bình | Thêm rclone vào service backup khi chạy thật |
+| KI-026 | Chế độ nhiều dòng họ: quản trị dòng họ B tạo được link đặt lại mật khẩu cho thành viên của B, kể cả khi người đó là quản trị dòng họ A → chiếm được quyền ở A. Chế độ một dòng họ (đang dùng) không bị | Cao khi bật `CLAN_MODE=multi` | Trước khi bật multi: chỉ cho tạo link với tài khoản chỉ thuộc dòng họ này, hoặc tài khoản do chính dòng họ tạo |
+| KI-027 | Số điện thoại chưa được xác minh (OTP SMS): ai cũng đăng ký được bằng số của người khác (vẫn phải chờ quản trị duyệt) | Trung bình | Quản trị kiểm tra trước khi duyệt; thêm OTP SMS/Zalo khi có ngân sách |
 | KI-008 | Bố cục phả đồ hiện là dạng "khối căn giữa", chưa nén nhánh kiểu Reingold–Tilford (cây rộng hơn cần thiết) | Thấp | Tối ưu khi làm trình chỉnh sửa phả đồ nếu cây quá rộng |
 
 ---

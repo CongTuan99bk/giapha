@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type {
+  AnniversaryList,
   Clan,
   GrantableRole,
   HomeSettings,
@@ -34,6 +35,14 @@ export interface Instance {
   clan: { id: string; name: string; surname: string } | null;
 }
 export const useInstance = () => useQuery({ queryKey: ["instance"], queryFn: () => api<Instance>("GET", "/instance") });
+
+/** Giỗ trong `days` ngày tới (tính từ hôm nay theo giờ Việt Nam ở máy chủ) */
+export const useAnniversaries = (clanId: string, days = 365) =>
+  useQuery({
+    queryKey: ["clan", clanId, "anniversaries", days],
+    queryFn: () => api<AnniversaryList>("GET", `/clans/${clanId}/anniversaries?days=${days}`),
+    staleTime: 10 * 60_000,
+  });
 
 export const useMe = () => useQuery({ queryKey: keys.me, queryFn: () => api<User>("GET", "/me"), retry: false });
 export const useMyClans = (enabled = true) => useQuery({ queryKey: keys.clans, queryFn: () => api<Clan[]>("GET", "/me/clans"), enabled });

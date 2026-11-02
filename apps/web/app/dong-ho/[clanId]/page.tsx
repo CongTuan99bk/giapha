@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import { AnniversaryRow } from "@/components/anniversary-list";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { Lightbox } from "@/components/lightbox";
 import { FormError } from "@/components/field";
-import { useClan, useHome } from "@/lib/queries";
+import { useAnniversaries, useClan, useHome } from "@/lib/queries";
 import { ROLE_RANK } from "@/lib/roles";
 
 /** Trang chủ dòng họ: banner ảnh tự trượt, câu đối hai bên, lối vào phả đồ. */
@@ -77,6 +78,7 @@ export default function ClanHomePage() {
             ? "Phả đồ chưa có ai."
             : `Phả đồ đang ghi ${h.stats.people.toLocaleString("vi-VN")} người qua ${h.stats.generations} đời.`}
         </p>
+        <UpcomingCard clanId={clanId} />
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href={`${base}/pha-do`} className="btn-chinh">
             {h.stats.people === 0 ? "Bắt đầu nhập phả" : "Xem phả đồ"}
@@ -90,6 +92,30 @@ export default function ClanHomePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Giỗ trong 60 ngày tới (tối đa 3) — ẩn nếu không có */
+function UpcomingCard({ clanId }: { clanId: string }) {
+  const list = useAnniversaries(clanId, 365);
+  const soon = (list.data?.items ?? []).filter((a) => a.daysUntil <= 60).slice(0, 3);
+  if (soon.length === 0) return null;
+  return (
+    <section aria-labelledby="gio-sap-toi" className="mt-8 rounded-md border border-[#d6c9ae] bg-do/60 px-5 py-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 id="gio-sap-toi" className="font-serif text-xl text-son-dam">
+          Giỗ sắp tới
+        </h2>
+        <Link href={`/dong-ho/${clanId}/lich-gio`} className="text-sm font-medium text-son underline-offset-4 hover:underline">
+          Xem lịch giỗ
+        </Link>
+      </div>
+      <ul className="mt-1 divide-y divide-[#e3d8c2]">
+        {soon.map((a) => (
+          <AnniversaryRow key={`${a.personId}-${a.lunar.year}`} a={a} clanId={clanId} compact />
+        ))}
+      </ul>
+    </section>
   );
 }
 

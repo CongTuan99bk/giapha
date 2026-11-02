@@ -221,3 +221,29 @@ export interface HomeSettings {
   motto: string | null;
   stats: { people: number; generations: number };
 }
+
+/** Một lần giỗ sắp tới (API /clans/:id/anniversaries) */
+export interface UpcomingAnniversary {
+  personId: string;
+  fullName: string;
+  gender: Gender;
+  generation: number | null;
+  inClan: boolean;
+  deathYear: number | null;
+  lunar: { day: number; month: number; year: number; isLeapMonth: boolean };
+  /** YYYY-MM-DD */
+  solarDate: string;
+  /** 0 = Chủ nhật */
+  weekday: number;
+  daysUntil: number;
+  /** 1 = giỗ đầu, 2 = giỗ hết */
+  nth: number | null;
+  adjustments: Array<"leap-month-to-regular" | "day30-to-day29" | "day30-to-next-month">;
+}
+
+export interface AnniversaryList {
+  from: string;
+  days: number;
+  items: UpcomingAnniversary[];
+  missingDeathDay: number;
+}
