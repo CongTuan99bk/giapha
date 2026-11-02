@@ -256,6 +256,8 @@ test("quên mật khẩu: trang gửi yêu cầu không tiết lộ email có t�
   const p = await browser.newPage();
   await p.goto("/dang-nhap");
   await p.getByRole("link", { name: "Quên mật khẩu?" }).click();
+  // chờ trang mới hiện hẳn — nếu không, máy chậm sẽ điền vào ô Email của trang đăng nhập cũ
+  await expect(p.getByRole("heading", { name: "Quên mật khẩu" })).toBeVisible();
   await p.getByLabel("Email").fill("khong-co-ai@e2e.test");
   await p.getByRole("button", { name: "Gửi link đặt lại mật khẩu" }).click();
   await expect(p.getByText(/Nếu khong-co-ai@e2e.test có tài khoản/)).toBeVisible();
