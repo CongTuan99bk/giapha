@@ -1,5 +1,6 @@
 "use client";
 
+import { useHydrated } from "@/lib/use-hydrated";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
@@ -8,6 +9,7 @@ import { Field, FormError } from "@/components/field";
 import { api, ApiError, fieldErrors } from "@/lib/api";
 
 function ResetForm() {
+  const hydrated = useHydrated();
   const params = useSearchParams();
   const router = useRouter();
   const token = params.get("ma") ?? "";
@@ -65,7 +67,7 @@ function ResetForm() {
         hint="Ít nhất 8 ký tự."
       />
       <Field label="Nhập lại mật khẩu mới" name="confirm" type="password" autoComplete="new-password" required error={fields.confirm} />
-      <button type="submit" className="btn-chinh w-full" disabled={pending}>
+      <button type="submit" className="btn-chinh w-full" disabled={!hydrated || pending}>
         {pending ? "Đang lưu…" : "Đặt mật khẩu mới"}
       </button>
       <p className="text-sm text-reu">Đặt xong, bạn sẽ được đăng xuất khỏi mọi thiết bị khác để bảo đảm an toàn.</p>

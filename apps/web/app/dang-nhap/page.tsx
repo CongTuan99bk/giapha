@@ -1,5 +1,6 @@
 "use client";
 
+import { useHydrated } from "@/lib/use-hydrated";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
@@ -12,6 +13,7 @@ import { safeNext } from "@/lib/redirect";
 import type { User } from "@/lib/types";
 
 function LoginForm() {
+  const hydrated = useHydrated();
   const router = useRouter();
   const params = useSearchParams();
   const qc = useQueryClient();
@@ -57,7 +59,7 @@ function LoginForm() {
           Quên mật khẩu?
         </Link>
       </p>
-      <button type="submit" className="btn-chinh w-full" disabled={pending}>
+      <button type="submit" className="btn-chinh w-full" disabled={!hydrated || pending}>
         {pending ? "Đang đăng nhập…" : "Đăng nhập"}
       </button>
       <p className="text-sm text-reu">

@@ -388,6 +388,9 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 - Test: API 68 (thêm 8: quên/đặt lại mật khẩu, link quản trị, giới hạn tần suất), 18 Playwright.
 ### Sửa
 - Biến môi trường để trống (`PUBLIC_URL=`) coi như không đặt.
+- Nút gửi của các form mở trực tiếp bằng link (đăng nhập, đăng ký, quên/đặt lại mật khẩu, tạo dòng họ) bị khoá tới khi trang sẵn sàng (`lib/use-hydrated.ts`): bấm quá sớm trên máy chậm làm trình duyệt gửi form kiểu cũ và mất thao tác (phát hiện qua CI).
+- Docker: service `media-init` chỉnh quyền volume ảnh (volume do service backup tạo trước thì thuộc root).
+- Playwright không chạy lại test (`retries: 0`) vì luồng chính chạy nối tiếp trên cùng dữ liệu.
 - Giấy phép: cho phép MIT-0 (nodemailer).
 
 ## [0.7.1] — 2026-11-02 — Xem ảnh lớn

@@ -1,5 +1,6 @@
 "use client";
 
+import { useHydrated } from "@/lib/use-hydrated";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { AuthShell } from "@/components/auth-shell";
@@ -7,6 +8,7 @@ import { Field, FormError } from "@/components/field";
 import { api, fieldErrors } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
+  const hydrated = useHydrated();
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -49,7 +51,7 @@ export default function ForgotPasswordPage() {
           <p className="-mt-4 text-reu">Nhập email bạn dùng để đăng nhập. Chúng tôi gửi link để bạn đặt mật khẩu mới.</p>
           <FormError message={error} />
           <Field label="Email" name="email" type="email" autoComplete="email" required error={fields.email} />
-          <button type="submit" className="btn-chinh w-full" disabled={pending}>
+          <button type="submit" className="btn-chinh w-full" disabled={!hydrated || pending}>
             {pending ? "Đang gửi…" : "Gửi link đặt lại mật khẩu"}
           </button>
           <p className="text-sm text-reu">

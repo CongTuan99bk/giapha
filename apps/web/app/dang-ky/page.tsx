@@ -1,5 +1,6 @@
 "use client";
 
+import { useHydrated } from "@/lib/use-hydrated";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
@@ -12,6 +13,7 @@ import { safeNext } from "@/lib/redirect";
 import type { User } from "@/lib/types";
 
 function RegisterForm() {
+  const hydrated = useHydrated();
   const router = useRouter();
   const params = useSearchParams();
   const next = safeNext(params.get("tiep"));
@@ -59,7 +61,7 @@ function RegisterForm() {
           error={fields.password}
           hint="Ít nhất 8 ký tự."
         />
-        <button type="submit" className="btn-chinh w-full" disabled={pending}>
+        <button type="submit" className="btn-chinh w-full" disabled={!hydrated || pending}>
           {pending ? "Đang tạo…" : "Tạo tài khoản"}
         </button>
         <p className="text-sm text-reu">

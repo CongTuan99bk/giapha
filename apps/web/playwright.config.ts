@@ -13,7 +13,8 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
   workers: 1,
-  retries: process.env.CI ? 1 : 0,
+  // Không chạy lại: các test luồng chính chạy nối tiếp trên cùng dữ liệu, chạy lại giữa chừng chỉ gây lỗi dây chuyền
+  retries: 0,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   globalSetup: "./e2e/global-setup.ts",
   use: {

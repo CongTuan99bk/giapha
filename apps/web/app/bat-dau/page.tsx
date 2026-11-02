@@ -1,5 +1,6 @@
 "use client";
 
+import { useHydrated } from "@/lib/use-hydrated";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ import { keys } from "@/lib/queries";
 
 /** Lần đầu sử dụng: người đầu tiên tạo dòng họ và trở thành chủ sở hữu. */
 function CreateClan() {
+  const hydrated = useHydrated();
   const router = useRouter();
   const qc = useQueryClient();
   const [name, setName] = useState("");
@@ -75,7 +77,7 @@ function CreateClan() {
           error={fields.slug}
           hint="Chữ thường không dấu, số và gạch ngang. Dùng làm địa chỉ website của dòng họ."
         />
-        <button type="submit" className="btn-chinh w-full" disabled={pending || !name.trim()}>
+        <button type="submit" className="btn-chinh w-full" disabled={!hydrated || pending || !name.trim()}>
           {pending ? "Đang tạo…" : "Tạo dòng họ"}
         </button>
       </form>
