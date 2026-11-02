@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { BannerCarousel } from "@/components/banner-carousel";
+import { Lightbox } from "@/components/lightbox";
 import { FormError } from "@/components/field";
 import { useClan, useHome } from "@/lib/queries";
 import { ROLE_RANK } from "@/lib/roles";
@@ -12,6 +14,7 @@ export default function ClanHomePage() {
   const { clanId } = useParams<{ clanId: string }>();
   const clan = useClan(clanId);
   const home = useHome(clanId);
+  const [viewing, setViewing] = useState<number | null>(null);
 
   if (clan.error || home.error) return <div className="p-6"><FormError message={(clan.error ?? home.error)!.message} /></div>;
   if (!clan.data || !home.data) return <p className="p-6 text-reu">Đang tải…</p>;
@@ -35,7 +38,9 @@ export default function ClanHomePage() {
         {h.couplet && <CoupletPanel text={h.couplet.left} side="trái" />}
         <div className="relative h-[min(58vw,27rem)] min-h-[14rem]">
           {h.banners.length > 0 ? (
-            <BannerCarousel slides={h.banners}>{title}</BannerCarousel>
+            <BannerCarousel slides={h.banners} onOpen={setViewing} hold={viewing !== null}>
+              {title}
+            </BannerCarousel>
           ) : (
             <div className="relative h-full bg-then">
               {isAdmin && (
@@ -52,6 +57,13 @@ export default function ClanHomePage() {
         </div>
         {h.couplet && <CoupletPanel text={h.couplet.right} side="phải" />}
       </div>
+
+      <Lightbox
+        items={h.banners.map((b) => ({ src: b.urls.lg, zoomSrc: b.urls.orig, downloadUrl: b.urls.orig, alt: b.caption ?? `Ảnh ${c.name}`, caption: b.caption }))}
+        index={viewing}
+        onIndexChange={setViewing}
+        onClose={() => setViewing(null)}
+      />
 
       <div className="mx-auto max-w-3xl px-4 py-8">
         {h.couplet && (

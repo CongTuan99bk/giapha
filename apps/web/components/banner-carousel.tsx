@@ -9,6 +9,10 @@ const SWIPE_PX = 40;
 
 interface Props {
   slides: MediaItem[];
+  /** Bấm vào ảnh → mở xem ảnh lớn ở vị trí này */
+  onOpen?: (index: number) => void;
+  /** Tạm dừng tự trượt từ bên ngoài (vd. khi đang mở xem ảnh lớn) */
+  hold?: boolean;
   /** Nội dung phủ lên ảnh (tên dòng họ, khẩu hiệu) */
   children?: ReactNode;
 }
@@ -19,7 +23,7 @@ interface Props {
  * Dừng khi rê chuột, khi đang dùng bàn phím trong banner, khi tab bị ẩn; không tự trượt nếu người dùng
  * bật "giảm chuyển động" trong hệ điều hành. Vuốt trái/phải trên điện thoại.
  */
-export function BannerCarousel({ slides, children }: Props) {
+export function BannerCarousel({ slides, children, onOpen, hold = false }: Props) {
   const count = slides.length;
   const [pos, setPos] = useState(0); // 0..count (count = bản sao ảnh đầu)
   const [animate, setAnimate] = useState(true);
@@ -27,6 +31,7 @@ export function BannerCarousel({ slides, children }: Props) {
   const [reduced, setReduced] = useState(false);
   const drag = useRef<{ x: number; id: number } | null>(null);
   const busy = useRef(false);
+  const swiped = useRef(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -74,12 +79,12 @@ export function BannerCarousel({ slides, children }: Props) {
 
   // Tự trượt
   useEffect(() => {
-    if (count < 2 || paused || reduced) return;
+    if (count < 2 || paused || hold || reduced) return;
     const t = window.setInterval(() => {
       if (document.visibilityState === "visible") go(pos + 1);
     }, INTERVAL_MS);
     return () => window.clearInterval(t);
-  }, [count, paused, reduced, pos, go]);
+  }, [count, paused, hold, reduced, pos, go]);
 
   if (count === 0) return null;
   const active = pos % count;
@@ -93,7 +98,8 @@ export function BannerCarousel({ slides, children }: Props) {
     drag.current = null;
     if (!d || d.id !== e.pointerId) return;
     const dx = e.clientX - d.x;
-    if (Math.abs(dx) >= SWIPE_PX) go(dx < 0 ? pos + 1 : pos - 1);
+    swiped.current = Math.abs(dx) >= SWIPE_PX; // vuốt xong thì không tính là bấm mở ảnh
+    if (swiped.current) go(dx < 0 ? pos + 1 : pos - 1);
   };
 
   return (
@@ -128,6 +134,20 @@ export function BannerCarousel({ slides, children }: Props) {
             aria-label={`Ảnh ${(i % count) + 1} trên ${count}${s.caption ? `: ${s.caption}` : ""}`}
             aria-hidden={i % count !== active || i === count}
           >
+            <button
+              type="button"
+              className="block h-full w-full cursor-zoom-in"
+              tabIndex={i % count === active && i !== count ? 0 : -1}
+              aria-label={`Xem ảnh lớn${s.caption ? `: ${s.caption}` : ""}`}
+              onClick={() => {
+                if (swiped.current) {
+                  swiped.current = false;
+                  return;
+                }
+                onOpen?.(i % count);
+              }}
+              disabled={!onOpen}
+            >
             <img
               src={s.urls.lg}
               srcSet={`${s.urls.md} 960w, ${s.urls.lg} 1920w`}
@@ -137,6 +157,7 @@ export function BannerCarousel({ slides, children }: Props) {
               draggable={false}
               className="h-full w-full object-cover"
             />
+            </button>
             {s.caption && (
               <span className="absolute right-3 top-3 max-w-[60%] truncate rounded bg-then/60 px-2 py-1 text-sm text-ngoc-50">{s.caption}</span>
             )}

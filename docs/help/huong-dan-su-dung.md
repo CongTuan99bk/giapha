@@ -1,6 +1,6 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.3
+version: 1.4
 updated: 2026-11-02
 audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
@@ -51,6 +51,7 @@ Trên điện thoại, các mục chính nằm ở thanh dưới cùng màn hìn
 
 **Trang chủ khi đã đăng nhập:** vào dòng họ, bạn thấy ngay **Trang chủ** với dải ảnh lớn (ảnh nhà thờ họ, cổng làng, đại gia đình…) tự trượt lần lượt và quay vòng, hai bên là **câu đối** (trên điện thoại câu đối nằm dưới ảnh).
 - Rê chuột lên ảnh để dừng trượt; bấm **‹ ›** hoặc các chấm phía dưới để chuyển ảnh. Trên điện thoại, vuốt sang trái/phải.
+- **Bấm vào ảnh để xem ảnh lớn** (xem mục *Xem ảnh lớn* bên dưới).
 - Nếu máy bạn bật "giảm chuyển động", ảnh không tự trượt — bấm chấm để xem ảnh khác.
 - Bên dưới là số người, số đời trong phả và các nút **Xem phả đồ**, **Tra cách xưng hô**, **Tìm người trong phả**.
 
@@ -73,6 +74,12 @@ Trên điện thoại, các mục chính nằm ở thanh dưới cùng màn hìn
 Bấm vào một người trên cây hoặc trong kết quả tìm kiếm để mở hồ sơ: ảnh, tên, tên khác (tên huý, tên tự), ngày sinh, ngày mất, ngày giỗ, tiểu sử, gia đình.
 
 - **Ảnh chân dung** (ảnh thờ) hiện ở đầu hồ sơ và thu nhỏ ngay trên ô của người đó trong phả đồ. Bấm vào ảnh để xem ảnh lớn.
+
+**Xem ảnh lớn:** bấm vào ảnh chân dung hoặc ảnh banner, ảnh mở to trên nền tối.
+- **Phóng to** (hoặc bấm đúp vào ảnh): xem bản gốc đủ nét, kéo/cuộn để xem chi tiết — hợp với ảnh cũ, giấy tờ. Bấm **Vừa màn hình** để thu lại.
+- Nhiều ảnh: bấm **‹ ›**, dùng phím mũi tên trái/phải, hoặc vuốt trên điện thoại; xem hết ảnh cuối sẽ quay về ảnh đầu.
+- **Tải ảnh gốc** để lưu về máy.
+- Đóng: bấm **Đóng ✕**, bấm ra vùng tối quanh ảnh, hoặc nhấn **Esc** (đang phóng to thì Esc lần đầu thu ảnh lại).
 
 - Ngày tháng hiển thị cả **dương lịch** và **âm lịch**.
 - Với người còn sống, website công khai chỉ hiện họ tên và năm sinh. Thông tin chi tiết chỉ thành viên đã đăng nhập mới xem được.

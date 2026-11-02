@@ -7,6 +7,7 @@ import { useAddPerson, useDeletePerson, useLinkMe, usePerson, useSetAvatar, useU
 import { mediaUrl, uploadImage } from "@/lib/upload";
 import type { Clan, Gender, PersonBrief, PersonDetail } from "@/lib/types";
 import { FormError } from "../field";
+import { Lightbox } from "../lightbox";
 import { PersonForm } from "../person-form";
 
 type Mode = { kind: "view" } | { kind: "edit" } | { kind: "add"; relative: RelativeKind; unionId?: string } | { kind: "delete"; needsConfirm: boolean };
@@ -343,6 +344,7 @@ function ThisIsMe({ clan, personId }: { clan: Clan; personId: string }) {
 /** Ảnh chân dung (ảnh thờ): xem, thêm, đổi, gỡ. Ảnh gốc mở được ở tab mới để tải về. */
 function Portrait({ clanId, p, canEdit }: { clanId: string; p: PersonDetail; canEdit: boolean }) {
   const setAvatar = useSetAvatar(clanId);
+  const [viewing, setViewing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -371,13 +373,27 @@ function Portrait({ clanId, p, canEdit }: { clanId: string; p: PersonDetail; can
     <div className="mb-4">
       {p.avatarMediaId ? (
         <div className="flex items-end gap-4">
-          <a href={mediaUrl(clanId, p.avatarMediaId, "lg")} target="_blank" rel="noreferrer" title="Xem ảnh lớn">
+          <button type="button" onClick={() => setViewing(true)} className="cursor-zoom-in rounded-md" aria-label={`Xem ảnh lớn: ${p.fullName}`}>
             <img
               src={mediaUrl(clanId, p.avatarMediaId, "md")}
               alt={`Ảnh chân dung ${p.fullName}`}
               className="h-36 w-28 rounded-md border border-ngoc-200 object-cover"
             />
-          </a>
+          </button>
+          <Lightbox
+            items={[
+              {
+                src: mediaUrl(clanId, p.avatarMediaId, "lg"),
+                zoomSrc: mediaUrl(clanId, p.avatarMediaId, "orig"),
+                downloadUrl: mediaUrl(clanId, p.avatarMediaId, "orig"),
+                alt: `Ảnh chân dung ${p.fullName}`,
+                caption: p.fullName,
+              },
+            ]}
+            index={viewing ? 0 : null}
+            onIndexChange={() => undefined}
+            onClose={() => setViewing(false)}
+          />
           {canEdit && (
             <div className="flex flex-col items-start gap-1 text-sm">
               <label className={`cursor-pointer font-medium text-son hover:underline ${busy ? "pointer-events-none opacity-50" : ""}`}>

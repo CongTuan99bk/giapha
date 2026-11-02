@@ -119,3 +119,12 @@ describe("kiểm tra ảnh trước khi tải", async () => {
     expect(checkImageFile({ name: "to.jpg", type: "image/jpeg", size: 16 * 1024 * 1024 })).toMatch(/lớn hơn 15 MB/);
   });
 });
+
+describe("xem ảnh lớn: quay vòng chỉ số", async () => {
+  const { wrapIndex } = await import("../components/lightbox");
+  it("lùi từ ảnh đầu về ảnh cuối, tiến từ ảnh cuối về ảnh đầu", () => {
+    expect(wrapIndex(-1, 3)).toBe(2);
+    expect(wrapIndex(3, 3)).toBe(0);
+    expect(wrapIndex(1, 3)).toBe(1);
+  });
+});

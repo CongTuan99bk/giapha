@@ -5,7 +5,7 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.7.0 |
+| Phiên bản file | 0.7.1 |
 | Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **MVP phần 1 gần xong — phả đồ, mời thành viên, ảnh chân dung, trang chủ có banner; tiếp theo: triển khai lên VPS** |
@@ -363,6 +363,12 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.7.1] — 2026-11-02 — Xem ảnh lớn
+### Thêm
+- `components/lightbox.tsx`: bấm ảnh chân dung hoặc ảnh banner → khung xem ảnh lớn (thẻ `<dialog>` gốc: giữ focus, Esc đóng, trả focus về nút đã mở). Phóng to xem bản gốc (bấm đúp/nút), chuyển ảnh bằng ‹ ›/phím mũi tên/vuốt, quay vòng, tải ảnh gốc, chú thích dưới ảnh. Banner dừng tự trượt khi đang xem.
+### Sửa
+- Ảnh đã có trong cache trình duyệt không bắn sự kiện `load` kịp → khung xem kẹt "Đang tải ảnh…"; nay ghi nhớ theo đường dẫn ảnh và kiểm tra `img.complete` (có test Playwright).
 
 ## [0.7.0] — 2026-11-02 — Ảnh chân dung, trang chủ có banner tự trượt
 ### Thêm

@@ -105,6 +105,19 @@ test("ảnh chân dung: tải lên từ bảng thông tin, hiện trên ô phả
   await panel().getByText("Thêm ảnh chân dung").locator("input[type=file]").setInputFiles(fixture("chan-dung.jpg"));
   await expect(panel().getByRole("img", { name: "Ảnh chân dung Lê Văn Cả" })).toBeVisible();
   await expect(page.locator(`${node("Lê Văn Cả")} image`)).toHaveCount(1);
+
+  // bấm ảnh → khung xem ảnh lớn; Esc để đóng
+  await panel().getByRole("button", { name: "Xem ảnh lớn: Lê Văn Cả" }).click();
+  const viewer = page.getByRole("dialog", { name: "Lê Văn Cả" });
+  await expect(viewer).toBeVisible();
+  await expect(viewer.getByRole("img", { name: "Ảnh chân dung Lê Văn Cả" })).toBeVisible();
+  await expect(viewer.getByText("Đang tải ảnh…")).toBeHidden(); // ảnh đã có trong cache vẫn phải hiện ra
+  await viewer.getByRole("button", { name: "Phóng to" }).click();
+  await expect(viewer.getByRole("img")).toHaveAttribute("src", /\/orig$/);
+  await page.keyboard.press("Escape"); // lần 1: thu về vừa màn hình
+  await expect(viewer.getByRole("button", { name: "Phóng to" })).toBeVisible();
+  await page.keyboard.press("Escape"); // lần 2: đóng
+  await expect(viewer).toBeHidden();
 });
 
 test("trang chủ: nhiều ảnh banner tự trượt + câu đối", async () => {
@@ -131,6 +144,20 @@ test("trang chủ: nhiều ảnh banner tự trượt + câu đối", async () =
   await page.waitForTimeout(800);
   await carousel.getByRole("button", { name: "Ảnh sau" }).click();
   await expect(carousel.getByRole("button", { name: "Xem ảnh 1" })).toHaveAttribute("aria-current", "true");
+
+  // bấm vào ảnh banner → xem ảnh lớn, chuyển ảnh bằng phím mũi tên, quay vòng
+  await page.waitForTimeout(800);
+  await carousel.getByRole("button", { name: "Xem ảnh lớn: Nhà thờ họ" }).click();
+  const viewer = page.getByRole("dialog");
+  await expect(viewer.getByText("1/2")).toBeVisible();
+  await expect(viewer.getByText("Đang tải ảnh…")).toBeHidden();
+  await page.keyboard.press("ArrowRight");
+  await expect(viewer.getByText("2/2")).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await expect(viewer.getByText("1/2")).toBeVisible();
+  await expect(viewer.getByRole("link", { name: "Tải ảnh gốc" })).toHaveAttribute("href", /\/orig$/);
+  await viewer.getByRole("button", { name: "Đóng xem ảnh" }).click();
+  await expect(viewer).toBeHidden();
 });
 
 let inviteUrl = "";
