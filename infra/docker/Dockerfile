@@ -29,7 +29,9 @@ FROM node:22-bookworm-slim AS api
 ENV NODE_ENV=production PORT=4000 MEDIA_DIR=/data/media
 WORKDIR /app
 COPY --from=build --chown=node:node /out/api ./
-RUN mkdir -p /data/media && chown node:node /data/media
+# Có sẵn một file trong thư mục: Docker chỉ chép nội dung + quyền sở hữu (node) sang volume mới khi thư mục không rỗng;
+# thư mục rỗng thì volume thuộc root và API (chạy bằng user node) không ghi ảnh được
+RUN mkdir -p /data/media && touch /data/media/.giu-cho && chown -R node:node /data/media
 USER node
 EXPOSE 4000
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=5 \
