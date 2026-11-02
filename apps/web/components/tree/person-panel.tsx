@@ -3,14 +3,32 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { formatAnniversary, formatFlexibleDate, GENDER_LABEL } from "@/lib/format";
-import { useAddPerson, useDeletePerson, useLinkMe, usePerson, useSetAvatar, useUpdatePerson, type RelativeKind } from "@/lib/queries";
+import {
+  type RelativeKind,
+  useAddPerson,
+  useDeletePerson,
+  useLinkMe,
+  usePerson,
+  useRemoveUnion,
+  useReorderChildren,
+  useReorderUnions,
+  useSetAvatar,
+  useSetParentLink,
+  useUpdatePerson,
+} from "@/lib/queries";
 import { mediaUrl, uploadImage } from "@/lib/upload";
-import type { Clan, Gender, PersonBrief, PersonDetail } from "@/lib/types";
+import type { ChildRelation, Clan, Gender, PersonBrief, PersonDetail, PersonListItem } from "@/lib/types";
 import { FormError } from "../field";
 import { Lightbox } from "../lightbox";
-import { PersonForm } from "../person-form";
+import { chipClass, PersonForm } from "../person-form";
+import { PersonPicker } from "../person-picker";
 
-type Mode = { kind: "view" } | { kind: "edit" } | { kind: "add"; relative: RelativeKind; unionId?: string } | { kind: "delete"; needsConfirm: boolean };
+type Mode =
+  | { kind: "view" }
+  | { kind: "edit" }
+  | { kind: "add"; relative: RelativeKind; unionId?: string }
+  | { kind: "parents" }
+  | { kind: "delete"; needsConfirm: boolean };
 
 interface Props {
   clan: Clan;
@@ -45,7 +63,15 @@ export function PersonPanel({ clan, personId, canEdit, onSelect, onClose }: Prop
     >
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ngoc-100 bg-giay/95 px-5 py-2 backdrop-blur">
         <span className="text-sm text-reu">
-          {mode.kind === "view" ? "Thông tin" : mode.kind === "edit" ? "Sửa thông tin" : mode.kind === "add" ? ADD_TITLE[mode.relative] : "Xoá khỏi phả đồ"}
+          {mode.kind === "view"
+            ? "Thông tin"
+            : mode.kind === "edit"
+              ? "Sửa thông tin"
+              : mode.kind === "add"
+                ? ADD_TITLE[mode.relative]
+                : mode.kind === "parents"
+                  ? "Cha mẹ"
+                  : "Xoá khỏi phả đồ"}
         </span>
         <button type="button" onClick={onClose} className="btn -mr-3 px-3 text-reu hover:text-then" aria-label="Đóng bảng thông tin">
           Đóng
@@ -61,6 +87,7 @@ export function PersonPanel({ clan, personId, canEdit, onSelect, onClose }: Prop
         {person.data && mode.kind === "add" && (
           <AddRelative clanId={clan.id} p={person.data} relative={mode.relative} unionId={mode.unionId} onSelect={onSelect} cancel={() => setMode({ kind: "view" })} />
         )}
+        {person.data && mode.kind === "parents" && <ParentLinkForm clanId={clan.id} p={person.data} done={() => setMode({ kind: "view" })} />}
         {person.data && mode.kind === "delete" && (
           <DeletePerson clanId={clan.id} p={person.data} needsConfirm={mode.needsConfirm} setMode={setMode} onDeleted={onClose} />
         )}
@@ -90,9 +117,15 @@ function PersonView({
   if (!p.isLiving) facts.push(["Mất", formatFlexibleDate(p.deathDate) || "Không rõ ngày"]);
   if (p.deathAnniversaryLunar) facts.push(["Ngày giỗ", formatAnniversary(p.deathAnniversaryLunar)]);
   if (!p.inClan) facts.push(["Quan hệ với họ", p.gender === "female" ? "Con dâu" : p.gender === "male" ? "Con rể" : "Dâu/rể"]);
+  const main = p.childOf.find((c) => c.relation !== "step");
+  if (main) facts.push(["Thứ bậc", rankText(main, p.gender)]);
   for (const o of p.otherNames) facts.push([OTHER_NAME[o.type] ?? "Tên khác", o.value]);
+  if (p.facts.birthPlace) facts.push(["Quê quán", p.facts.birthPlace]);
+  if (p.facts.occupation) facts.push(["Nghề nghiệp", p.facts.occupation]);
+  if (p.facts.burialPlace) facts.push(["Nơi an táng", p.facts.burialPlace]);
 
   const hasParents = p.parents.length > 0;
+  const ownUnions = p.unions.every((u) => u.isPartnerA);
   return (
     <div>
       <Portrait clanId={clan.id} p={p} canEdit={canEdit} />
@@ -100,19 +133,47 @@ function PersonView({
       <ThisIsMe clan={clan} personId={p.id} />
       <dl className="mt-4 grid grid-cols-[7.5rem_1fr] gap-x-3 gap-y-2 text-[0.95rem]">
         {facts.map(([k, v]) => (
-          <div key={k} className="contents">
+          <div key={`${k}-${v}`} className="contents">
             <dt className="text-reu">{k}</dt>
             <dd>{v}</dd>
           </div>
         ))}
       </dl>
 
-      <Relatives title="Cha mẹ" people={p.parents} onSelect={onSelect} empty={canEdit ? undefined : "Chưa có thông tin"} />
-      {p.unions.map((u) => (
+      {p.biography?.text && (
+        <section className="mt-6">
+          <h3 className="text-sm font-medium text-reu">Tiểu sử</h3>
+          <p className="mt-1 whitespace-pre-line font-serif text-[1.05rem] leading-relaxed">{p.biography.text}</p>
+        </section>
+      )}
+
+      {p.childOf.length > 0 ? (
+        p.childOf.map((c) => (
+          <section key={c.unionId} className="mt-6">
+            <h3 className="text-sm font-medium text-reu">{c.relation === "step" ? "Cha mẹ kế (con riêng)" : c.relation === "adopted" ? "Cha mẹ nuôi" : "Cha mẹ"}</h3>
+            {c.parents.map((x) => (
+              <PersonLink key={x.id} person={x} onSelect={onSelect} />
+            ))}
+          </section>
+        ))
+      ) : (
+        !canEdit && <Relatives title="Cha mẹ" people={[]} onSelect={onSelect} empty="Chưa có thông tin" />
+      )}
+      {canEdit && !isRoot && (
+        <button type="button" className="mt-2 text-sm font-medium text-son hover:underline" onClick={() => setMode({ kind: "parents" })}>
+          {hasParents ? "Đổi cha mẹ, con ruột/nuôi" : "Chọn cha/mẹ đã có trong phả"}
+        </button>
+      )}
+
+      {p.unions.map((u, i) => (
         <section key={u.id} className="mt-6">
-          <h3 className="text-sm font-medium text-reu">{p.gender === "female" ? "Chồng" : p.gender === "male" ? "Vợ" : "Vợ/chồng"}</h3>
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-medium text-reu">{spouseLabel(p.gender, i, p.unions.length)}</h3>
+            {canEdit && ownUnions && p.unions.length > 1 && <UnionOrder clanId={clan.id} p={p} index={i} />}
+          </div>
           {u.partner ? <PersonLink person={u.partner} onSelect={onSelect} /> : <p className="mt-1 text-reu">Chưa rõ</p>}
-          <Relatives title="Con" people={u.children} onSelect={onSelect} nested />
+          <ChildList clanId={clan.id} unionId={u.id} items={u.children} canEdit={canEdit} onSelect={onSelect} />
+          {canEdit && u.partner && u.children.length === 0 && <RemoveUnion clanId={clan.id} unionId={u.id} partner={u.partner} />}
           {canEdit && (
             <button type="button" className="mt-2 text-sm font-medium text-son hover:underline" onClick={() => setMode({ kind: "add", relative: "child", unionId: u.id })}>
               Thêm con{u.partner ? ` với ${shortName(u.partner.fullName)}` : ""}
@@ -154,7 +215,25 @@ function PersonView({
   );
 }
 
-const OTHER_NAME: Record<string, string> = { huy: "Tên huý", tu: "Tên tự", thuy: "Tên thuỵ", hieu: "Tên hiệu" };
+const OTHER_NAME: Record<string, string> = { huy: "Tên huý", tu: "Tên tự", thuy: "Tên thuỵ", hieu: "Tên hiệu", khac: "Tên thường gọi" };
+
+const RELATION_LABEL: Record<ChildRelation, string> = { biological: "Con ruột", adopted: "Con nuôi", step: "Con riêng" };
+const ORDINAL = ["cả", "hai", "ba", "tư", "năm", "sáu", "bảy", "tám", "chín", "mười"];
+
+/** "Vợ cả", "Vợ hai"… khi có nhiều vợ; "Chồng thứ 2" với người nữ có nhiều đời chồng */
+function spouseLabel(gender: Gender, index: number, total: number): string {
+  const base = gender === "female" ? "Chồng" : gender === "male" ? "Vợ" : "Vợ/chồng";
+  if (total <= 1) return base;
+  if (gender === "male") return `Vợ ${ORDINAL[index] ?? index + 1}`;
+  return `${base} thứ ${index + 1}`;
+}
+
+/** "Trưởng nam, 1 trong 3 người con" · "Con thứ 2 trong 3 người con" · "Con một" (+ "con nuôi") */
+function rankText(c: PersonDetail["childOf"][number], gender: Gender): string {
+  const head = c.birthOrder === 1 ? (gender === "male" ? "Trưởng nam" : gender === "female" ? "Trưởng nữ" : "Con trưởng") : `Con thứ ${c.birthOrder}`;
+  const text = c.siblings <= 1 ? "Con một" : `${head}, trong ${c.siblings} người con`;
+  return c.relation === "adopted" ? `${text} (con nuôi)` : text;
+}
 
 const shortName = (name: string) => name.trim().split(/\s+/).slice(-1)[0] ?? name;
 
@@ -186,6 +265,206 @@ function Relatives({
       <h3 className="text-sm font-medium text-reu">{title}</h3>
       {people.length === 0 ? <p className="mt-1 text-reu">{empty}</p> : people.map((x) => <PersonLink key={x.id} person={x} onSelect={onSelect} />)}
     </section>
+  );
+}
+
+/** Danh sách con của một cặp: con ruột/nuôi/riêng; người nhập liệu đổi thứ tự bằng nút lên/xuống */
+function ChildList({
+  clanId,
+  unionId,
+  items,
+  canEdit,
+  onSelect,
+}: {
+  clanId: string;
+  unionId: string;
+  items: PersonDetail["unions"][number]["children"];
+  canEdit: boolean;
+  onSelect: (id: string) => void;
+}) {
+  const reorder = useReorderChildren(clanId);
+  if (items.length === 0) return null;
+  const move = (from: number, to: number) => {
+    const ids = items.map((c) => c.id);
+    const [x] = ids.splice(from, 1);
+    ids.splice(to, 0, x!);
+    reorder.mutate({ unionId, childIds: ids });
+  };
+  return (
+    <section className="mt-3 border-l-2 border-ngoc-200 pl-3">
+      <h3 className="text-sm font-medium text-reu">Con{canEdit && items.length > 1 ? " — xếp theo thứ tự sinh, con trưởng trước" : ""}</h3>
+      <ol className="mt-1 space-y-0.5">
+        {items.map((c, i) => (
+          <li key={c.id} className="flex items-center justify-between gap-2">
+            <span className="min-w-0">
+              <PersonLink person={c} onSelect={onSelect} />
+              {c.relation !== "biological" && <span className="ml-1 text-sm text-thep-dam">({RELATION_LABEL[c.relation].toLowerCase()})</span>}
+            </span>
+            {canEdit && items.length > 1 && (
+              <span className="flex shrink-0 gap-1">
+                <MoveButton label={`Đưa ${c.fullName} lên trước`} disabled={i === 0 || reorder.isPending} onClick={() => move(i, i - 1)}>
+                  ↑
+                </MoveButton>
+                <MoveButton label={`Đưa ${c.fullName} xuống sau`} disabled={i === items.length - 1 || reorder.isPending} onClick={() => move(i, i + 1)}>
+                  ↓
+                </MoveButton>
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+      {reorder.error && <p className="text-sm text-loi">{reorder.error.message}</p>}
+    </section>
+  );
+}
+
+function MoveButton({ label, disabled, onClick, children }: { label: string; disabled: boolean; onClick: () => void; children: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="h-9 w-9 rounded border border-ngoc-200 text-reu hover:bg-ngoc-100 hover:text-then disabled:opacity-30"
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Đổi thứ tự vợ cả / vợ hai */
+function UnionOrder({ clanId, p, index }: { clanId: string; p: PersonDetail; index: number }) {
+  const reorder = useReorderUnions(clanId);
+  const label = (u: PersonDetail["unions"][number]) => u.partner?.fullName ?? "người chưa rõ tên";
+  const move = (to: number) => {
+    const ids = p.unions.map((u) => u.id);
+    const [x] = ids.splice(index, 1);
+    ids.splice(to, 0, x!);
+    reorder.mutate({ personId: p.id, unionIds: ids });
+  };
+  return (
+    <span className="flex gap-1">
+      <MoveButton label={`Đưa ${label(p.unions[index]!)} lên trước`} disabled={index === 0 || reorder.isPending} onClick={() => move(index - 1)}>
+        ↑
+      </MoveButton>
+      <MoveButton
+        label={`Đưa ${label(p.unions[index]!)} xuống sau`}
+        disabled={index === p.unions.length - 1 || reorder.isPending}
+        onClick={() => move(index + 1)}
+      >
+        ↓
+      </MoveButton>
+    </span>
+  );
+}
+
+/** Gỡ quan hệ vợ chồng nhập nhầm (chỉ khi chưa có con chung); người kia vẫn còn trong danh sách */
+function RemoveUnion({ clanId, unionId, partner }: { clanId: string; unionId: string; partner: PersonBrief }) {
+  const remove = useRemoveUnion(clanId);
+  const [confirming, setConfirming] = useState(false);
+  if (!confirming) {
+    return (
+      <button type="button" className="mt-1 block text-sm text-reu hover:text-loi hover:underline" onClick={() => setConfirming(true)}>
+        Gỡ quan hệ vợ chồng (nhập nhầm)
+      </button>
+    );
+  }
+  return (
+    <div className="mt-2 rounded-md border border-loi/30 bg-son-nhat p-3 text-sm" role="alert">
+      <p>
+        Gỡ quan hệ vợ chồng với {partner.fullName}? {partner.fullName} vẫn còn trong Danh sách, chỉ không còn nối với người này.
+      </p>
+      {remove.error && <p className="mt-1 text-loi">{remove.error.message}</p>}
+      <div className="mt-2 flex gap-2">
+        <button type="button" className="btn bg-loi text-white hover:bg-son-dam" disabled={remove.isPending} onClick={() => remove.mutate(unionId)}>
+          Gỡ quan hệ
+        </button>
+        <button type="button" className="btn-phu" onClick={() => setConfirming(false)}>
+          Huỷ
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Đặt cha mẹ: chọn cha hoặc mẹ có sẵn trong phả, chọn cặp (khi người đó có nhiều vợ/chồng), và ruột/nuôi/riêng.
+ * Dùng khi nhập nhầm cha mẹ, gắn người nhập rời vào cây, hoặc đánh dấu con nuôi.
+ */
+function ParentLinkForm({ clanId, p, done }: { clanId: string; p: PersonDetail; done: () => void }) {
+  const current = p.childOf.find((c) => c.relation !== "step") ?? p.childOf[0];
+  const first = current?.parents[0];
+  const [parent, setParent] = useState<PersonListItem | null>(
+    first ? { ...first, deathYear: null, generation: null, isLiving: false, inClan: true } : null,
+  );
+  const [unionId, setUnionId] = useState<string | undefined>(current?.unionId);
+  const [relation, setRelation] = useState<ChildRelation>(current?.relation ?? "biological");
+  const parentDetail = usePerson(clanId, parent?.id ?? null);
+  const setLink = useSetParentLink(clanId);
+  const unions = parentDetail.data?.unions ?? [];
+  // cặp đã chọn không thuộc người vừa đổi → bỏ chọn
+  const chosen = unions.some((u) => u.id === unionId) ? unionId : unions.length === 1 ? unions[0]!.id : undefined;
+  const needsUnion = unions.length > 1 && !chosen;
+
+  return (
+    <form
+      className="space-y-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!parent || needsUnion) return;
+        setLink.mutate({ personId: p.id, parentId: parent.id, unionId: chosen, relation }, { onSuccess: done });
+      }}
+    >
+      <p className="font-serif text-lg">Cha mẹ của {p.fullName}</p>
+      <PersonPicker
+        clanId={clanId}
+        label="Cha hoặc mẹ (tìm trong phả)"
+        value={parent}
+        onChange={(x) => {
+          setParent(x);
+          setUnionId(undefined);
+        }}
+      />
+      {parent && unions.length > 1 && (
+        <fieldset>
+          <legend className="nhan">Con của {parent.fullName} với</legend>
+          <div className="flex flex-col gap-2">
+            {unions.map((u) => (
+              <label key={u.id} className={chipClass(chosen === u.id)}>
+                <input type="radio" name="cap-cha-me" className="sr-only" checked={chosen === u.id} onChange={() => setUnionId(u.id)} />
+                {u.partner?.fullName ?? "Chưa rõ tên"}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
+      <fieldset>
+        <legend className="nhan">Là</legend>
+        <div className="flex flex-wrap gap-2">
+          {(["biological", "adopted", "step"] as const).map((r) => (
+            <label key={r} className={chipClass(relation === r)}>
+              <input type="radio" name="quan-he-con" className="sr-only" checked={relation === r} onChange={() => setRelation(r)} />
+              {RELATION_LABEL[r]}
+            </label>
+          ))}
+        </div>
+        <p className="mt-1 text-sm text-reu">
+          {relation === "step"
+            ? "Con riêng: con của vợ/chồng với người trước, được thêm bên cạnh cha mẹ ruột."
+            : "Chuyển sang cha mẹ này; nếu đang ghi cha mẹ khác thì thay thế. Con cháu đi theo."}
+        </p>
+      </fieldset>
+      {setLink.error && <FormError message={setLink.error.message} />}
+      <div className="flex gap-3">
+        <button type="submit" className="btn-chinh flex-1" disabled={!parent || needsUnion || setLink.isPending || parentDetail.isPending}>
+          {setLink.isPending ? "Đang lưu…" : "Lưu cha mẹ"}
+        </button>
+        <button type="button" className="btn-phu" onClick={done}>
+          Huỷ
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -236,6 +515,7 @@ function AddRelative({
   cancel: () => void;
 }) {
   const add = useAddPerson(clanId);
+  const [relation, setRelation] = useState<ChildRelation>("biological");
   // Gợi ý sẵn: vợ/chồng khác giới; cha mẹ — nam (cha) trước
   const gender: Gender = relative === "spouse" ? (p.gender === "male" ? "female" : "male") : "male";
   const lead =
@@ -247,13 +527,26 @@ function AddRelative({
   return (
     <div>
       <p className="mb-5 font-serif text-lg">{lead}</p>
+      {relative === "child" && (
+        <fieldset className="mb-5">
+          <legend className="nhan">Là</legend>
+          <div className="flex flex-wrap gap-2">
+            {(["biological", "adopted", "step"] as const).map((r) => (
+              <label key={r} className={chipClass(relation === r)}>
+                <input type="radio" name="loai-con" className="sr-only" checked={relation === r} onChange={() => setRelation(r)} />
+                {RELATION_LABEL[r]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
       <PersonForm
         // Cha mẹ của người đã mất chắc chắn cũng đã mất
         initial={{ gender, isLiving: relative === "parent" ? p.isLiving : true }}
         submitLabel={ADD_TITLE[relative]}
         onCancel={cancel}
         onSubmit={async (person) => {
-          const res = await add.mutateAsync({ kind: relative, fromId: p.id, unionId, person });
+          const res = await add.mutateAsync({ kind: relative, fromId: p.id, unionId, ...(relative === "child" && { relation }), person });
           onSelect(res.person.id);
         }}
       />

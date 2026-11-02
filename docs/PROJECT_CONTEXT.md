@@ -5,7 +5,7 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.10.1 |
+| Phiên bản file | 0.11.0 |
 | Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **Sẵn sàng demo: `pnpm demo` chạy trên máy cá nhân có link chia sẻ; tiếp theo: lịch giỗ** |
@@ -51,7 +51,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Tài liệu đặc tả – phân tích – thiết kế v1.0 | Xong (2026-11-01) | FR/NFR/BR, use case, ERD, API, UI, thống kê, bảo mật, test, vận hành |
 | Sổ tay chủ sở hữu & Hướng dẫn sử dụng v1.0 | Xong (2026-11-01) | Viết theo thiết kế; đối chiếu lại tên nút, thêm ảnh chụp khi có giao diện |
 | Giai đoạn 0 — Nền móng (tuần 1–2) | **Xong (2026-11-01)** | Monorepo, CI, schema + RLS, genealogy-core, lunar-vn, schemas — 126 test xanh |
-| MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Xong phần chính (2026-11-02)** | Đăng nhập email/số điện thoại, tạo dòng họ, phả đồ, thêm/sửa/xoá người, danh sách, xưng hô, mời/duyệt thành viên, vai trò, ảnh, trang chủ, lịch giỗ, PWA, demo Docker — 95 test API + 22 test trình duyệt. Còn: hoàn thiện nhập phả (KI-017) |
+| MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Xong phần chính (2026-11-02)** | Đăng nhập email/số điện thoại, tạo dòng họ, phả đồ, thêm/sửa/xoá người, danh sách, xưng hô, mời/duyệt thành viên, vai trò, ảnh, trang chủ, lịch giỗ, PWA, demo Docker — 108 test API + 23 test trình duyệt. Nhập phả đầy đủ xong 0.11.0 |
 | MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | Chưa bắt đầu | |
 | Phase 2 (tuần 15–24), Phase 3 (tuần 25–32) | Chưa bắt đầu | |
 
@@ -60,7 +60,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 
 ### 2.3. Việc tiếp theo (thứ tự chủ dự án đã chốt)
 1. ~~Lịch giỗ~~ — xong 0.10.0 (còn: nhắc qua email khi có SMTP, sự kiện họp họ/chạp mả).
-2. Hoàn thiện nhập phả: sắp thứ tự con, con nuôi/con riêng, nhiều vợ/chồng, tên huý, tiểu sử (API đã có một phần — KI-017).
+2. ~~Hoàn thiện nhập phả~~ — xong 0.11.0 (còn: tiểu sử định dạng chữ đậm/nghiêng, ảnh trong tiểu sử; nhánh/chi).
 3. Website công khai + thống kê truy cập + thông tin liên hệ.
 3b. Thư viện ảnh/tư liệu theo album (KI-022); nhập Excel / xuất PDF.
 4. Ứng dụng iOS/Android (Capacitor bọc PWA).
@@ -244,9 +244,12 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | `POST /clans` | đã đăng nhập | người tạo = owner; `SLUG_TAKEN`; chế độ single đã có dòng họ → `SINGLE_CLAN_EXISTS` |
 | `GET /clans/:clanId`, `PATCH /clans/:clanId` | member / admin | đổi `rootPersonId`/`lineageMode` → tính lại đời |
 | `GET /clans/:clanId/persons?q&generation&living&page&pageSize` | member | tìm không dấu; người `hidden` chỉ admin thấy |
-| `GET/POST/PATCH/DELETE /clans/:clanId/persons[/:personId]` | member xem, editor sửa | PATCH cần `version` → `PERSON_VERSION_CONFLICT`; DELETE có con cần `?confirm=true` (`HAS_DESCENDANTS`), không xoá thuỷ tổ (`IS_ROOT_PERSON`) |
+| `GET/POST/PATCH/DELETE /clans/:clanId/persons[/:personId]` | member xem, editor sửa | người có `otherNames[{type huy\|tu\|thuy\|hieu\|khac, value}]`, `facts {birthPlace, burialPlace, occupation}` (bảng `person_facts`; gửi null/rỗng để xoá), `biography {text} \| null`; chi tiết thêm `childOf[{unionId, relation, birthOrder, siblings, parents}]`, `unions[].isPartnerA`. PATCH cần `version` → `PERSON_VERSION_CONFLICT`; DELETE có con cần `?confirm=true` (`HAS_DESCENDANTS`), không xoá thuỷ tổ (`IS_ROOT_PERSON`) |
 | `POST /clans/:clanId/persons/:id/children` · `/spouses` · `/parents` | editor | `UNION_REQUIRED` khi nhiều hôn phối, `SELF_UNION`, `ALREADY_SPOUSES`, `HAS_PARENTS` |
 | `PUT /clans/:clanId/unions/:unionId/children/order` | editor | `CHILD_LIST_MISMATCH` |
+| `PUT /clans/:clanId/persons/:personId/parent-link` | editor | `{parentId, unionId?, relation}` — gắn/chuyển cha mẹ hoặc đổi ruột/nuôi/riêng; `step` thêm bên cạnh cha mẹ ruột, ruột/nuôi thay cha mẹ cũ (đánh số lại anh chị em cũ, bỏ cặp "chưa rõ" rỗng); trả chi tiết người; `UNION_REQUIRED`, `SELF_PARENT`, `IS_ROOT_PERSON`, `ANCESTOR_CYCLE` |
+| `PUT /clans/:clanId/persons/:personId/unions/order` | editor | `{unionIds}` vợ cả trước; chỉ cặp người này là `partner_a`; `UNION_LIST_MISMATCH` |
+| `DELETE /clans/:clanId/unions/:unionId` | editor | gỡ hôn phối nhập nhầm (xoá hẳn, người giữ nguyên); `UNION_HAS_CHILDREN` 409 |
 | `GET /clans/:clanId/tree?rootId&depth&orientation&collapsed` | member | `{rootId, nodes[{personId,x,y,width,height,depth,isSpouse,hasHiddenChildren,person}], edges, width, height}` |
 | `GET /clans/:clanId/kinship?a&b` | member | `{related, aCallsB, bCallsA, kind, side, generationGap, viaMarriage, path}` |
 | `GET /clans/:clanId/members` · `PATCH/DELETE …/members/:memberId` | admin | đổi `role`/`personId`; chỉ quản lý người vai trò thấp hơn (`ROLE_TOO_LOW`, `CANNOT_CHANGE_OWN_ROLE`, `CANNOT_REMOVE_SELF`) |
@@ -381,6 +384,14 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.11.0] — 2026-11-02 — Hoàn thiện nhập phả
+### Thêm
+- Hồ sơ: tên thường gọi, tên huý/tự/hiệu/thuỵ; quê quán, nghề nghiệp/chức tước, nơi an táng (bảng `person_facts` sẵn có, không cần migration); tiểu sử văn bản `{text}` (`biographySchema`). Bảng thông tin hiện **thứ bậc** ("Trưởng nam, trong 3 người con", "Con một", kèm "con nuôi").
+- Quan hệ: thêm con chọn ruột/nuôi/riêng; xếp thứ tự con bằng nút ↑↓; vợ cả/vợ hai… và đổi thứ tự; "Đổi cha mẹ, con ruột/nuôi" (gắn người nhập rời, sửa nhầm cha mẹ, đổi loại con); gỡ quan hệ vợ chồng nhập nhầm khi chưa có con chung. API mới: `PUT …/persons/:id/parent-link`, `PUT …/persons/:id/unions/order`, `DELETE …/unions/:id`.
+- Hướng dẫn sử dụng v1.7 (mục 11–13).
+### Sửa
+- `biography` trước là `unknown` (rich text dự kiến) → nay `{text}`; dữ liệu cũ đều null nên không cần chuyển đổi.
 
 ## [0.10.1] — 2026-11-02 — Nền phả đồ vàng hoàng theo file thiết kế
 ### Sửa
@@ -554,7 +565,7 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-012 | `GET /tree` tính bố cục mỗi lần gọi (chưa cache); ổn với vài nghìn người | Thấp | Cache theo `clan.tree_version` khi cây > 5.000 người |
 | KI-013 | Xưng hô khác nhau theo vùng/gia đình: cần màn hình cho ban quản lý sửa bảng xưng hô riêng của dòng họ (lưu JSON trong cài đặt) | Trung bình | MVP phần 2 |
 | KI-014 | ~~Người đăng ký mới chưa vào được dòng họ~~ — **đã xử lý** bằng link mời (0.6.0) | Đã xử lý | — |
-| KI-017 | API sắp thứ tự con, con nuôi/con riêng đã có nhưng chưa có giao diện; thứ tự vợ/chồng chưa đổi được | Trung bình | Sau khi triển khai VPS |
+| KI-017 | ~~Chưa có giao diện thứ tự con, con nuôi/riêng, thứ tự vợ/chồng~~ — **đã có** (0.11.0) | Đã xử lý | — |
 | KI-018 | ~~Xem trước lời mời chưa giới hạn tần suất~~ — **đã có** (0.8.0) | Đã xử lý | — |
 | KI-015 | `API_ORIGIN` của web được "đóng" vào lúc build (rewrites của Next) — đổi địa chỉ API phải build lại | Thấp | Docker build truyền `API_ORIGIN`; hoặc Caddy chuyển thẳng `/api` sang API |
 | KI-016 | Danh sách người hiện tối đa 50 người đầu, chưa có phân trang trên giao diện | Thấp | Thêm "Xem thêm" khi dòng họ > 50 người |

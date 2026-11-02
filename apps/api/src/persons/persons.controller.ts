@@ -4,9 +4,11 @@ import {
   addSpouseSchema,
   idSchema,
   paginationSchema,
+  parentLinkSchema,
   personCreateSchema,
   personUpdateSchema,
   reorderChildrenSchema,
+  reorderUnionsSchema,
 } from "@coinguon/schemas";
 import { z } from "zod";
 import { CurrentMembership, type Membership, MinRole } from "../common/context.js";
@@ -137,6 +139,29 @@ export class PersonsController {
   setAvatar(@CurrentMembership() m: Membership, @Param("personId") personId: string, @Body() body: unknown) {
     const { mediaId } = z.object({ mediaId: idSchema.nullable() }).strict().parse(body);
     return this.db.withClan(this.ctx(m), (trx) => this.persons.setAvatar(trx, this.actor(m), idSchema.parse(personId), mediaId));
+  }
+
+  /** Đặt/đổi cha mẹ hoặc loại quan hệ con (ruột/nuôi/riêng) */
+  @Put("persons/:personId/parent-link")
+  @MinRole("editor")
+  setParentLink(@CurrentMembership() m: Membership, @Param("personId") personId: string, @Body() body: unknown) {
+    const input = parentLinkSchema.parse(body);
+    return this.db.withClan(this.ctx(m), (trx) => this.persons.setParentLink(trx, this.actor(m), idSchema.parse(personId), input));
+  }
+
+  @Put("persons/:personId/unions/order")
+  @MinRole("editor")
+  @HttpCode(204)
+  async reorderUnions(@CurrentMembership() m: Membership, @Param("personId") personId: string, @Body() body: unknown) {
+    const { unionIds } = reorderUnionsSchema.parse(body);
+    await this.db.withClan(this.ctx(m), (trx) => this.persons.reorderUnions(trx, this.actor(m), idSchema.parse(personId), unionIds));
+  }
+
+  @Delete("unions/:unionId")
+  @MinRole("editor")
+  @HttpCode(204)
+  async removeUnion(@CurrentMembership() m: Membership, @Param("unionId") unionId: string) {
+    await this.db.withClan(this.ctx(m), (trx) => this.persons.removeUnion(trx, this.actor(m), idSchema.parse(unionId)));
   }
 
   @Put("unions/:unionId/children/order")

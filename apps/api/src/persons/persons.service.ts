@@ -3,7 +3,10 @@ import { solarToLunar } from "@coinguon/lunar-vn";
 import {
   defaultPrivacy,
   type FlexibleDate,
+  type ParentLinkInput,
+  PERSON_FACT_TYPES,
   type PersonCreateInput,
+  type PersonFacts,
   type PersonUpdateInput,
 } from "@coinguon/schemas";
 import { Injectable } from "@nestjs/common";
@@ -64,7 +67,7 @@ export class PersonsService {
   constructor(private readonly graph: GraphService) {}
 
   async insertPerson(trx: Tx, clanId: string, input: PersonCreateInput): Promise<PersonRow> {
-    return trx
+    const row = await trx
       .insertInto("persons")
       .values({
         id: randomUUID(),
@@ -76,13 +79,30 @@ export class PersonsService {
         birth_date: json(input.birthDate),
         death_date: json(input.deathDate),
         death_anniv_lunar: json(deathAnniversaryOf(input.deathDate)),
-        biography: json(input.biography),
+        biography: json(input.biography?.text ? input.biography : null),
         privacy: input.privacy ?? defaultPrivacy(input.isLiving),
         branch_id: input.branchId ?? null,
         updated_at: new Date(),
       })
       .returningAll()
       .executeTakeFirstOrThrow();
+    if (input.facts) await this.saveFacts(trx, clanId, row.id, input.facts);
+    return row;
+  }
+
+  /** Ghi quê quán, nghề nghiệp, nơi an táng: trường có mặt thì thay, null/rỗng thì xoá; trường vắng mặt giữ nguyên. */
+  private async saveFacts(trx: Tx, clanId: string, personId: string, facts: PersonFacts) {
+    for (const type of PERSON_FACT_TYPES) {
+      if (!(type in facts)) continue;
+      const value = facts[type]?.trim();
+      await trx.deleteFrom("person_facts").where("person_id", "=", personId).where("type", "=", type).execute();
+      if (value) await trx.insertInto("person_facts").values({ id: randomUUID(), clan_id: clanId, person_id: personId, type, value }).execute();
+    }
+  }
+
+  async factsOf(trx: Tx, personId: string): Promise<Record<string, string>> {
+    const rows = await trx.selectFrom("person_facts").select(["type", "value"]).where("person_id", "=", personId).orderBy("sort_order").execute();
+    return Object.fromEntries(rows.map((r) => [r.type, r.value]));
   }
 
   async getActive(trx: Tx, id: string): Promise<PersonRow> {
@@ -146,7 +166,7 @@ export class PersonsService {
         }),
         ...(input.privacy !== undefined && { privacy: input.privacy }),
         ...(input.branchId !== undefined && { branch_id: input.branchId }),
-        ...(input.biography !== undefined && { biography: json(input.biography) }),
+        ...(input.biography !== undefined && { biography: json(input.biography?.text ? input.biography : null) }),
         version: sql<number>`version + 1`,
         updated_at: new Date(),
       })
@@ -159,6 +179,7 @@ export class PersonsService {
         currentVersion: before.version,
       });
     }
+    if (input.facts) await this.saveFacts(trx, a.clanId, id, input.facts);
     if (input.gender !== undefined && input.gender !== before.gender) {
       await this.graph.recomputeLineage(trx, a.clanId); // giới tính ảnh hưởng tính "thuộc họ"
     }
@@ -344,15 +365,126 @@ export class PersonsService {
     await audit(trx, { ...this.auditBase(a), action: "union.reorderChildren", entity: "union", entityId: unionId, after: { childIds } });
   }
 
+  /** Đánh số lại thứ tự con của một hôn phối thành 1, 2, 3… (sau khi chuyển một người con đi) */
+  private async compactChildren(trx: Tx, unionId: string) {
+    await trx.updateTable("parent_child").set({ birth_order: sql<number>`birth_order + 100000` }).where("union_id", "=", unionId).execute();
+    await sql`
+      update parent_child pc set birth_order = r.rn
+      from (select child_id, row_number() over (order by birth_order) as rn from parent_child where union_id = ${unionId}) r
+      where pc.union_id = ${unionId} and pc.child_id = r.child_id`.execute(trx);
+  }
+
+  /** Hôn phối của cha/mẹ để gắn con: chọn sẵn, duy nhất, hoặc tạo cặp "chưa rõ vợ/chồng" */
+  private async resolveParentUnion(trx: Tx, clanId: string, parentId: string, unionId: string | undefined) {
+    const unions = await this.unionsOf(trx, parentId);
+    if (unionId) {
+      if (!unions.some((u) => u.id === unionId)) throw unprocessable("UNION_NOT_OF_PERSON", "Hôn phối được chọn không thuộc người này");
+      return unionId;
+    }
+    if (unions.length === 1) return unions[0]!.id;
+    if (unions.length === 0) {
+      const id = randomUUID();
+      await trx.insertInto("unions").values({ id, clan_id: clanId, partner_a_id: parentId, partner_b_id: null, order_index: 1 }).execute();
+      return id;
+    }
+    throw unprocessable("UNION_REQUIRED", "Người này có nhiều vợ/chồng — hãy chọn con thuộc cặp nào", {
+      unions: unions.map((u) => ({ id: u.id, partnerId: u.partner_a_id === parentId ? u.partner_b_id : u.partner_a_id })),
+    });
+  }
+
+  /**
+   * FR-TREE-08: đặt cha mẹ cho một người — gắn người chưa có cha mẹ, chuyển sang cha mẹ khác khi nhập nhầm,
+   * hoặc chỉ đổi con ruột/nuôi/riêng. Con riêng ("step") được thêm bên cạnh cha mẹ ruột; ruột/nuôi thì thay cha mẹ cũ.
+   * Vòng lặp tổ tiên bị trigger ANCESTOR_CYCLE chặn.
+   */
+  async setParentLink(trx: Tx, a: Actor, childId: string, input: ParentLinkInput) {
+    await this.getActive(trx, childId);
+    if (input.parentId === childId) throw unprocessable("SELF_PARENT", "Một người không thể là cha/mẹ của chính mình");
+    await this.getActive(trx, input.parentId);
+    const clan = await trx.selectFrom("clans").select("root_person_id").where("id", "=", a.clanId).executeTakeFirstOrThrow();
+    if (clan.root_person_id === childId) {
+      throw conflict("IS_ROOT_PERSON", "Thuỷ tổ không gắn vào cha mẹ khác. Dùng “Thêm cha/mẹ”, hoặc đổi thuỷ tổ trong Cài đặt.");
+    }
+    const unionId = await this.resolveParentUnion(trx, a.clanId, input.parentId, input.unionId);
+    const links = await trx.selectFrom("parent_child").select(["union_id", "relation"]).where("child_id", "=", childId).execute();
+    const before = links.map((l) => ({ unionId: l.union_id, relation: l.relation }));
+
+    const same = links.find((l) => l.union_id === unionId);
+    if (same) {
+      // Đã là con của cặp này: chỉ đổi loại quan hệ
+      await trx.updateTable("parent_child").set({ relation: input.relation }).where("union_id", "=", unionId).where("child_id", "=", childId).execute();
+    } else {
+      const moved = input.relation === "step" ? [] : links.filter((l) => l.relation !== "step").map((l) => l.union_id);
+      if (moved.length) {
+        await trx.deleteFrom("parent_child").where("child_id", "=", childId).where("union_id", "in", moved).execute();
+        for (const old of moved) {
+          await this.compactChildren(trx, old);
+          // cặp "chưa rõ vợ/chồng" tạo ra chỉ để giữ người con này thì bỏ luôn
+          const left = await trx.selectFrom("parent_child").select("child_id").where("union_id", "=", old).executeTakeFirst();
+          if (!left) await trx.deleteFrom("unions").where("id", "=", old).where("partner_b_id", "is", null).execute();
+        }
+      }
+      const { max } = await trx
+        .selectFrom("parent_child")
+        .select((eb) => eb.fn.max("birth_order").as("max"))
+        .where("union_id", "=", unionId)
+        .executeTakeFirstOrThrow();
+      await trx
+        .insertInto("parent_child")
+        .values({ clan_id: a.clanId, union_id: unionId, child_id: childId, relation: input.relation, birth_order: (max ?? 0) + 1 })
+        .execute();
+    }
+    await this.graph.recomputeLineage(trx, a.clanId);
+    await audit(trx, { ...this.auditBase(a), action: "person.setParents", entity: "person", entityId: childId, before, after: { ...input, unionId } });
+    return this.detail(trx, childId);
+  }
+
+  /** Thứ tự vợ/chồng (vợ cả = 1): chỉ các hôn phối người này đứng đầu (partner_a), phải đủ danh sách */
+  async reorderUnions(trx: Tx, a: Actor, personId: string, unionIds: string[]) {
+    await this.getActive(trx, personId);
+    const own = (await this.unionsOf(trx, personId)).filter((u) => u.partner_a_id === personId);
+    if (own.length !== unionIds.length || !own.every((u) => unionIds.includes(u.id))) {
+      throw unprocessable("UNION_LIST_MISMATCH", "Danh sách vợ/chồng không khớp với dữ liệu hiện tại");
+    }
+    for (const [i, id] of unionIds.entries()) await trx.updateTable("unions").set({ order_index: i + 1 }).where("id", "=", id).execute();
+    await this.graph.recomputeLineage(trx, a.clanId);
+    await audit(trx, { ...this.auditBase(a), action: "person.reorderUnions", entity: "person", entityId: personId, after: { unionIds } });
+  }
+
+  /** Gỡ quan hệ vợ chồng nhập nhầm (không xoá người). Có con chung thì phải chuyển con sang cha mẹ khác trước. */
+  async removeUnion(trx: Tx, a: Actor, unionId: string) {
+    const u = await trx.selectFrom("unions").selectAll().where("id", "=", unionId).where("deleted_at", "is", null).executeTakeFirst();
+    if (!u) throw notFound("Không tìm thấy quan hệ vợ chồng");
+    const child = await trx.selectFrom("parent_child").select("child_id").where("union_id", "=", unionId).executeTakeFirst();
+    if (child) throw conflict("UNION_HAS_CHILDREN", "Hai người có con chung. Hãy chuyển các con sang cha mẹ đúng trước khi gỡ.");
+    // Xoá hẳn (không có gì tham chiếu) để sau này nối lại hai người không vướng ràng buộc duy nhất
+    await trx.deleteFrom("unions").where("id", "=", unionId).execute();
+    const rest = (await this.unionsOf(trx, u.partner_a_id)).filter((x) => x.partner_a_id === u.partner_a_id);
+    for (const [i, x] of rest.entries()) await trx.updateTable("unions").set({ order_index: i + 1 }).where("id", "=", x.id).execute();
+    await this.graph.recomputeLineage(trx, a.clanId);
+    await audit(trx, { ...this.auditBase(a), action: "union.remove", entity: "union", entityId: unionId, before: u });
+  }
+
   async detail(trx: Tx, id: string) {
     const p = await this.getActive(trx, id);
     const unions = await this.unionsOf(trx, id);
     const parentLinks = await trx
       .selectFrom("parent_child as pc")
       .innerJoin("unions as u", "u.id", "pc.union_id")
-      .select(["u.partner_a_id", "u.partner_b_id", "pc.relation"])
+      .select(["u.id as union_id", "u.partner_a_id", "u.partner_b_id", "pc.relation", "pc.birth_order"])
       .where("pc.child_id", "=", id)
       .execute();
+    // thứ tự trong nhà (con thứ mấy) và số anh chị em ruột của cặp cha mẹ đó
+    const siblingCounts = parentLinks.length
+      ? await trx
+          .selectFrom("parent_child as pc")
+          .innerJoin("persons as c", "c.id", "pc.child_id")
+          .select(["pc.union_id", (eb) => eb.fn.countAll<string>().as("n")])
+          .where("pc.union_id", "in", parentLinks.map((l) => l.union_id))
+          .where("c.deleted_at", "is", null)
+          .groupBy("pc.union_id")
+          .execute()
+      : [];
     const unionIds = unions.map((u) => u.id);
     const childLinks = unionIds.length
       ? await trx
@@ -377,6 +509,15 @@ export class PersonsService {
     const brief = new Map(names.map((n) => [n.id, { id: n.id, fullName: n.full_name, gender: n.gender, birthYear: n.birth_year }]));
     return {
       ...toPersonDto(p),
+      facts: await this.factsOf(trx, id),
+      /** Cha mẹ theo từng cặp: con thứ mấy, ruột/nuôi/riêng */
+      childOf: parentLinks.map((l) => ({
+        unionId: l.union_id,
+        relation: l.relation,
+        birthOrder: l.birth_order,
+        siblings: Number(siblingCounts.find((c) => c.union_id === l.union_id)?.n ?? 1),
+        parents: [l.partner_a_id, l.partner_b_id].filter((x): x is string => !!x && brief.has(x)).map((x) => brief.get(x)!),
+      })),
       parents: parentLinks.flatMap((l) =>
         [l.partner_a_id, l.partner_b_id].filter((x): x is string => !!x && brief.has(x)).map((x) => ({ ...brief.get(x)!, relation: l.relation })),
       ),
@@ -385,6 +526,8 @@ export class PersonsService {
         return {
           id: u.id,
           orderIndex: u.order_index,
+          /** Người này đứng đầu cặp (thường là chồng) — chỉ khi đó mới xếp được thứ tự vợ cả, vợ hai */
+          isPartnerA: u.partner_a_id === id,
           partner: partnerId ? (brief.get(partnerId) ?? null) : null,
           children: childLinks
             .filter((c) => c.union_id === u.id && brief.has(c.child_id))

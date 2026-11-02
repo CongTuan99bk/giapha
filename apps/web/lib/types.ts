@@ -52,18 +52,28 @@ export interface Person extends PersonBrief {
   lineagePath: string | null;
   privacy: Privacy;
   avatarMediaId: string | null;
-  biography: unknown;
+  biography: { text: string } | null;
   version: number;
   updatedAt: string;
 }
 
+export type ChildRelation = "biological" | "adopted" | "step";
+export type OtherNameType = "huy" | "tu" | "thuy" | "hieu" | "khac";
+export type FactType = "birthPlace" | "burialPlace" | "occupation";
+
 export interface PersonDetail extends Person {
+  /** Quê quán, nơi an táng, nghề nghiệp — chỉ có trường đã nhập */
+  facts: Partial<Record<FactType, string>>;
+  /** Cha mẹ theo từng cặp: con thứ mấy trên tổng số, ruột/nuôi/riêng */
+  childOf: Array<{ unionId: string; relation: ChildRelation; birthOrder: number; siblings: number; parents: PersonBrief[] }>;
   parents: Array<PersonBrief & { relation: string }>;
   unions: Array<{
     id: string;
     orderIndex: number;
+    /** Người này đứng đầu cặp — mới xếp được thứ tự vợ cả, vợ hai */
+    isPartnerA: boolean;
     partner: PersonBrief | null;
-    children: Array<PersonBrief & { relation: string; birthOrder: number }>;
+    children: Array<PersonBrief & { relation: ChildRelation; birthOrder: number }>;
   }>;
 }
 
@@ -141,6 +151,10 @@ export interface PersonInput {
   birthDate?: FlexibleDate | null;
   deathDate?: FlexibleDate | null;
   privacy?: Privacy;
+  otherNames?: Array<{ type: OtherNameType; value: string }>;
+  /** null = xoá trường đó */
+  facts?: Partial<Record<FactType, string | null>>;
+  biography?: { text: string } | null;
 }
 
 export type GrantableRole = Exclude<ClanRole, "owner">;

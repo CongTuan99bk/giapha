@@ -6,6 +6,25 @@ export const otherNameSchema = z.object({
   value: z.string().trim().min(1).max(200),
 });
 
+/** Tiểu sử: văn bản thường, xuống dòng giữ nguyên (đủ cho người lớn tuổi nhập; trình soạn thảo định dạng để sau) */
+export const biographySchema = z.object({ text: z.string().trim().max(20000, { message: "Tiểu sử tối đa 20.000 ký tự" }) });
+
+/** Thông tin thêm lưu ở bảng person_facts, mỗi loại một dòng */
+export const PERSON_FACT_TYPES = ["birthPlace", "burialPlace", "occupation"] as const;
+export type PersonFactType = (typeof PERSON_FACT_TYPES)[number];
+const factText = z.string().trim().max(300, { message: "Tối đa 300 ký tự" }).nullable().optional();
+export const personFactsSchema = z
+  .object({
+    /** Quê quán / nơi sinh */
+    birthPlace: factText,
+    /** Nơi an táng (mộ phần) */
+    burialPlace: factText,
+    /** Nghề nghiệp, chức tước, học vị */
+    occupation: factText,
+  })
+  .strict();
+export type PersonFacts = z.infer<typeof personFactsSchema>;
+
 /** Các trường hồ sơ, không có giá trị mặc định (dùng chung cho tạo mới và sửa). */
 const personBaseSchema = z.object({
   fullName: z.string().trim().min(1, { message: "Cần nhập họ tên" }).max(200),
@@ -16,8 +35,8 @@ const personBaseSchema = z.object({
   deathDate: flexibleDateSchema.nullable(),
   privacy: privacySchema,
   branchId: idSchema.nullable(),
-  /** Tiểu sử dạng rich text (JSON của trình soạn thảo) */
-  biography: z.unknown(),
+  biography: biographySchema.nullable(),
+  facts: personFactsSchema,
 });
 
 export const personCreateSchema = personBaseSchema
@@ -30,7 +49,8 @@ export const personCreateSchema = personBaseSchema
     /** Bỏ trống → hệ thống áp mặc định theo BR-PRIV-01 */
     privacy: privacySchema.optional(),
     branchId: idSchema.nullable().optional(),
-    biography: z.unknown().optional(),
+    biography: biographySchema.nullable().optional(),
+    facts: personFactsSchema.optional(),
   })
   .refine((p) => !(p.isLiving && p.deathDate), {
     message: "Người còn sống không có ngày mất",
@@ -76,3 +96,21 @@ export const reorderChildrenSchema = z.object({
 }).refine((v) => new Set(v.childIds).size === v.childIds.length, {
   message: "Danh sách con bị trùng",
 });
+
+/**
+ * Đặt cha mẹ cho một người (FR-TREE-08): gắn người chưa có cha mẹ, chuyển sang cha mẹ khác khi nhập nhầm,
+ * hoặc đổi con ruột/nuôi/riêng. `unionId` chọn cặp vợ chồng khi cha/mẹ có nhiều hôn phối.
+ */
+export const parentLinkSchema = z
+  .object({
+    parentId: idSchema,
+    unionId: idSchema.optional(),
+    relation: childRelationSchema.default("biological"),
+  })
+  .strict();
+export type ParentLinkInput = z.infer<typeof parentLinkSchema>;
+
+/** Thứ tự vợ/chồng (vợ cả trước) */
+export const reorderUnionsSchema = z
+  .object({ unionIds: z.array(idSchema).min(1).max(20) })
+  .refine((v) => new Set(v.unionIds).size === v.unionIds.length, { message: "Danh sách bị trùng" });

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type {
   AnniversaryList,
+  ChildRelation,
   Clan,
   GrantableRole,
   HomeSettings,
@@ -79,10 +80,11 @@ export type RelativeKind = "child" | "spouse" | "parent";
 export function useAddPerson(clanId: string) {
   const invalidate = useInvalidateClan(clanId);
   return useMutation({
-    mutationFn: (v: { kind: RelativeKind | "first"; fromId?: string; unionId?: string; person: PersonInput }) => {
+    mutationFn: (v: { kind: RelativeKind | "first"; fromId?: string; unionId?: string; relation?: ChildRelation; person: PersonInput }) => {
       if (v.kind === "first") return api<Person>("POST", `/clans/${clanId}/persons`, v.person).then((p) => ({ person: p }));
       const path = { child: "children", spouse: "spouses", parent: "parents" }[v.kind];
-      const body = v.kind === "child" && v.unionId ? { unionId: v.unionId, person: v.person } : { person: v.person };
+      const body =
+        v.kind === "child" ? { ...(v.unionId && { unionId: v.unionId }), ...(v.relation && { relation: v.relation }), person: v.person } : { person: v.person };
       return api<{ unionId: string; person: Person }>("POST", `/clans/${clanId}/persons/${v.fromId}/${path}`, body);
     },
     onSuccess: invalidate,
@@ -94,6 +96,45 @@ export function useUpdatePerson(clanId: string) {
   return useMutation({
     mutationFn: (v: { id: string; patch: Partial<PersonInput> & { version: number } }) =>
       api<Person>("PATCH", `/clans/${clanId}/persons/${v.id}`, v.patch),
+    onSuccess: invalidate,
+  });
+}
+
+/** Đặt/đổi cha mẹ, hoặc đổi con ruột/nuôi/riêng */
+export function useSetParentLink(clanId: string) {
+  const invalidate = useInvalidateClan(clanId);
+  return useMutation({
+    mutationFn: (v: { personId: string; parentId: string; unionId?: string; relation: ChildRelation }) =>
+      api<PersonDetail>("PUT", `/clans/${clanId}/persons/${v.personId}/parent-link`, {
+        parentId: v.parentId,
+        relation: v.relation,
+        ...(v.unionId && { unionId: v.unionId }),
+      }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useReorderChildren(clanId: string) {
+  const invalidate = useInvalidateClan(clanId);
+  return useMutation({
+    mutationFn: (v: { unionId: string; childIds: string[] }) => api<void>("PUT", `/clans/${clanId}/unions/${v.unionId}/children/order`, { childIds: v.childIds }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useReorderUnions(clanId: string) {
+  const invalidate = useInvalidateClan(clanId);
+  return useMutation({
+    mutationFn: (v: { personId: string; unionIds: string[] }) => api<void>("PUT", `/clans/${clanId}/persons/${v.personId}/unions/order`, { unionIds: v.unionIds }),
+    onSuccess: invalidate,
+  });
+}
+
+/** Gỡ quan hệ vợ chồng nhập nhầm (không xoá người) */
+export function useRemoveUnion(clanId: string) {
+  const invalidate = useInvalidateClan(clanId);
+  return useMutation({
+    mutationFn: (unionId: string) => api<void>("DELETE", `/clans/${clanId}/unions/${unionId}`),
     onSuccess: invalidate,
   });
 }

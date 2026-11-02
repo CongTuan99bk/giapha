@@ -1,6 +1,6 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.6
+version: 1.7
 updated: 2026-11-02
 audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
@@ -187,9 +187,10 @@ Người nhập liệu, quản trị và chủ sở hữu sửa phả **ngay tr�
 
 1. Vào thẻ **Phả đồ**, bấm vào một người. Bảng thông tin hiện bên phải (trên điện thoại: trượt lên từ dưới).
 2. Chọn:
-   - **Thêm con** — người này đã có vợ/chồng thì bấm **Thêm con với …** dưới tên đúng người vợ/chồng.
+   - **Thêm con** — người này đã có vợ/chồng thì bấm **Thêm con với …** dưới tên đúng người vợ/chồng. Chọn **Con ruột**, **Con nuôi** hoặc **Con riêng** (con của vợ/chồng với người trước).
    - **Thêm vợ** / **Thêm chồng**
    - **Thêm cha/mẹ** — chỉ hiện khi người này chưa có cha mẹ trong phả (thường dùng để thêm đời trên thuỷ tổ).
+   - **Chọn cha/mẹ đã có trong phả** — gắn một người nhập rời vào đúng chỗ trong cây (xem mục 13).
 3. Nhập ít nhất **họ tên**; nên nhập thêm giới tính, năm sinh → bấm nút thêm.
 
 Người mới hiện ngay trên cây và được chọn sẵn; số đời được tính tự động.
@@ -201,7 +202,12 @@ Người mới hiện ngay trên cây và được chọn sẵn; số đời đ�
 ## 12. Sửa thông tin, ngày tháng, quyền riêng tư
 
 1. Bấm vào người cần sửa → **Sửa thông tin**.
-2. Sửa **họ tên**, **giới tính**, **còn sống / đã mất**. *(Tên khác, tiểu sử, ảnh, thông tin thêm: Sắp ra mắt.)*
+2. Sửa **họ tên**, **giới tính**, **còn sống / đã mất**.
+   Mở **Thông tin thêm: tên huý, quê quán, tiểu sử…** để ghi:
+   - **Tên thường gọi** (ông Tư, bà Cả…), **Tên huý**, **Tên tự**, **Tên hiệu**, **Tên thuỵ**;
+   - **Quê quán, nơi sinh**; **Nghề nghiệp, chức tước, học vị**; **Nơi an táng (mộ phần)** (chỉ với người đã mất);
+   - **Tiểu sử**: công đức, sự nghiệp, kỷ niệm. Xuống dòng bao nhiêu thì hiện đúng bấy nhiêu.
+   Bảng thông tin hiện đủ các mục này, cùng **thứ bậc** trong nhà (ví dụ *Trưởng nam, trong 3 người con*).
 3. **Nhập ngày tháng:** gõ ngày, tháng, năm; chọn **Dương lịch** hoặc **Âm lịch** (âm lịch có ô **Tháng nhuận**). Chỉ biết năm thì để trống ngày, tháng; không chắc năm thì tích **Chỉ biết khoảng năm**. Nhập đủ ngày và tháng mất thì hệ thống **tự tính ngày giỗ âm lịch** (kể cả khi bạn nhập ngày mất theo dương lịch).
 4. **Ai được xem thông tin:**
    - **Mọi người** — cả khách xem website công khai.
@@ -220,9 +226,12 @@ Người mới hiện ngay trên cây và được chọn sẵn; số đời đ�
 
 ## 13. Nhiều vợ/chồng, con nuôi, thứ tự con
 
-- **Nhiều vợ/chồng:** bấm **Thêm vợ/chồng** nhiều lần; thứ tự theo lần thêm. *(Kéo thả đổi thứ tự: Sắp ra mắt.)*
-- **Con nuôi, con riêng** *(Sắp ra mắt trên giao diện)*: hiện mọi con thêm từ giao diện là con ruột.
-- **Thứ tự con trưởng, con thứ:** theo thứ tự thêm vào. *(Màn hình sắp xếp lại: Sắp ra mắt.)* Thứ tự này ảnh hưởng cách xưng hô giữa các nhánh (bác hay chú), nên hãy thêm con theo đúng thứ tự sinh.
+- **Nhiều vợ:** bấm **Thêm vợ** nhiều lần. Bảng thông tin ghi **Vợ cả**, **Vợ hai**, **Vợ ba**…; bấm mũi tên **↑ ↓** cạnh tên để đổi thứ tự. Con của bà nào thì bấm **Thêm con với …** dưới tên bà đó.
+- **Con nuôi, con riêng:** chọn khi thêm con. Trên phả đồ, con nuôi nối bằng nét đứt dài, con riêng bằng nét chấm. Người con hiện mục **Cha mẹ nuôi** hoặc **Cha mẹ kế (con riêng)**.
+- **Thứ tự con trưởng, con thứ:** dưới mỗi cặp vợ chồng, danh sách **Con** xếp theo thứ tự sinh, con trưởng trước; bấm **↑ ↓** cạnh tên để sửa. Thứ tự này ảnh hưởng cách xưng hô giữa các nhánh (bác hay chú), nên hãy sắp đúng thứ tự sinh.
+- **Nhập nhầm cha mẹ, hoặc đổi con nuôi ↔ con ruột:** bấm vào người con → **Đổi cha mẹ, con ruột/nuôi** → tìm và chọn cha hoặc mẹ đúng (cha có nhiều vợ thì chọn **Con của … với** bà nào) → chọn **Con ruột / Con nuôi / Con riêng** → **Lưu cha mẹ**. Con cháu của người đó đi theo, số đời tự tính lại. Anh chị em ở chỗ cũ được đánh số thứ tự lại.
+- **Nhập nhầm vợ/chồng:** nếu hai người chưa có con chung, bấm **Gỡ quan hệ vợ chồng (nhập nhầm)** dưới tên người kia. Người đó vẫn còn trong **Danh sách**, chỉ không còn nối với người này. Có con chung thì chuyển các con sang cha mẹ đúng trước.
+- **Thuỷ tổ** không đổi cha mẹ được; muốn thêm đời trên thì dùng **Thêm cha/mẹ**.
 
 ## 14. Nhập gia phả từ file Excel
 

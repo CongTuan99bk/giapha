@@ -3,7 +3,7 @@
 import { useId, useState, type FormEvent } from "react";
 import { fieldErrors } from "@/lib/api";
 import { fromDateFields, toDateFields, type DateFields } from "@/lib/format";
-import type { Gender, PersonInput, Privacy } from "@/lib/types";
+import type { FactType, Gender, OtherNameType, PersonInput, Privacy } from "@/lib/types";
 import { FormError } from "./field";
 
 export interface PersonFormValues {
@@ -13,6 +13,29 @@ export interface PersonFormValues {
   birthDate: PersonInput["birthDate"];
   deathDate: PersonInput["deathDate"];
   privacy?: Privacy | undefined;
+  otherNames?: Array<{ type: string; value: string }>;
+  facts?: Partial<Record<FactType, string>>;
+  biography?: { text: string } | null;
+}
+
+/** Tên khác theo lệ gia phả; "khac" dùng cho tên thường gọi trong nhà, trong làng */
+const OTHER_NAME_FIELDS: Array<{ type: OtherNameType; label: string; placeholder?: string }> = [
+  { type: "khac", label: "Tên thường gọi", placeholder: "Ví dụ: ông Tư" },
+  { type: "huy", label: "Tên huý" },
+  { type: "tu", label: "Tên tự" },
+  { type: "hieu", label: "Tên hiệu" },
+  { type: "thuy", label: "Tên thuỵ" },
+];
+
+const emptyNames = (): Record<OtherNameType, string> => ({ khac: "", huy: "", tu: "", hieu: "", thuy: "" });
+
+function namesFrom(list: PersonFormValues["otherNames"]): Record<OtherNameType, string> {
+  const out = emptyNames();
+  for (const n of list ?? []) {
+    const t = n.type as OtherNameType;
+    if (t in out) out[t] = out[t] ? `${out[t]}; ${n.value}` : n.value;
+  }
+  return out;
 }
 
 interface Props {
@@ -36,6 +59,14 @@ export function PersonForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
   const [birth, setBirth] = useState<DateFields>(toDateFields(initial?.birthDate));
   const [death, setDeath] = useState<DateFields>(toDateFields(initial?.deathDate));
   const [privacy, setPrivacy] = useState<Privacy | "">(initial?.privacy ?? "");
+  const [names, setNames] = useState(namesFrom(initial?.otherNames));
+  const [facts, setFacts] = useState<Record<FactType, string>>({
+    birthPlace: initial?.facts?.birthPlace ?? "",
+    occupation: initial?.facts?.occupation ?? "",
+    burialPlace: initial?.facts?.burialPlace ?? "",
+  });
+  const [bio, setBio] = useState(initial?.biography?.text ?? "");
+  const hasMore = Object.values(names).some(Boolean) || Object.values(facts).some(Boolean) || Boolean(bio);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -61,6 +92,14 @@ export function PersonForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
         birthDate: birthDate as PersonInput["birthDate"],
         deathDate: deathDate as PersonInput["deathDate"],
         ...(privacy ? { privacy } : {}),
+        otherNames: OTHER_NAME_FIELDS.filter((f) => names[f.type].trim()).map((f) => ({ type: f.type, value: names[f.type].trim() })),
+        facts: {
+          birthPlace: facts.birthPlace.trim() || null,
+          occupation: facts.occupation.trim() || null,
+          // người còn sống không có nơi an táng
+          burialPlace: (!isLiving && facts.burialPlace.trim()) || null,
+        },
+        biography: bio.trim() ? { text: bio.trim() } : null,
       });
     } catch (err) {
       // Lỗi từ máy chủ có thể mang tiền tố "person." (khi thêm người thân)
@@ -128,6 +167,54 @@ export function PersonForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
         />
       )}
 
+      <details className="group rounded-md border border-ngoc-200 bg-ngoc-50/60 px-4 py-3" open={hasMore || undefined}>
+        <summary className="cursor-pointer font-medium text-son">Thông tin thêm: tên huý, quê quán, tiểu sử…</summary>
+        <div className="mt-4 space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {OTHER_NAME_FIELDS.map((f) => (
+              <TextField
+                key={f.type}
+                label={f.label}
+                value={names[f.type]}
+                placeholder={f.placeholder}
+                maxLength={200}
+                onChange={(v) => setNames((n) => ({ ...n, [f.type]: v }))}
+              />
+            ))}
+          </div>
+          <TextField label="Quê quán, nơi sinh" value={facts.birthPlace} onChange={(v) => setFacts((x) => ({ ...x, birthPlace: v }))} />
+          <TextField
+            label="Nghề nghiệp, chức tước, học vị"
+            value={facts.occupation}
+            placeholder="Ví dụ: Lý trưởng, Cử nhân, Giáo viên"
+            onChange={(v) => setFacts((x) => ({ ...x, occupation: v }))}
+          />
+          {!isLiving && (
+            <TextField
+              label="Nơi an táng (mộ phần)"
+              value={facts.burialPlace}
+              placeholder="Ví dụ: Nghĩa trang họ, xứ Đồng Cát"
+              onChange={(v) => setFacts((x) => ({ ...x, burialPlace: v }))}
+            />
+          )}
+          {errors.facts && <p className="text-sm text-loi">{errors.facts}</p>}
+          <div>
+            <label htmlFor={`${uid}-tieusu`} className="nhan">
+              Tiểu sử
+            </label>
+            <textarea
+              id={`${uid}-tieusu`}
+              className="o-nhap min-h-32 leading-relaxed"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Công đức, sự nghiệp, kỷ niệm con cháu còn nhớ…"
+              maxLength={20000}
+            />
+            {errors.biography && <p className="mt-1 text-sm text-loi">{errors.biography}</p>}
+          </div>
+        </div>
+      </details>
+
       <div>
         <label htmlFor={`${uid}-rieng`} className="nhan">
           Ai được xem thông tin
@@ -155,7 +242,31 @@ export function PersonForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
   );
 }
 
-function chipClass(active: boolean) {
+function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  maxLength = 300,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string | undefined;
+  maxLength?: number;
+}) {
+  const id = useId();
+  return (
+    <div>
+      <label htmlFor={id} className="nhan">
+        {label}
+      </label>
+      <input id={id} className="o-nhap" value={value} maxLength={maxLength} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+export function chipClass(active: boolean) {
   return `cursor-pointer rounded-md border px-4 py-2 text-[0.95rem] min-h-11 inline-flex items-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-thep ${
     active ? "border-son bg-son-nhat font-medium text-son-dam" : "border-ngoc-300 bg-giay text-then hover:bg-ngoc-100"
   }`;

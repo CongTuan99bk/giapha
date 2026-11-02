@@ -375,3 +375,45 @@ test("lịch giỗ: ngày giỗ thuỷ tổ tự tính từ ngày mất, tải �
   expect((await download).suggestedFilename()).toBe("lich-gio-ho-le-van-thon-thu.ics");
   await p.close();
 });
+
+test("nhập phả đầy đủ: tên huý, nơi an táng, tiểu sử, con nuôi, xếp thứ tự con, đổi con nuôi thành con ruột", async ({ browser }) => {
+  const p = await browser.newPage();
+  await loginOwner(p);
+  await p.getByRole("link", { name: "Phả đồ", exact: true }).click();
+  const pnl = () => p.getByRole("complementary", { name: "Thông tin người được chọn" });
+  await p.locator(node("Lê Văn Cả")).click();
+
+  await pnl().getByRole("button", { name: "Sửa thông tin" }).click();
+  await pnl().getByText("Thông tin thêm: tên huý").click();
+  await pnl().getByLabel("Tên huý").fill("Lê Công Cả");
+  await pnl().getByLabel("Quê quán, nơi sinh").fill("Thôn Thử");
+  await pnl().getByLabel("Nơi an táng (mộ phần)").fill("Đồi Thông");
+  await pnl().getByLabel("Tiểu sử").fill("Người lập làng.\nCó công dựng đình.");
+  await pnl().getByRole("button", { name: "Lưu thay đổi" }).click();
+  await expect(pnl().getByText("Lê Công Cả")).toBeVisible();
+  await expect(pnl().getByText("Đồi Thông")).toBeVisible();
+  await expect(pnl().getByText(/Người lập làng\./)).toBeVisible();
+
+  // thêm con nuôi với vợ Hai
+  await pnl().getByRole("button", { name: "Thêm con với Hai" }).click();
+  await pnl().getByText("Con nuôi", { exact: true }).click();
+  await pnl().getByLabel("Họ và tên").fill("Lê Văn Nuôi");
+  await pnl().getByRole("button", { name: "Thêm con", exact: true }).click();
+  await expect(pnl().getByRole("heading", { name: "Lê Văn Nuôi" })).toBeVisible();
+  await expect(pnl().getByText("Con thứ 2, trong 2 người con (con nuôi)")).toBeVisible();
+  await expect(pnl().getByRole("heading", { name: "Cha mẹ nuôi" })).toBeVisible();
+
+  // xếp lại thứ tự: con nuôi lên trước
+  await pnl().getByRole("button", { name: /Lê Văn Cả/ }).click();
+  await pnl().getByRole("button", { name: "Đưa Lê Văn Nuôi lên trước" }).click();
+  await expect(pnl().getByRole("listitem").first()).toContainText("Lê Văn Nuôi");
+  await pnl().getByRole("button", { name: "Lê Văn Nuôi", exact: true }).click();
+  await expect(pnl().getByText("Trưởng nam, trong 2 người con (con nuôi)")).toBeVisible();
+
+  // đổi con nuôi thành con ruột
+  await pnl().getByRole("button", { name: "Đổi cha mẹ, con ruột/nuôi" }).click();
+  await pnl().getByText("Con ruột", { exact: true }).click();
+  await pnl().getByRole("button", { name: "Lưu cha mẹ" }).click();
+  await expect(pnl().getByText("Trưởng nam, trong 2 người con", { exact: true })).toBeVisible();
+  await p.close();
+});
