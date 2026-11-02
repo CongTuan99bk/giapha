@@ -32,6 +32,8 @@ export default defineConfig({
   webServer: [
     {
       command: "node ../api/dist/main.js",
+      stdout: process.env.CI ? "pipe" : "ignore", // CI: in nhật ký API để dễ tìm lỗi
+      stderr: "pipe",
       url: "http://localhost:4000/api/v1/health",
       reuseExistingServer: false,
       timeout: 30_000,

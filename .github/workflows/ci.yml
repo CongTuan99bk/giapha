@@ -86,6 +86,10 @@ jobs:
       - name: Test giao diện trên trình duyệt (Playwright)
         run: pnpm --filter @coinguon/web test:e2e
 
+      - name: In ảnh chụp trạng thái trang khi lỗi
+        if: failure()
+        run: find apps/web/test-results -name error-context.md -exec sh -c 'echo "=== $1"; cat "$1"' _ {} \; || true
+
       - name: Lưu báo cáo Playwright khi lỗi
         if: failure()
         uses: actions/upload-artifact@v4
