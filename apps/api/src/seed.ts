@@ -16,7 +16,10 @@ import { AuthService } from "./auth/auth.service.js";
 import { ClansService } from "./clans/clans.service.js";
 import { loadConfig } from "./config.js";
 import { Database, type Tx } from "./db/database.js";
+import { MediaService } from "./media/media.service.js";
 import { PersonsService } from "./persons/persons.service.js";
+import { sampleBanners } from "./seed-art.js";
+import { SiteService } from "./site/site.service.js";
 
 /** PRNG có hạt giống — chạy lại cho ra cùng một cây. */
 function mulberry32(seed: number) {
@@ -127,6 +130,20 @@ export async function seed(opts: { email: string; password: string; generations?
       });
       count++;
       await grow(root.id, 1, 1858);
+    });
+
+    // Trang chủ: 3 ảnh banner minh hoạ tự vẽ + câu đối dân gian + khẩu hiệu
+    const owner = { ...actor, memberId: "", role: "owner" as const, personId: null };
+    const art = await sampleBanners();
+    await db.withClan(actor, async (trx: Tx) => {
+      const media = app.get(MediaService);
+      const uploaded = [];
+      for (const a of art) uploaded.push(await media.upload(trx, owner, a.data, a.caption));
+      await app.get(SiteService).updateHome(trx, owner, {
+        banners: uploaded.map((m) => ({ mediaId: m.id })),
+        couplet: { left: "Cây có cội mới nảy cành xanh lá", right: "Nước có nguồn mới bể rộng sông sâu" },
+        motto: "Uống nước nhớ nguồn",
+      });
     });
 
     return { email: opts.email, password: opts.password, clanId: clan.id, personCount: count };

@@ -72,6 +72,7 @@ export class ErrorFilter implements ExceptionFilter {
     }
     if (e instanceof HttpException) {
       const status = e.getStatus();
+      if (status === 413) return { status, body: { code: "FILE_TOO_LARGE", message: "Ảnh quá lớn. Hãy chọn ảnh nhỏ hơn." } };
       const code = status === 404 ? "NOT_FOUND" : status === 401 ? "UNAUTHENTICATED" : HttpStatus[status] ?? "HTTP_ERROR";
       return { status, body: { code, message: e.message } };
     }

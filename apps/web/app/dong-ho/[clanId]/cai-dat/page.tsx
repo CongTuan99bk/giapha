@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Field, FormError } from "@/components/field";
+import { HomeSettingsForm } from "@/components/home-settings-form";
 import { PersonPicker } from "@/components/person-picker";
 import { fieldErrors } from "@/lib/api";
 import {
@@ -35,6 +36,9 @@ export default function SettingsPage() {
           <InviteForm clan={clan.data} />
           <ActiveInvitations clanId={clanId} />
         </Section>
+        <Section id="trang-chu" title="Trang chủ" lead="Ảnh banner tự trượt, câu đối và khẩu hiệu hiện ở thẻ Trang chủ cho mọi thành viên.">
+          <HomeSettingsForm clanId={clanId} />
+        </Section>
         <Section title="Thành viên">
           <MemberList clan={clan.data} />
         </Section>
@@ -46,9 +50,9 @@ export default function SettingsPage() {
   );
 }
 
-function Section({ title, lead, children }: { title: string; lead?: string; children: ReactNode }) {
+function Section({ id, title, lead, children }: { id?: string; title: string; lead?: string; children: ReactNode }) {
   return (
-    <section className="mt-12 border-t border-ngoc-200 pt-8">
+    <section id={id} className="mt-12 scroll-mt-4 border-t border-ngoc-200 pt-8">
       <h2 className="font-serif text-2xl">{title}</h2>
       {lead && <p className="mt-1 max-w-prose text-reu">{lead}</p>}
       <div className="mt-6">{children}</div>

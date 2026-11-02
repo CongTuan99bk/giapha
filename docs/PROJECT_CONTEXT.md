@@ -5,10 +5,10 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.6.0 |
+| Phiên bản file | 0.7.0 |
 | Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
-| Giai đoạn hiện tại | **MVP phần 1 gần xong — phả đồ, mời thành viên, vai trò chạy được; tiếp theo: triển khai lên VPS** |
+| Giai đoạn hiện tại | **MVP phần 1 gần xong — phả đồ, mời thành viên, ảnh chân dung, trang chủ có banner; tiếp theo: triển khai lên VPS** |
 | Mã nguồn | https://github.com/CongTuan99bk/giapha (nhánh `main`, CI xanh) |
 | Tài liệu đặc tả đầy đủ | "Tài liệu dự án: Hệ thống Gia Phả Cội Nguồn" v1.0 — https://claude.ai/artifact/1Wy2PqEVYSLqycMLH8LMzG |
 | Bản thảo kỹ thuật | https://claude.ai/artifact/T24kXNyJ9UkUPdRwMzBkFd |
@@ -59,7 +59,8 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 - (trống)
 
 ### 2.3. Việc tiếp theo
-1. Docker Compose production cho VPS 4 GB (Caddy, sao lưu) + hướng dẫn demo bằng Cloudflare Tunnel.
+1. Docker Compose production cho VPS 4 GB (Caddy, volume `media`, sao lưu DB + ảnh) + hướng dẫn demo bằng Cloudflare Tunnel.
+1b. Thư viện ảnh/tư liệu theo album (KI-022).
 2. Rate limit theo IP cho đăng nhập/đăng ký/xem lời mời (KI-010); quên mật khẩu + OTP email (KI-009).
 3. Giao diện: sắp xếp thứ tự con, con nuôi/con riêng, nhiều vợ/chồng (API đã có một phần — KI-017).
 4. Sửa bảng xưng hô riêng của dòng họ (KI-013); "Tôi gọi người này là gì?" từ người đã gắn "Đây là tôi".
@@ -242,6 +243,11 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | `GET /clans/:clanId/members` · `PATCH/DELETE …/members/:memberId` | admin | đổi `role`/`personId`; chỉ quản lý người vai trò thấp hơn (`ROLE_TOO_LOW`, `CANNOT_CHANGE_OWN_ROLE`, `CANNOT_REMOVE_SELF`) |
 | `PATCH /clans/:clanId/me/person` | member | "Đây là tôi" `{personId \| null}`; `PERSON_ALREADY_LINKED` |
 | `GET/POST /clans/:clanId/invitations` · `DELETE …/invitations/:id` | admin | tạo `{role, email?, personId?, expiresInDays 1–30, maxUses 1–100}` → trả `token` **một lần**; không cấp được `owner` |
+| `POST /clans/:clanId/media` | editor | multipart `file` (+ `caption`); trả `{id, width, height, caption, urls:{sm,md,lg,orig}}`; lỗi `FILE_REQUIRED`, `UNSUPPORTED_IMAGE` 422, `FILE_TOO_LARGE` 413 |
+| `GET /clans/:clanId/media` · `GET …/media/:id/:variant` | member | thư viện ảnh; tải file theo cỡ `sm` (vuông 320) / `md` 960 / `lg` 1920 (WebP) / `orig` (JPEG/PNG, tải về) — `Cache-Control: private, immutable` |
+| `PATCH/DELETE /clans/:clanId/media/:id` | editor | sửa chú thích; xoá (gỡ khỏi ảnh chân dung, banner tự bỏ, xoá file sau commit) |
+| `PUT /clans/:clanId/persons/:id/avatar` | editor | `{mediaId \| null}` — không tăng `version`; ảnh phải cùng dòng họ (`MEDIA_NOT_FOUND`) |
+| `GET /clans/:clanId/site/home` · `PUT` (admin) | member | `{banners[], couplet {left,right} \| null, motto, stats {people, generations}}`; lưu trong `site_settings.data.home` |
 | `GET /invitations/:token` | công khai | xem trước `{clanName, role, invitedBy, expiresAt, forSpecificEmail, status}` |
 | `POST /invitations/:token/accept` | đã đăng nhập | `{clanId, alreadyMember}`; lỗi `INVITE_NOT_FOUND` 404, `INVITE_EXPIRED`/`INVITE_REVOKED`/`INVITE_USED` 410, `INVITE_EMAIL_MISMATCH` 403 |
 
@@ -317,6 +323,8 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | DATABASE_URL | PostgreSQL — role chủ, chạy migration |
 | APP_DATABASE_URL | Role `coinguon_app` (bị RLS) — dùng trong api/web |
 | PLATFORM_DATABASE_URL | Role `coinguon_platform` (BYPASSRLS) — worker, super-admin |
+| MEDIA_DIR | Thư mục lưu ảnh (mặc định `data/media` theo thư mục chạy API; `.env.example`: `../../data/media`; production: volume Docker) |
+| MEDIA_MAX_MB | Dung lượng tối đa mỗi ảnh tải lên, mặc định 15 |
 | DATA_ENCRYPTION_KEY | Mã hoá cột nhạy cảm (nhóm máu) |
 | REDIS_URL | Redis |
 | R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET | Lưu file |
@@ -342,6 +350,7 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | ADR-006 | 2026-11-01 | Liên hệ ban quản lý trong bảng `contacts` riêng, công khai từng trường + consent | Tuân thủ luật dữ liệu cá nhân, linh hoạt nhiều người | Gộp vào site_settings |
 | ADR-007 | 2026-11-01 (sửa) | Một VPS **ở Việt Nam** (Bizfly Cloud 4 GB ~240.000 đ/tháng) + Docker Compose + Caddy; ảnh lưu ổ đĩa VPS, sao lưu sang Google Drive; demo chạy máy cá nhân + Cloudflare Tunnel | Ngân sách ~10 USD/tháng, dữ liệu ở trong nước, chủ dự án chọn | Viettel IDC (gói 4 GB ~599.000 đ/tháng — vượt ngân sách), Singapore, R2 |
 | ADR-008 | 2026-11-01 | Prisma 6.19 (chưa lên 7/8) | Ổn định, ít thay đổi cấu hình; Prisma 7 bắt buộc driver adapter + prisma.config.ts — cân nhắc nâng cấp khi làm api | Prisma 7.10, Drizzle |
+| ADR-015 | 2026-11-02 | Ảnh: xử lý bằng `sharp` (xoay theo EXIF rồi **bỏ toàn bộ metadata/GPS**, tạo cỡ sm/md/lg WebP + bản gốc JPEG/PNG), lưu **ổ đĩa** `MEDIA_DIR/{clanId}/{mediaId}/`, phục vụ qua API dưới `/clans/:clanId/media/...` để RLS + TenantGuard kiểm quyền. Banner/câu đối lưu trong `site_settings.data.home` | Ngân sách ~10 USD/tháng (không R2); ảnh gia đình là dữ liệu riêng tư; lớp `MediaStorage` đổi được sang S3/R2 sau | Cloudflare R2 + URL ký sẵn; Next Image optimizer (không gửi cookie khi tải ảnh cần đăng nhập) |
 | ADR-014 | 2026-11-02 | Lời mời bằng link: mã ngẫu nhiên 18 byte, DB chỉ lưu sha256; tra theo mã dùng role `coinguon_platform` (BYPASSRLS) vì người nhận chưa có ngữ cảnh dòng họ — chỉ khớp đúng `token_hash`, mọi ghi đều qua `withClan` | Không thể đặt `app.clan_id` trước khi biết lời mời thuộc dòng họ nào; FORCE RLS chặn cả hàm SECURITY DEFINER | Hàm SECURITY DEFINER + bỏ FORCE RLS; mã chứa clan_id |
 | ADR-013 | 2026-11-01 | Xưng hô mặc định miền Trung: ba/mạ, chị-em gái của cha là "o", chồng o/dì là "dượng" | Chủ dự án chọn; bảng tạm, sẽ cho dòng họ tự sửa (KI-013) | Bắc làm mặc định |
 | ADR-012 | 2026-11-01 | Điện thoại: PWA trước, rồi **Capacitor** đóng gói chính web app thành app iOS/Android, thêm tính năng gốc (thông báo đẩy ngày giỗ, chụp ảnh, xem offline) | Một mã nguồn, chi phí thấp; App Store yêu cầu app có tính năng gốc, không chỉ bọc web | React Native/Expo (viết lại giao diện), Flutter |
@@ -354,6 +363,17 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.7.0] — 2026-11-02 — Ảnh chân dung, trang chủ có banner tự trượt
+### Thêm
+- API ảnh (ADR-015): tải lên, xử lý, lưu ổ đĩa, phục vụ có kiểm quyền, chú thích, xoá; ảnh chân dung cho người (`PUT …/avatar`); trang chủ `site/home` (banner nhiều ảnh, câu đối, khẩu hiệu, thống kê).
+- Web: **Trang chủ** dòng họ (`/dong-ho/:id`) — banner tự trượt quay vòng (dừng khi rê chuột/đang dùng bàn phím/tab ẩn, vuốt trên điện thoại, không tự trượt khi "giảm chuyển động"), câu đối dựng đứng hai bên (điện thoại: dưới ảnh). **Phả đồ chuyển sang `/dong-ho/:id/pha-do`.**
+- Ảnh chân dung trong bảng thông tin (thêm/đổi/gỡ/tải gốc) và thu nhỏ trên ô phả đồ (ô rộng 172×76).
+- Cài đặt → **Trang chủ**: tải nhiều ảnh banner, chú thích, đổi thứ tự, câu đối, khẩu hiệu.
+- Seed: 3 ảnh banner minh hoạ **tự vẽ bằng SVG** (`src/seed-art.ts`, không dùng ảnh có bản quyền) + câu đối dân gian "Cây có cội… / Nước có nguồn…".
+- Test: API 60 (thêm 11 cho ảnh: EXIF/GPS bị xoá, xoay đúng, quyền xem, quá dung lượng, ảnh dòng họ khác…), web 25 + 17 Playwright.
+### Ghi chú
+- HEIC (iPhone) chưa đọc được: `sharp` dựng sẵn không kèm bộ giải mã HEVC; giao diện báo cách xử lý (KI-019).
 
 ## [0.6.0] — 2026-11-02 — Mời thành viên, vai trò, cài đặt dòng họ
 ### Thêm
@@ -465,6 +485,10 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-018 | Xem trước lời mời (`GET /invitations/:token`) chưa giới hạn tần suất — mã 18 byte nên dò không khả thi, nhưng nên chặn spam | Thấp | Cùng KI-010 |
 | KI-015 | `API_ORIGIN` của web được "đóng" vào lúc build (rewrites của Next) — đổi địa chỉ API phải build lại | Thấp | Docker build truyền `API_ORIGIN`; hoặc Caddy chuyển thẳng `/api` sang API |
 | KI-016 | Danh sách người hiện tối đa 50 người đầu, chưa có phân trang trên giao diện | Thấp | Thêm "Xem thêm" khi dòng họ > 50 người |
+| KI-019 | Ảnh HEIC chưa đọc được (sharp dựng sẵn không có HEVC). iPhone qua trình duyệt thường tự đổi sang JPG | Thấp | Nếu người dùng gặp nhiều: chuyển đổi trên trình duyệt (thư viện WASM) trước khi tải |
+| KI-020 | Chưa giới hạn tổng dung lượng ảnh mỗi dòng họ; VPS 40 GB | Trung bình | Thêm hạn mức + cảnh báo khi > 70% ổ đĩa, trước khi mở cho nhiều người tải |
+| KI-021 | Ảnh chỉ xem được khi đã đăng nhập (route dưới `/clans/:clanId`). Website công khai sẽ cần route ảnh công khai cho banner/ảnh người đã mất có `privacy=public` | Trung bình | Khi làm website công khai (MVP phần 2) |
+| KI-022 | Chưa có trang Thư viện ảnh/tư liệu (album) — API liệt kê ảnh đã có | Trung bình | Bước tiếp theo sau triển khai |
 | KI-008 | Bố cục phả đồ hiện là dạng "khối căn giữa", chưa nén nhánh kiểu Reingold–Tilford (cây rộng hơn cần thiết) | Thấp | Tối ưu khi làm trình chỉnh sửa phả đồ nếu cây quá rộng |
 
 ---

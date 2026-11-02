@@ -21,6 +21,7 @@ const node = (id: string, x: number, y: number, depth: number): TreeNode => ({
     generation: depth + 1,
     inClan: true,
     hasAvatar: false,
+    avatarMediaId: null,
   },
 });
 

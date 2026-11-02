@@ -108,3 +108,14 @@ describe("safeNext", async () => {
     expect(safeNext(null, "/dong-ho")).toBe("/dong-ho");
   });
 });
+
+describe("kiểm tra ảnh trước khi tải", async () => {
+  const { checkImageFile } = await import("./upload");
+  it("nhận ảnh, chặn file khác và file quá lớn", () => {
+    expect(checkImageFile({ name: "nha-tho.jpg", type: "image/jpeg", size: 2_000_000 })).toBeNull();
+    expect(checkImageFile({ name: "IMG_0001.jpg", type: "", size: 3_000_000 })).toBeNull(); // một số máy không báo type
+    expect(checkImageFile({ name: "IMG_0001.HEIC", type: "image/heic", size: 3_000_000 })).toMatch(/HEIC của iPhone/);
+    expect(checkImageFile({ name: "gia-pha.pdf", type: "application/pdf", size: 1000 })).toMatch(/không phải ảnh/);
+    expect(checkImageFile({ name: "to.jpg", type: "image/jpeg", size: 16 * 1024 * 1024 })).toMatch(/lớn hơn 15 MB/);
+  });
+});

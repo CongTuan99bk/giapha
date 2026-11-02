@@ -27,7 +27,7 @@ export default function PeopleListPage() {
         <ul className="mt-6 divide-y divide-ngoc-200 border-y border-ngoc-200">
           {list.data?.items.map((p) => (
             <li key={p.id}>
-              <Link href={`/dong-ho/${clanId}?nguoi=${p.id}`} className="grid grid-cols-[3.5rem_1fr_auto] items-baseline gap-3 px-1 py-3 hover:bg-ngoc-100">
+              <Link href={`/dong-ho/${clanId}/pha-do?nguoi=${p.id}`} className="grid grid-cols-[3.5rem_1fr_auto] items-baseline gap-3 px-1 py-3 hover:bg-ngoc-100">
                 <span className="text-sm text-reu">{p.generation ? `Đời ${p.generation}` : ""}</span>
                 <span className={`font-serif text-lg ${p.inClan ? "" : "text-reu"}`}>{p.fullName}</span>
                 <span className="text-sm tabular-nums text-reu">{lifespan(p)}</span>

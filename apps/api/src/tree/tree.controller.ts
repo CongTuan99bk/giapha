@@ -46,6 +46,9 @@ export class TreeController {
 
       const layout = layoutTree(index, {
         rootId,
+        // ô người rộng hơn mặc định để chứa ảnh chân dung + 2 dòng tên
+        nodeWidth: 172,
+        nodeHeight: 76,
         orientation: q.orientation,
         collapsed: q.collapsed,
         ...(q.depth ? { maxDepth: q.depth } : {}),
@@ -63,6 +66,7 @@ export class TreeController {
           generation: p.generation,
           inClan: p.in_clan,
           hasAvatar: !hidden && p.avatar_media_id !== null,
+          avatarMediaId: hidden ? null : p.avatar_media_id,
         };
       };
       return {

@@ -132,6 +132,13 @@ export class PersonsController {
     return this.db.withClan(this.ctx(m), (trx) => this.persons.addParent(trx, this.actor(m), personId, input));
   }
 
+  @Put("persons/:personId/avatar")
+  @MinRole("editor")
+  setAvatar(@CurrentMembership() m: Membership, @Param("personId") personId: string, @Body() body: unknown) {
+    const { mediaId } = z.object({ mediaId: idSchema.nullable() }).strict().parse(body);
+    return this.db.withClan(this.ctx(m), (trx) => this.persons.setAvatar(trx, this.actor(m), idSchema.parse(personId), mediaId));
+  }
+
   @Put("unions/:unionId/children/order")
   @MinRole("editor")
   @HttpCode(204)

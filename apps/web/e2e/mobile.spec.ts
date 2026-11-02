@@ -8,6 +8,8 @@ test("điện thoại: đăng nhập, xem phả đồ, chạm vào người mở
   await page.getByLabel("Mật khẩu").fill(OWNER.password);
   await page.getByRole("button", { name: "Đăng nhập" }).click();
 
+  await expect(page.getByRole("region", { name: "Ảnh dòng họ" })).toBeVisible();
+  await page.getByRole("link", { name: "Xem phả đồ" }).tap();
   const root = page.locator(node("Lê Văn Cả"));
   await expect(root).toBeVisible();
   await root.tap();

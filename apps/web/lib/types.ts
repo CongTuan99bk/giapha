@@ -50,6 +50,7 @@ export interface Person extends PersonBrief {
   inClan: boolean;
   lineagePath: string | null;
   privacy: Privacy;
+  avatarMediaId: string | null;
   biography: unknown;
   version: number;
   updatedAt: string;
@@ -98,6 +99,7 @@ export interface TreeNode {
     generation: number | null;
     inClan: boolean;
     hasAvatar: boolean;
+    avatarMediaId: string | null;
   };
 }
 
@@ -177,4 +179,23 @@ export interface InvitationPreview {
   expiresAt: string;
   forSpecificEmail: boolean;
   status: InvitationStatus;
+}
+
+export type ImageVariant = "sm" | "md" | "lg" | "orig";
+
+export interface MediaItem {
+  id: string;
+  width: number | null;
+  height: number | null;
+  caption: string | null;
+  sizeBytes: number;
+  createdAt: string;
+  urls: Record<ImageVariant, string>;
+}
+
+export interface HomeSettings {
+  banners: MediaItem[];
+  couplet: { left: string; right: string } | null;
+  motto: string | null;
+  stats: { people: number; generations: number };
 }

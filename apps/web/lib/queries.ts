@@ -5,6 +5,7 @@ import { api } from "./api";
 import type {
   Clan,
   GrantableRole,
+  HomeSettings,
   Invitation,
   KinshipResult,
   Member,
@@ -155,5 +156,27 @@ export function useLinkMe(clanId: string) {
   return useMutation({
     mutationFn: (personId: string | null) => api<Member>("PATCH", `/clans/${clanId}/me/person`, { personId }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clan", clanId] }),
+  });
+}
+
+// ───────────── Ảnh & trang chủ ─────────────
+
+export const useHome = (clanId: string) =>
+  useQuery({ queryKey: ["clan", clanId, "home"], queryFn: () => api<HomeSettings>("GET", `/clans/${clanId}/site/home`) });
+
+export function useSaveHome(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { banners: Array<{ mediaId: string; caption?: string | null }>; couplet: { left: string; right: string } | null; motto: string | null }) =>
+      api<HomeSettings>("PUT", `/clans/${clanId}/site/home`, v),
+    onSuccess: (data) => qc.setQueryData(["clan", clanId, "home"], data),
+  });
+}
+
+export function useSetAvatar(clanId: string) {
+  const invalidate = useInvalidateClan(clanId);
+  return useMutation({
+    mutationFn: (v: { personId: string; mediaId: string | null }) => api<Person>("PUT", `/clans/${clanId}/persons/${v.personId}/avatar`, { mediaId: v.mediaId }),
+    onSuccess: invalidate,
   });
 }

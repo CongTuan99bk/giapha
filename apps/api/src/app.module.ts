@@ -12,6 +12,10 @@ import { HealthController } from "./health.controller.js";
 import { InstanceController } from "./instance.controller.js";
 import { InvitationsController, MembersController } from "./members/members.controller.js";
 import { MembersService } from "./members/members.service.js";
+import { MediaController } from "./media/media.controller.js";
+import { MediaService } from "./media/media.service.js";
+import { MediaStorage } from "./media/media-storage.js";
+import { SiteService } from "./site/site.service.js";
 import { PersonsController } from "./persons/persons.controller.js";
 import { PersonsService } from "./persons/persons.service.js";
 import { GraphService } from "./tree/graph.service.js";
@@ -25,7 +29,7 @@ export class AppModule {
   static forRoot(config: AppConfig): DynamicModule {
     return {
       module: AppModule,
-      controllers: [HealthController, InstanceController, AuthController, MeController, ClansController, PersonsController, TreeController, MembersController, InvitationsController],
+      controllers: [HealthController, InstanceController, AuthController, MeController, ClansController, PersonsController, TreeController, MembersController, InvitationsController, MediaController],
       providers: [
         { provide: APP_CONFIG, useValue: config },
         Database,
@@ -34,6 +38,9 @@ export class AppModule {
         GraphService,
         PersonsService,
         MembersService,
+        MediaStorage,
+        MediaService,
+        SiteService,
         { provide: APP_GUARD, useClass: SessionGuard },
         { provide: APP_GUARD, useClass: TenantGuard },
         { provide: APP_FILTER, useClass: ErrorFilter },

@@ -1,3 +1,5 @@
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 /**
@@ -36,6 +38,7 @@ export default defineConfig({
         NODE_ENV: "test",
         PORT: "4000",
         CLAN_MODE: "single",
+        MEDIA_DIR: join(tmpdir(), "coinguon-e2e-media"),
         APP_DATABASE_URL: `postgresql://coinguon_app:coinguon_app@${host}/${E2E_DB}`,
         PLATFORM_DATABASE_URL: `postgresql://coinguon_platform:coinguon_platform@${host}/${E2E_DB}`,
       },

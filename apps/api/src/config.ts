@@ -21,6 +21,10 @@ const envSchema = z.object({
    * multi: dịch vụ nhiều dòng họ (để sẵn, chưa dùng).
    */
   CLAN_MODE: z.enum(["single", "multi"]).default("single"),
+  /** Thư mục lưu ảnh (ADR-015). Production: volume Docker được sao lưu hằng đêm. */
+  MEDIA_DIR: z.string().default("data/media"),
+  /** Dung lượng tối đa mỗi ảnh tải lên (MB) */
+  MEDIA_MAX_MB: z.coerce.number().int().min(1).max(50).default(15),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;

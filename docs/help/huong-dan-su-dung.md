@@ -1,6 +1,6 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.2
+version: 1.3
 updated: 2026-11-02
 audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
@@ -49,6 +49,11 @@ Website có các mục:
 
 Trên điện thoại, các mục chính nằm ở thanh dưới cùng màn hình; các mục khác bấm nút **☰ Menu**.
 
+**Trang chủ khi đã đăng nhập:** vào dòng họ, bạn thấy ngay **Trang chủ** với dải ảnh lớn (ảnh nhà thờ họ, cổng làng, đại gia đình…) tự trượt lần lượt và quay vòng, hai bên là **câu đối** (trên điện thoại câu đối nằm dưới ảnh).
+- Rê chuột lên ảnh để dừng trượt; bấm **‹ ›** hoặc các chấm phía dưới để chuyển ảnh. Trên điện thoại, vuốt sang trái/phải.
+- Nếu máy bạn bật "giảm chuyển động", ảnh không tự trượt — bấm chấm để xem ảnh khác.
+- Bên dưới là số người, số đời trong phả và các nút **Xem phả đồ**, **Tra cách xưng hô**, **Tìm người trong phả**.
+
 ## 2. Xem phả đồ
 
 1. Bấm **Phả đồ** trên menu.
@@ -66,6 +71,8 @@ Trên điện thoại, các mục chính nằm ở thanh dưới cùng màn hìn
 ## 3. Xem hồ sơ một người
 
 Bấm vào một người trên cây hoặc trong kết quả tìm kiếm để mở hồ sơ: ảnh, tên, tên khác (tên huý, tên tự), ngày sinh, ngày mất, ngày giỗ, tiểu sử, gia đình.
+
+- **Ảnh chân dung** (ảnh thờ) hiện ở đầu hồ sơ và thu nhỏ ngay trên ô của người đó trong phả đồ. Bấm vào ảnh để xem ảnh lớn.
 
 - Ngày tháng hiển thị cả **dương lịch** và **âm lịch**.
 - Với người còn sống, website công khai chỉ hiện họ tên và năm sinh. Thông tin chi tiết chỉ thành viên đã đăng nhập mới xem được.
@@ -185,6 +192,11 @@ Người mới hiện ngay trên cây và được chọn sẵn; số đời đ�
 
 **Xoá:** bấm **Xoá** → **Xoá người này**. Người có con thì con cháu vẫn giữ trong phả. Không xoá được thuỷ tổ (đổi thuỷ tổ trong **Cài đặt** trước).
 
+**Ảnh chân dung:** bấm vào người → **Thêm ảnh chân dung** → chọn ảnh từ máy hoặc điện thoại. Đã có ảnh thì có **Đổi ảnh**, **Gỡ ảnh**, **Tải ảnh gốc**.
+- Nhận ảnh JPG, PNG, WebP, tối đa 15 MB. Ảnh HEIC của iPhone chưa đọc được — chọn ảnh qua trình duyệt trên iPhone (máy tự đổi sang JPG), hoặc đổi trong iPhone: **Cài đặt → Camera → Định dạng → Tương thích nhất**.
+- Ảnh tự xoay đúng chiều. **Thông tin vị trí nơi chụp (GPS) và tên máy ảnh bị xoá** trước khi lưu, để không lộ địa chỉ nhà.
+- Bản gốc vẫn được giữ đủ nét để lưu trữ tư liệu; hệ thống tạo thêm bản nhỏ cho phả đồ và điện thoại để tải nhanh.
+
 ## 13. Nhiều vợ/chồng, con nuôi, thứ tự con
 
 - **Nhiều vợ/chồng:** bấm **Thêm vợ/chồng** nhiều lần; thứ tự theo lần thêm. *(Kéo thả đổi thứ tự: Sắp ra mắt.)*
@@ -253,7 +265,15 @@ Vào **Quản trị → Thống kê**:
 
 ## 19. Cài đặt website
 
-Vào **Quản trị → Website**:
+**Trang chủ (đã có):** vào thẻ **Cài đặt → Trang chủ**:
+
+1. **Thêm ảnh banner** → chọn một hoặc nhiều ảnh (tối đa 12). Nên dùng ảnh ngang, rộng từ 1600 điểm ảnh trở lên.
+2. Gõ **chú thích** cho từng ảnh nếu muốn (hiện ở góc ảnh). Dùng nút **↑ ↓** để đổi thứ tự trượt, **Bỏ** để gỡ ảnh khỏi banner.
+3. Gõ **câu đối**: **Vế bên trái**, **Vế bên phải** (mỗi vế tối đa 40 ký tự). Để trống cả hai nếu không dùng.
+4. Gõ **khẩu hiệu** hiện dưới tên dòng họ, ví dụ *Uống nước nhớ nguồn*.
+5. Bấm **Lưu trang chủ**, rồi mở thẻ **Trang chủ** để xem.
+
+Các mục dưới đây thuộc website công khai *(Sắp ra mắt)* — vào **Quản trị → Website**:
 
 - **Giao diện:** tải logo, ảnh bìa (banner), ảnh cuốn thư; chọn màu chủ đạo. Bấm **Xem trước** trước khi **Lưu**.
 - **Menu:** bật/tắt, đổi tên, kéo thả thứ tự các mục; thêm mục trỏ tới một chuyên mục bài viết.

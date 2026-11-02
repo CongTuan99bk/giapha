@@ -8,7 +8,8 @@ import { useClan, useMe } from "@/lib/queries";
 import { ROLE_RANK } from "@/lib/roles";
 
 const TABS = [
-  { href: "", label: "Phả đồ" },
+  { href: "", label: "Trang chủ" },
+  { href: "/pha-do", label: "Phả đồ" },
   { href: "/danh-sach", label: "Danh sách" },
   { href: "/xung-ho", label: "Xưng hô" },
 ] as const;

@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { formatAnniversary, formatFlexibleDate, GENDER_LABEL } from "@/lib/format";
-import { useAddPerson, useDeletePerson, useLinkMe, usePerson, useUpdatePerson, type RelativeKind } from "@/lib/queries";
+import { useAddPerson, useDeletePerson, useLinkMe, usePerson, useSetAvatar, useUpdatePerson, type RelativeKind } from "@/lib/queries";
+import { mediaUrl, uploadImage } from "@/lib/upload";
 import type { Clan, Gender, PersonBrief, PersonDetail } from "@/lib/types";
 import { FormError } from "../field";
 import { PersonForm } from "../person-form";
@@ -93,6 +94,7 @@ function PersonView({
   const hasParents = p.parents.length > 0;
   return (
     <div>
+      <Portrait clanId={clan.id} p={p} canEdit={canEdit} />
       <h2 className="font-serif text-[1.75rem] leading-tight">{p.fullName}</h2>
       <ThisIsMe clan={clan} personId={p.id} />
       <dl className="mt-4 grid grid-cols-[7.5rem_1fr] gap-x-3 gap-y-2 text-[0.95rem]">
@@ -334,6 +336,77 @@ function ThisIsMe({ clan, personId }: { clan: Clan; personId: string }) {
         Đây là tôi
       </button>
       {link.error && <p className="mt-1 text-sm text-loi">{link.error.message}</p>}
+    </div>
+  );
+}
+
+/** Ảnh chân dung (ảnh thờ): xem, thêm, đổi, gỡ. Ảnh gốc mở được ở tab mới để tải về. */
+function Portrait({ clanId, p, canEdit }: { clanId: string; p: PersonDetail; canEdit: boolean }) {
+  const setAvatar = useSetAvatar(clanId);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+
+  async function choose(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const m = await uploadImage(clanId, file, `Ảnh ${p.fullName}`);
+      await setAvatar.mutateAsync({ personId: p.id, mediaId: m.id });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không tải được ảnh.");
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = "";
+    }
+  }
+
+  if (!p.avatarMediaId && !canEdit) return null;
+  const picker = (
+    <input ref={input} type="file" accept="image/*" className="sr-only" onChange={(e) => void choose(e.target.files)} disabled={busy} />
+  );
+  return (
+    <div className="mb-4">
+      {p.avatarMediaId ? (
+        <div className="flex items-end gap-4">
+          <a href={mediaUrl(clanId, p.avatarMediaId, "lg")} target="_blank" rel="noreferrer" title="Xem ảnh lớn">
+            <img
+              src={mediaUrl(clanId, p.avatarMediaId, "md")}
+              alt={`Ảnh chân dung ${p.fullName}`}
+              className="h-36 w-28 rounded-md border border-ngoc-200 object-cover"
+            />
+          </a>
+          {canEdit && (
+            <div className="flex flex-col items-start gap-1 text-sm">
+              <label className={`cursor-pointer font-medium text-son hover:underline ${busy ? "pointer-events-none opacity-50" : ""}`}>
+                {picker}
+                {busy ? "Đang tải…" : "Đổi ảnh"}
+              </label>
+              <button
+                type="button"
+                className="text-reu hover:text-loi hover:underline"
+                onClick={() => setAvatar.mutate({ personId: p.id, mediaId: null })}
+                disabled={busy || setAvatar.isPending}
+              >
+                Gỡ ảnh
+              </button>
+              <a href={mediaUrl(clanId, p.avatarMediaId, "orig")} className="text-reu hover:underline">
+                Tải ảnh gốc
+              </a>
+            </div>
+          )}
+        </div>
+      ) : (
+        <label
+          className={`flex h-24 w-full cursor-pointer items-center justify-center rounded-md border border-dashed border-ngoc-300 text-sm text-reu hover:border-son hover:text-son ${busy ? "pointer-events-none opacity-60" : ""}`}
+        >
+          {picker}
+          {busy ? "Đang tải ảnh…" : "Thêm ảnh chân dung"}
+        </label>
+      )}
+      {error && <p className="mt-1 text-sm text-loi">{error}</p>}
     </div>
   );
 }

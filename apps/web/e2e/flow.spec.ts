@@ -1,3 +1,5 @@
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
 import { node, OWNER } from "./data";
 
@@ -11,6 +13,7 @@ test.afterAll(async () => {
   await page.close();
 });
 
+const fixture = (name: string) => join(dirname(fileURLToPath(import.meta.url)), "fixtures", name);
 const panel = () => page.getByRole("complementary", { name: "Thông tin người được chọn" });
 
 test("người đầu tiên đăng ký và tạo dòng họ", async () => {
@@ -96,6 +99,40 @@ test("danh sách: tìm tên không dấu", async () => {
   await expect(panel().getByRole("heading", { name: "Trần Thị Hai" })).toBeVisible();
 });
 
+test("ảnh chân dung: tải lên từ bảng thông tin, hiện trên ô phả đồ", async () => {
+  await page.getByRole("link", { name: "Phả đồ", exact: true }).click();
+  await page.locator(node("Lê Văn Cả")).click();
+  await panel().getByText("Thêm ảnh chân dung").locator("input[type=file]").setInputFiles(fixture("chan-dung.jpg"));
+  await expect(panel().getByRole("img", { name: "Ảnh chân dung Lê Văn Cả" })).toBeVisible();
+  await expect(page.locator(`${node("Lê Văn Cả")} image`)).toHaveCount(1);
+});
+
+test("trang chủ: nhiều ảnh banner tự trượt + câu đối", async () => {
+  await page.getByRole("link", { name: "Cài đặt" }).click();
+  await page.locator("#trang-chu input[type=file]").setInputFiles([fixture("banner-1.jpg"), fixture("banner-2.jpg")]);
+  await expect(page.getByLabel("Chú thích ảnh 2")).toBeVisible();
+  await page.getByLabel("Chú thích ảnh 1").fill("Nhà thờ họ");
+  await page.getByLabel("Vế bên trái").fill("Cây có cội mới nảy cành xanh lá");
+  await page.getByLabel("Vế bên phải").fill("Nước có nguồn mới bể rộng sông sâu");
+  await page.getByLabel("Khẩu hiệu dưới tên dòng họ").fill("Uống nước nhớ nguồn");
+  await page.getByRole("button", { name: "Lưu trang chủ" }).click();
+  await expect(page.getByText("Đã lưu. Xem ở thẻ Trang chủ.")).toBeVisible();
+
+  await page.getByRole("link", { name: "Trang chủ" }).click();
+  const carousel = page.getByRole("region", { name: "Ảnh dòng họ" });
+  await expect(carousel).toBeVisible();
+  await expect(page.getByText("Uống nước nhớ nguồn")).toBeVisible();
+  await expect(page.getByRole("note", { name: /Câu đối vế trái: Cây có cội/ })).toBeVisible();
+  await expect(carousel.getByRole("button", { name: "Xem ảnh 1" })).toHaveAttribute("aria-current", "true");
+  await carousel.hover();
+  await carousel.getByRole("button", { name: "Ảnh sau" }).click();
+  await expect(carousel.getByRole("button", { name: "Xem ảnh 2" })).toHaveAttribute("aria-current", "true");
+  // ảnh cuối → bấm tiếp quay vòng về ảnh đầu
+  await page.waitForTimeout(800);
+  await carousel.getByRole("button", { name: "Ảnh sau" }).click();
+  await expect(carousel.getByRole("button", { name: "Xem ảnh 1" })).toHaveAttribute("aria-current", "true");
+});
+
 let inviteUrl = "";
 
 test("tạo link mời trong Cài đặt", async () => {
@@ -125,6 +162,9 @@ test("người đã có tài khoản mở link mời → tham gia với vai trò
   await expect(page.getByText("Họ Lê Văn – thôn Thử")).toBeVisible();
   await expect(page.getByText("Bạn đang đăng nhập là nguoimoi@e2e.test.")).toBeVisible();
   await page.getByRole("button", { name: "Tham gia dòng họ" }).click();
+  // vào trang chủ dòng họ (có banner), rồi mở phả đồ
+  await expect(page.getByRole("heading", { level: 1, name: "Họ Lê Văn – thôn Thử" })).toBeVisible();
+  await page.getByRole("link", { name: "Phả đồ", exact: true }).click();
 
   const root = page.locator(node("Lê Văn Cả"));
   await expect(root).toBeVisible();
@@ -146,6 +186,7 @@ test("người chưa có tài khoản: mở link → tạo tài khoản → quay
   await p.getByRole("button", { name: "Tạo tài khoản" }).click();
   await expect(p).toHaveURL(new RegExp(inviteUrl + "$"));
   await p.getByRole("button", { name: "Tham gia dòng họ" }).click();
+  await p.getByRole("link", { name: "Xem phả đồ" }).click();
   await expect(p.locator(node("Lê Văn Cả"))).toBeVisible();
   await p.close();
 });

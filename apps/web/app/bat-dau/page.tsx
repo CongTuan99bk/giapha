@@ -35,7 +35,7 @@ function CreateClan() {
         slug: slug || slugify(name),
       });
       await qc.invalidateQueries({ queryKey: keys.clans });
-      router.replace(`/dong-ho/${clan.id}`);
+      router.replace(`/dong-ho/${clan.id}/pha-do`);
     } catch (err) {
       const fe = fieldErrors(err);
       if (err instanceof ApiError && err.code === "SLUG_TAKEN") fe.slug = "Địa chỉ này đã có người dùng, hãy chọn địa chỉ khác.";

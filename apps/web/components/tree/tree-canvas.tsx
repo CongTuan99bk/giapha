@@ -2,11 +2,14 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { lifespan } from "@/lib/format";
+import { mediaUrl } from "@/lib/upload";
 import { fitView, focusView, generationRows, visibleNodes, wrapName, zoomAt, type View } from "@/lib/tree-view";
 import type { TreeLayout, TreeNode } from "@/lib/types";
 
 interface Props {
   layout: TreeLayout;
+  /** Dùng để dựng đường dẫn ảnh chân dung */
+  clanId: string;
   selectedId: string | null;
   onSelect: (personId: string) => void;
   /** Yêu cầu đưa một người vào giữa màn hình (đổi `nonce` để yêu cầu lại) */
@@ -21,7 +24,7 @@ const DRAG_SLOP = 5;
  * Kéo để di chuyển, cuộn/chụm hai ngón để phóng to, bấm vào người để chọn.
  * Dải bên trái ghi "Đời n" như lề cuốn gia phả, luôn khớp với hàng đang xem.
  */
-export function TreeCanvas({ layout, selectedId, onSelect, focus }: Props) {
+export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [view, setView] = useState<View | null>(null);
@@ -162,6 +165,12 @@ export function TreeCanvas({ layout, selectedId, onSelect, focus }: Props) {
     >
       {view && (
         <svg className="absolute inset-0 h-full w-full" aria-hidden={false}>
+          <defs>
+            {/* khung ảnh chân dung bo góc, dùng chung cho mọi ô */}
+            <clipPath id="khung-chan-dung" clipPathUnits="objectBoundingBox">
+              <rect width="1" height="1" rx="0.1" ry="0.08" />
+            </clipPath>
+          </defs>
           <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
             {/* Dải màu xen kẽ theo đời */}
             {[...rows.entries()].map(([depth, r]) =>
@@ -197,6 +206,7 @@ export function TreeCanvas({ layout, selectedId, onSelect, focus }: Props) {
                 generation={rootGeneration + n.depth}
                 selected={n.personId === selectedId}
                 isRoot={n.personId === layout.rootId}
+                avatarUrl={n.person.avatarMediaId ? mediaUrl(clanId, n.person.avatarMediaId, "sm") : null}
                 onSelect={select}
               />
             ))}
@@ -271,16 +281,20 @@ const PersonNode = memo(function PersonNode({
   generation,
   selected,
   isRoot,
+  avatarUrl,
   onSelect,
 }: {
   node: TreeNode;
   generation: number;
   selected: boolean;
   isRoot: boolean;
+  avatarUrl: string | null;
   onSelect: (id: string) => void;
 }) {
   const p = node.person;
-  const lines = wrapName(p.fullName, 17);
+  // Có ảnh: ảnh chân dung bên trái, chữ dịch sang phải và ngắn lại
+  const tx = avatarUrl ? 64 : 14;
+  const lines = wrapName(p.fullName, avatarUrl ? 13 : 18);
   const span = lifespan(p);
   const outside = !p.inClan;
   const bar = p.gender === "male" ? "fill-son" : p.gender === "female" ? "fill-reu" : "fill-ngoc-300";
@@ -312,15 +326,26 @@ const PersonNode = memo(function PersonNode({
       />
       <rect width={4} height={node.height} className={bar} opacity={outside ? 0.5 : 1} />
       {isRoot && <rect width={node.width} height={4} className="fill-thep" />}
-      <text x={14} y={lines.length === 1 ? 32 : 24} className={`fill-then font-serif ${outside ? "" : "font-medium"}`} fontSize={15.5}>
+      {avatarUrl && (
+        <image
+          href={avatarUrl}
+          x={10}
+          y={8}
+          width={46}
+          height={node.height - 16}
+          preserveAspectRatio="xMidYMid slice"
+          clipPath="url(#khung-chan-dung)"
+        />
+      )}
+      <text x={tx} y={lines.length === 1 ? 32 : 24} className={`fill-then font-serif ${outside ? "" : "font-medium"}`} fontSize={15.5}>
         {lines.map((l, i) => (
-          <tspan key={i} x={14} dy={i === 0 ? 0 : 18}>
+          <tspan key={i} x={tx} dy={i === 0 ? 0 : 18}>
             {l}
           </tspan>
         ))}
       </text>
       {span && (
-        <text x={14} y={node.height - 11} className="fill-reu font-sans tabular-nums" fontSize={12}>
+        <text x={tx} y={node.height - 11} className="fill-reu font-sans tabular-nums" fontSize={12}>
           {span}
         </text>
       )}

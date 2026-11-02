@@ -45,6 +45,7 @@ export function toPersonDto(p: PersonRow) {
     inClan: p.in_clan,
     lineagePath: p.lineage_path,
     privacy: p.privacy,
+    avatarMediaId: p.avatar_media_id,
     biography: p.biography,
     version: p.version,
     updatedAt: p.updated_at,
@@ -100,6 +101,28 @@ export class PersonsService {
     await this.graph.recomputeLineage(trx, a.clanId);
     await audit(trx, { ...this.auditBase(a), action: "person.create", entity: "person", entityId: person.id, after: input });
     return toPersonDto(await this.getActive(trx, person.id));
+  }
+
+  /**
+   * Đặt/gỡ ảnh chân dung. Không tăng `version`: đổi ảnh không xung đột với người đang sửa chữ cùng lúc.
+   * Ảnh phải thuộc dòng họ hiện tại (RLS) và chưa bị xoá.
+   */
+  async setAvatar(trx: Tx, a: Actor, id: string, mediaId: string | null) {
+    const before = await this.getActive(trx, id);
+    if (mediaId) {
+      const m = await trx.selectFrom("media").select("id").where("id", "=", mediaId).where("deleted_at", "is", null).executeTakeFirst();
+      if (!m) throw unprocessable("MEDIA_NOT_FOUND", "Không tìm thấy ảnh");
+    }
+    await trx.updateTable("persons").set({ avatar_media_id: mediaId, updated_at: new Date() }).where("id", "=", id).execute();
+    await audit(trx, {
+      ...this.auditBase(a),
+      action: "person.avatar",
+      entity: "person",
+      entityId: id,
+      before: { avatarMediaId: before.avatar_media_id },
+      after: { avatarMediaId: mediaId },
+    });
+    return toPersonDto(await this.getActive(trx, id));
   }
 
   /** Sửa hồ sơ với khoá lạc quan (BR-TREE-07). */
