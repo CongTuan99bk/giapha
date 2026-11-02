@@ -58,7 +58,7 @@ export function ClanHeader({ clanId }: { clanId: string }) {
               aria-current={active ? "page" : undefined}
               className={`whitespace-nowrap rounded-t-md px-4 py-2 text-[0.95rem] ${
                 // thẻ đang mở liền màu với nền trang bên dưới (phả đồ nền giấy dó)
-                active ? `${t.href === "/pha-do" ? "bg-do" : "bg-ngoc-50"} font-medium text-then` : "text-ngoc-200 hover:text-white"
+                active ? `${t.href === "/pha-do" ? "bg-hoang" : "bg-ngoc-50"} font-medium text-then` : "text-ngoc-200 hover:text-white"
               }`}
             >
               {t.label}

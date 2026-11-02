@@ -5,7 +5,7 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.10.0 |
+| Phiên bản file | 0.10.1 |
 | Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **Sẵn sàng demo: `pnpm demo` chạy trên máy cá nhân có link chia sẻ; tiếp theo: lịch giỗ** |
@@ -381,6 +381,13 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.10.1] — 2026-11-02 — Nền phả đồ vàng hoàng theo file thiết kế
+### Sửa
+- Nền phả đồ dùng ảnh từ file thiết kế của chủ dự án `giaphatrangdengoc.psd` (rồng, mây, tròn lót): ẩn lớp trắng "Layer 3" để lộ nền vàng #f4e79c, giảm độ mờ các lớp hoạ tiết 20% → 10% cho tông-trên-tông, bỏ dải viền của ảnh (viền vẽ bằng CSS, màu son thẫm #670513 lấy từ lớp KHUNG). Ảnh web: `public/hoa-van/nen-rong-vang.webp` (2400px, 120 KB, `background-size: cover`). Token `--color-hoang`, `--color-khung`.
+- Bỏ hoạ tiết tự vẽ `luong-long.svg` và `scripts/ve-hoa-van.mjs`, bỏ tiện ích `nen-giay-do`.
+### Ghi chú
+- File PSD gốc và bản đã chỉnh màu không đưa vào repo (28 MB); giữ ở máy chủ dự án. Repo đang công khai: ảnh nền nằm trong `public/`.
 
 ## [0.10.0] — 2026-11-02 — Lịch giỗ
 ### Thêm

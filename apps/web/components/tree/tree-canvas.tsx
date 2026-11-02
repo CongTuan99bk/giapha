@@ -153,7 +153,7 @@ export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus }: Prop
   return (
     <div
       ref={box}
-      className="nen-giay-do absolute inset-0 cursor-grab touch-none select-none overflow-hidden outline-none active:cursor-grabbing"
+      className="absolute inset-0 bg-hoang cursor-grab touch-none select-none overflow-hidden outline-none active:cursor-grabbing"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -163,11 +163,11 @@ export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus }: Prop
       role="application"
       aria-label="Phả đồ. Dùng phím mũi tên để di chuyển, phím cộng trừ để phóng to thu nhỏ, phím Tab để đi qua từng người."
     >
-      {/* Nền chìm "lưỡng long chầu nguyệt" + khung viền thếp đôi — đứng yên khi kéo phả đồ */}
+      {/* Nền hoàng: rồng, mây, tròn lót chìm (từ file thiết kế giaphatrangdengoc.psd) + khung son đôi — đứng yên khi kéo phả đồ */}
       <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 left-14">
-        <div className="absolute inset-0 bg-[url(/hoa-van/luong-long.svg)] bg-[length:clamp(640px,92%,1100px)_auto] bg-center bg-no-repeat opacity-[0.075]" />
-        <div className="absolute inset-3 rounded-sm border border-thep/25">
-          <div className="absolute inset-1.5 rounded-sm border border-thep/15" />
+        <div className="absolute inset-0 bg-[url(/hoa-van/nen-rong-vang.webp)] bg-cover bg-center" />
+        <div className="absolute inset-2 border-2 border-khung/70">
+          <div className="absolute inset-1 border border-khung/40" />
         </div>
       </div>
       {view && (
@@ -246,7 +246,7 @@ export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus }: Prop
         <IconButton label="Thu nhỏ" onClick={() => zoomBy(1 / 1.25)}>
           −
         </IconButton>
-        <button type="button" className="rounded px-3 text-sm text-then hover:bg-do" onClick={fitAll}>
+        <button type="button" className="rounded px-3 text-sm text-then hover:bg-hoang" onClick={fitAll}>
           Xem cả cây
         </button>
       </div>
@@ -258,7 +258,7 @@ const RAIL = 56; // độ rộng lề "Đời n"
 
 function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: string }) {
   return (
-    <button type="button" aria-label={label} title={label} onClick={onClick} className="h-10 w-10 rounded text-xl leading-none text-then hover:bg-do">
+    <button type="button" aria-label={label} title={label} onClick={onClick} className="h-10 w-10 rounded text-xl leading-none text-then hover:bg-hoang">
       {children}
     </button>
   );

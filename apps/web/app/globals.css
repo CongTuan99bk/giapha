@@ -29,7 +29,10 @@
   /* Phả đồ: giấy dó (ngà, có sợi) thay cho nền ngọc lạnh */
   --color-do: #f4eee1;
   --color-do-dam: #e9dfca;
-  --color-the: #fffdf7; /* nền thẻ người trên giấy dó */
+  --color-the: #fffdf7; /* nền thẻ người trên nền phả đồ */
+  /* Phả đồ: nền vàng hoàng, viền son thẫm (lấy đúng màu từ file thiết kế giaphatrangdengoc.psd) */
+  --color-hoang: #f4e79c;
+  --color-khung: #670513;
   --color-loi: #a3261b;
 
   --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
@@ -105,8 +108,3 @@
   & hr { @apply my-10 border-ngoc-200; }
 }
 
-/* Nền giấy dó cho phả đồ: màu ngà + vân sợi rất nhẹ (ảnh nhỏ lặp lại, không vẽ lại khi kéo phả đồ) */
-@utility nen-giay-do {
-  background-color: var(--color-do);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9 .35' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .33 0 0 0 0 .2 0 0 0 .075 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
