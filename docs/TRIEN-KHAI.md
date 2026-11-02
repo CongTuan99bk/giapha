@@ -19,10 +19,14 @@ Cả ba dùng chung một bộ cấu hình Docker (`infra/docker/compose.prod.ym
 1. **Docker Desktop** — https://www.docker.com/products/docker-desktop/ → cài, mở lên, đợi biểu tượng cá voi báo *running*.
    Windows: nếu được hỏi, bật **WSL 2** theo hướng dẫn của trình cài.
 2. **Git** — https://git-scm.com/downloads
-3. **Node.js 22** (bản LTS) — https://nodejs.org → sau khi cài, mở **PowerShell** (Windows) hoặc **Terminal** (macOS) gõ:
-   ```bash
-   corepack enable
-   ```
+3. **Node.js** bản **LTS** (22 trở lên) — https://nodejs.org → tải bản LTS, cài với các lựa chọn mặc định.
+   - Trình cài trên Windows có ô **"Automatically install the necessary tools"** (cài thêm Python, Visual Studio Build Tools, Chocolatey): **không cần tích**.
+   - Cài xong, **mở PowerShell mới** (Windows) hoặc Terminal (macOS) gõ lệnh cài **pnpm**:
+     ```bash
+     npm install -g pnpm@10
+     ```
+   - Kiểm tra: `node -v` ra `v22…` trở lên, `pnpm -v` ra `10…`.
+   (Node.js từ bản 25 không còn kèm `corepack`, nên dùng lệnh `npm install -g pnpm@10` ở trên thay cho `corepack enable`.)
 
 ### Chạy demo
 

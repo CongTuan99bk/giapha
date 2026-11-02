@@ -35,7 +35,7 @@ docs/                 # PROJECT_CONTEXT.md, hướng dẫn sử dụng
 
 ## Demo nhanh có link chia sẻ (0 đồng)
 
-Cần **Docker Desktop**, **Git**, **Node.js 22** (`corepack enable`). Rồi:
+Cần **Docker Desktop**, **Git**, **Node.js LTS ≥ 22** và **pnpm 10** (`npm install -g pnpm@10`). Rồi:
 
 ```bash
 git clone https://github.com/CongTuan99bk/giapha.git && cd giapha
@@ -46,7 +46,7 @@ Chi tiết, cách chạy 24/7 miễn phí (Oracle Cloud) hoặc trên VPS: **`do
 
 ## Chạy trên máy cá nhân (phát triển)
 
-Cần cài: **Node.js 22** (bản 22.9 trở lên), **pnpm 10** (`corepack enable`), **Docker Desktop**, **Git**.
+Cần cài: **Node.js LTS** (22.9 trở lên), **pnpm 10** (`npm install -g pnpm@10`), **Docker Desktop**, **Git**.
 
 ```bash
 git clone https://github.com/CongTuan99bk/giapha.git
