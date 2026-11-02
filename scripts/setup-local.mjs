@@ -65,7 +65,7 @@ console.log("  PostgreSQL đã sẵn sàng");
 
 if (process.env.SETUP_SKIP_MIGRATE !== "1") {
   step("Tạo bảng (migration)");
-  run("pnpm", ["--filter", "@coinguon/db", "migrate:deploy"]);
+  run("pnpm", ["--filter", "@coinguon/db", "migrate"]);
 }
 
 step("Build");

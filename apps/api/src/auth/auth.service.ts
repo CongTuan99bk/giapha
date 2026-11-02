@@ -7,7 +7,7 @@ import { sha256 } from "../common/guards.js";
 import { Database } from "../db/database.js";
 
 /** Tham số Argon2id theo khuyến nghị OWASP (19 MiB, 2 vòng) */
-const ARGON2 = { memoryCost: 19_456, timeCost: 2, parallelism: 1 } as const;
+export const ARGON2 = { memoryCost: 19_456, timeCost: 2, parallelism: 1 } as const;
 const MAX_FAILED_LOGINS = 5;
 const LOCK_MINUTES = 15;
 

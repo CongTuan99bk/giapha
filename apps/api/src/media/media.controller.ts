@@ -22,6 +22,7 @@ import type { Response } from "express";
 import { z } from "zod";
 import { CurrentMembership, type Membership, MinRole } from "../common/context.js";
 import { unprocessable } from "../common/errors.js";
+import { RateLimit } from "../common/rate-limit.js";
 import { APP_CONFIG, type AppConfig } from "../config.js";
 import { Database } from "../db/database.js";
 import { homeSettingsSchema, SiteService } from "../site/site.service.js";
@@ -46,6 +47,7 @@ export class MediaController {
   /** Tải ảnh lên (multipart, trường "file"; tuỳ chọn "caption") */
   @Post("media")
   @MinRole("editor")
+  @RateLimit("upload", { limit: 120, windowSec: 600 })
   // không khai báo storage → multer giữ file trong bộ nhớ (memoryStorage), xử lý xong mới ghi đĩa
   @UseInterceptors(FileInterceptor("file", { limits: { fileSize: HARD_LIMIT, files: 1 } }))
   async upload(@CurrentMembership() m: Membership, @UploadedFile() file: Express.Multer.File | undefined, @Body() body: Record<string, unknown>) {

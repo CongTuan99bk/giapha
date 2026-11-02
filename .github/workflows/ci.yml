@@ -61,11 +61,15 @@ jobs:
           DATABASE_URL="$TEST_API_DATABASE_URL" pnpm --filter @coinguon/db migrate:deploy
           psql "$TEST_API_DATABASE_URL" -v ON_ERROR_STOP=1 -f infra/docker/postgres/init.sql
 
-      - name: Database cho test giao diện (e2e)
+      - name: Database cho test giao diện (e2e) — chạy bằng migrate.mjs, kiểm tra Prisma công nhận
         run: |
           psql "$DATABASE_URL" -c "CREATE DATABASE coinguon_e2e"
-          DATABASE_URL=postgresql://coinguon:coinguon@localhost:5432/coinguon_e2e pnpm --filter @coinguon/db migrate:deploy
-          psql postgresql://coinguon:coinguon@localhost:5432/coinguon_e2e -v ON_ERROR_STOP=1 -f infra/docker/postgres/init.sql
+          export E2E_URL=postgresql://coinguon:coinguon@localhost:5432/coinguon_e2e
+          DATABASE_URL=$E2E_URL pnpm --filter @coinguon/db migrate
+          DATABASE_URL=$E2E_URL pnpm --filter @coinguon/db migrate   # chạy lại: không làm gì
+          # migrate.mjs ghi _prisma_migrations y hệt Prisma → prisma migrate status phải báo "up to date"
+          DATABASE_URL=$E2E_URL pnpm --filter @coinguon/db exec prisma migrate status
+          psql $E2E_URL -v ON_ERROR_STOP=1 -f infra/docker/postgres/init.sql
 
       - name: Migration SQL khớp schema.prisma
         run: |
@@ -91,3 +95,46 @@ jobs:
             apps/web/playwright-report
             apps/web/test-results
           retention-days: 7
+
+  # Build image Docker và chạy thử toàn bộ hệ thống như trên máy chủ (không có tunnel)
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tạo file cấu hình thử
+        run: |
+          cat > .env.ci <<EOF
+          DB_PASSWORD=$(openssl rand -hex 16)
+          APP_DB_PASSWORD=$(openssl rand -hex 16)
+          PLATFORM_DB_PASSWORD=$(openssl rand -hex 16)
+          COOKIE_SECURE=true
+          SEED_PASSWORD=ci-demo-123
+          EOF
+      - name: Build và khởi động
+        run: |
+          docker compose -f infra/docker/compose.prod.yml --env-file .env.ci up -d --build
+          for i in $(seq 1 60); do
+            curl -fsS http://localhost:3000/api/v1/health && exit 0
+            sleep 5
+          done
+          echo "Hệ thống không lên sau 5 phút"; exit 1
+      - name: Kiểm tra qua web (Next chuyển tiếp sang API)
+        run: |
+          set -e
+          curl -fsS http://localhost:3000/api/v1/health
+          curl -fsS http://localhost:3000/dang-nhap > /dev/null
+          curl -fsS http://localhost:3000/api/v1/instance | grep '"clan":null'
+          docker compose -f infra/docker/compose.prod.yml --env-file .env.ci run --rm -e SEED_PASSWORD=ci-demo-123 api node dist/seed.js
+          curl -fsS http://localhost:3000/api/v1/instance | grep 'ho-phan-mau'
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:3000/api/v1/auth/login -H 'content-type: application/json' -d '{"email":"quanly@giapha.test","password":"ci-demo-123"}')
+          test "$code" = "200"
+      - name: Migration chạy lại không lỗi, sao lưu tạo file
+        run: |
+          set -e
+          docker compose -f infra/docker/compose.prod.yml --env-file .env.ci run --rm migrate
+          docker compose -f infra/docker/compose.prod.yml --env-file .env.ci exec -T backup /bin/sh /backup.sh now
+          ls -la backups
+          ls backups/db_*.dump backups/media_*.tar.gz
+      - name: Nhật ký khi lỗi
+        if: failure()
+        run: docker compose -f infra/docker/compose.prod.yml --env-file .env.ci logs --no-color --tail 200

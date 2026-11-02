@@ -33,7 +33,18 @@ docs/                 # PROJECT_CONTEXT.md, hướng dẫn sử dụng
 .github/workflows/    # CI
 ```
 
-## Chạy trên máy cá nhân
+## Demo nhanh có link chia sẻ (0 đồng)
+
+Cần **Docker Desktop**, **Git**, **Node.js 22** (`corepack enable`). Rồi:
+
+```bash
+git clone https://github.com/CongTuan99bk/giapha.git && cd giapha
+pnpm demo --du-lieu-mau     # in ra link https://….trycloudflare.com + tài khoản mẫu
+```
+
+Chi tiết, cách chạy 24/7 miễn phí (Oracle Cloud) hoặc trên VPS: **`docs/TRIEN-KHAI.md`**.
+
+## Chạy trên máy cá nhân (phát triển)
 
 Cần cài: **Node.js 22** (bản 22.9 trở lên), **pnpm 10** (`corepack enable`), **Docker Desktop**, **Git**.
 

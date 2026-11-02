@@ -3,7 +3,7 @@
 // Chính sách (PROJECT_CONTEXT mục 12): chỉ giấy phép dễ dãi; ngoại lệ phải ghi rõ lý do bên dưới.
 import { execFileSync } from "node:child_process";
 
-const ALLOWED = new Set(["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC", "0BSD", "BlueOak-1.0.0", "CC0-1.0", "Unlicense", "Python-2.0"]);
+const ALLOWED = new Set(["MIT", "MIT-0", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC", "0BSD", "BlueOak-1.0.0", "CC0-1.0", "Unlicense", "Python-2.0"]);
 
 /** Ngoại lệ theo từng gói: [giấy phép, lý do] */
 const EXCEPTIONS = {

@@ -1,0 +1,13 @@
+# Dùng khi có tên miền trỏ về máy chủ (VPS, Oracle Cloud): Caddy tự lấy chứng chỉ HTTPS (Let's Encrypt).
+# Chưa có tên miền: dùng DOMAIN=<IP-dạng-gạch-nối>.sslip.io, vd. 140-238-1-2.sslip.io
+{$DOMAIN} {
+	encode zstd gzip
+	request_body {
+		max_size 60MB
+	}
+	reverse_proxy web:3000
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+}

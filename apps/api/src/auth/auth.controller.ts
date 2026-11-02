@@ -5,13 +5,19 @@ import { z } from "zod";
 import { APP_CONFIG, type AppConfig } from "../config.js";
 import { type AppRequest, CurrentUser, Public, type SessionUser } from "../common/context.js";
 import { CSRF_COOKIE, SESSION_COOKIE } from "../common/guards.js";
+import { RateLimit } from "../common/rate-limit.js";
 import { AuthService, type IssuedSession } from "./auth.service.js";
+import { PasswordResetService } from "./password-reset.service.js";
 
 const registerSchema = z.object({
   email: emailSchema,
   password: z.string().min(8, { message: "Mật khẩu tối thiểu 8 ký tự" }).max(200),
   name: z.string().trim().min(1).max(120),
 });
+
+const passwordSchema = z.string().min(8, { message: "Mật khẩu tối thiểu 8 ký tự" }).max(200);
+const forgotSchema = z.object({ email: emailSchema });
+const resetSchema = z.object({ token: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/, { message: "Link không hợp lệ" }), password: passwordSchema });
 
 const loginSchema = z.object({
   email: emailSchema,
@@ -22,10 +28,12 @@ const loginSchema = z.object({
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
+    private readonly resets: PasswordResetService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
   @Public()
+  @RateLimit("register", { limit: 10, windowSec: 3600 })
   @Post("register")
   async register(@Body() body: unknown, @Req() req: AppRequest, @Res({ passthrough: true }) res: Response) {
     const input = registerSchema.parse(body);
@@ -35,6 +43,7 @@ export class AuthController {
   }
 
   @Public()
+  @RateLimit("login", { limit: 30, windowSec: 900, bodyField: "email", fieldLimit: 15 })
   @Post("login")
   @HttpCode(200)
   async login(@Body() body: unknown, @Req() req: AppRequest, @Res({ passthrough: true }) res: Response) {
@@ -42,6 +51,26 @@ export class AuthController {
     const { user, session } = await this.auth.login(email, password, req.header("user-agent"));
     this.setCookies(res, session);
     return { user, csrfToken: session.csrf };
+  }
+
+  /** Luôn trả 202 dù email có hay không có tài khoản (không cho dò email). */
+  @Public()
+  @RateLimit("forgot", { limit: 5, windowSec: 3600, bodyField: "email", fieldLimit: 3 })
+  @Post("forgot-password")
+  @HttpCode(202)
+  async forgot(@Body() body: unknown) {
+    const { email } = forgotSchema.parse(body);
+    await this.resets.requestByEmail(email);
+    return { ok: true };
+  }
+
+  @Public()
+  @RateLimit("reset", { limit: 10, windowSec: 900 })
+  @Post("reset-password")
+  @HttpCode(200)
+  async reset(@Body() body: unknown) {
+    const { token, password } = resetSchema.parse(body);
+    return this.resets.reset(token, password);
   }
 
   @Post("logout")

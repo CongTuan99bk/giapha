@@ -12,3 +12,4 @@ packages/db/generated/
 # Ảnh tải lên khi chạy trên máy (MEDIA_DIR)
 data/
 apps/api/data/
+backups/

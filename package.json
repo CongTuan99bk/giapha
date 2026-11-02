@@ -19,7 +19,12 @@
     "coverage": "turbo run coverage",
     "dev": "turbo run dev --filter=@coinguon/api --filter=@coinguon/web",
     "khoi-tao": "node scripts/setup-local.mjs",
-    "dev:infra:reset": "docker compose -f infra/docker/compose.dev.yml down -v"
+    "dev:infra:reset": "docker compose -f infra/docker/compose.dev.yml down -v",
+    "demo": "node scripts/demo.mjs start",
+    "demo:link": "node scripts/demo.mjs link",
+    "demo:sao-luu": "node scripts/demo.mjs backup",
+    "demo:nhat-ky": "node scripts/demo.mjs logs",
+    "demo:dung": "node scripts/demo.mjs stop"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

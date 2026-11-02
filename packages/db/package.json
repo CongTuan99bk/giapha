@@ -12,13 +12,14 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "migrate:sql": "bash scripts/apply-sql-migrations.sh",
-    "check-drift": "node scripts/check-drift.mjs"
+    "check-drift": "node scripts/check-drift.mjs",
+    "migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
-    "@prisma/client": "6.19.3"
+    "@prisma/client": "6.19.3",
+    "pg": "^8.13.0"
   },
   "devDependencies": {
-    "pg": "^8.13.0",
     "@types/pg": "^8.11.0",
     "prisma": "6.19.3"
   },

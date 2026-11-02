@@ -44,9 +44,19 @@ function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-5" noValidate>
+      {params.get("da-doi-mat-khau") && (
+        <p role="status" className="rounded-md border border-ngoc-300 bg-ngoc-100 px-3 py-2 text-sm">
+          Đã đặt mật khẩu mới. Hãy đăng nhập bằng mật khẩu mới.
+        </p>
+      )}
       <FormError message={error} />
       <Field label="Email" name="email" type="email" autoComplete="email" required />
       <Field label="Mật khẩu" name="password" type="password" autoComplete="current-password" required />
+      <p className="-mt-3 text-right text-sm">
+        <Link href="/quen-mat-khau" className="text-son underline-offset-4 hover:underline">
+          Quên mật khẩu?
+        </Link>
+      </p>
       <button type="submit" className="btn-chinh w-full" disabled={pending}>
         {pending ? "Đang đăng nhập…" : "Đăng nhập"}
       </button>

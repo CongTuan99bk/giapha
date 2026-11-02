@@ -118,6 +118,16 @@ export class MembersService {
     await audit(trx, { clanId: actor.clanId, actorId: actor.userId, action: "member.remove", entity: "clan_member", entityId: memberId, before: target });
   }
 
+  /** Kiểm tra quản trị được phép đặt lại mật khẩu cho thành viên này; ghi nhật ký. */
+  async resetTarget(trx: Tx, actor: Membership, memberId: string) {
+    const target = await trx.selectFrom("clan_members").select(["id", "user_id", "role"]).where("id", "=", memberId).executeTakeFirst();
+    if (!target) throw notFound("Không tìm thấy thành viên");
+    if (target.user_id === actor.userId) throw forbidden("USE_FORGOT_PASSWORD", "Hãy dùng chức năng Quên mật khẩu cho tài khoản của chính bạn");
+    if (!canManage(actor.role, target.role)) throw forbidden("ROLE_TOO_LOW", "Bạn không đặt lại mật khẩu được cho người này");
+    await audit(trx, { clanId: actor.clanId, actorId: actor.userId, action: "member.password_reset_link", entity: "clan_member", entityId: memberId });
+    return { userId: target.user_id };
+  }
+
   /** Một người trong phả chỉ gắn với một tài khoản */
   private async assertPersonLinkable(trx: Tx, personId: string, memberId: string | null) {
     const p = await trx.selectFrom("persons").select("id").where("id", "=", personId).where("deleted_at", "is", null).executeTakeFirst();

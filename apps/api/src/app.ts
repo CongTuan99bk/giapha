@@ -12,7 +12,7 @@ export async function createApp(config: AppConfig): Promise<INestApplication> {
     logger: config.NODE_ENV === "test" ? false : ["log", "warn", "error"],
   });
   app.setGlobalPrefix("api/v1");
-  app.set("trust proxy", 1); // sau Caddy/Cloudflare
+  app.set("trust proxy", /^\d+$/.test(config.TRUST_PROXY) ? Number(config.TRUST_PROXY) : config.TRUST_PROXY);
   app.disable("x-powered-by");
   app.use(cookieParser());
   app.useBodyParser("json", { limit: "1mb" });

@@ -25,12 +25,28 @@ const envSchema = z.object({
   MEDIA_DIR: z.string().default("data/media"),
   /** Dung lượng tối đa mỗi ảnh tải lên (MB) */
   MEDIA_MAX_MB: z.coerce.number().int().min(1).max(50).default(15),
+  /**
+   * Express "trust proxy": tin các bước chuyển tiếp trong mạng nội bộ (Docker, Next, Caddy) để lấy đúng IP người dùng
+   * từ X-Forwarded-For. Xem https://expressjs.com/en/guide/behind-proxies.html
+   */
+  TRUST_PROXY: z.string().default("loopback, linklocal, uniquelocal"),
+  /** Header chứa IP thật do proxy tin cậy gắn (vd. "cf-connecting-ip" khi chạy sau Cloudflare Tunnel). Trống = dùng req.ip */
+  CLIENT_IP_HEADER: z.string().optional(),
+  /** Giới hạn tần suất (chặn dò mật khẩu, spam). Chỉ tắt trong test. */
+  RATE_LIMIT: z.enum(["on", "off"]).default("on"),
+  /** Địa chỉ web công khai, vd. https://giapha.example.vn — dùng để dựng link trong email */
+  PUBLIC_URL: z.string().url().optional(),
+  /** Gửi email qua SMTP (Gmail: smtp.gmail.com, cổng 465, mật khẩu ứng dụng). Trống = chỉ ghi link vào log máy chủ */
+  SMTP_URL: z.string().optional(),
+  SMTP_FROM: z.string().default("Gia Phả Cội Nguồn <no-reply@localhost>"),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
-  const parsed = envSchema.safeParse(env);
+  // Biến để trống (vd. PUBLIC_URL= trong file .env hoặc docker compose) coi như không đặt
+  const cleaned = Object.fromEntries(Object.entries(env).filter(([, v]) => v !== undefined && v !== ""));
+  const parsed = envSchema.safeParse(cleaned);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`Cấu hình môi trường không hợp lệ — ${issues}`);

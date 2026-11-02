@@ -307,6 +307,16 @@ export interface ParentChild {
   union_id: string;
 }
 
+export interface PasswordResets {
+  created_at: Generated<Timestamp>;
+  created_by: string | null;
+  expires_at: Timestamp;
+  id: string;
+  token_hash: string;
+  used_at: Timestamp | null;
+  user_id: string;
+}
+
 export interface PersonFacts {
   clan_id: string;
   date_from: Json | null;
@@ -453,6 +463,7 @@ export interface DB {
   invitations: Invitations;
   media: Media;
   parent_child: ParentChild;
+  password_resets: PasswordResets;
   person_facts: PersonFacts;
   persons: Persons;
   places: Places;

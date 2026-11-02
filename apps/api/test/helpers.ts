@@ -32,6 +32,7 @@ export async function bootApp(env: Record<string, string> = {}): Promise<INestAp
     APP_DATABASE_URL: APP_URL,
     PLATFORM_DATABASE_URL: PLATFORM_URL,
     CLAN_MODE: "multi",
+    RATE_LIMIT: "off", // bật riêng trong test giới hạn tần suất
     ...env,
   });
   const app = await createApp(config);

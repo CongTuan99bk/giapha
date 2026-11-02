@@ -1,6 +1,6 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.4
+version: 1.5
 updated: 2026-11-02
 audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
@@ -131,15 +131,19 @@ Không cần tải từ kho ứng dụng; cài thẳng từ trình duyệt:
 
 ## 8. Đăng ký, đăng nhập
 
-**Đăng ký:** bấm **Đăng nhập** góc trên → **Tạo tài khoản** → nhập email, mật khẩu (ít nhất 8 ký tự) → nhập mã xác minh gửi về email.
+**Đăng ký:** thường bạn nhận **link mời** từ ban quản lý (xem mục 9). Mở link → **Tạo tài khoản để tham gia** → nhập họ tên, email, mật khẩu (ít nhất 8 ký tự). *(Mã xác minh gửi về email: Sắp ra mắt.)*
 
-**Đăng nhập:** dùng email và mật khẩu, hoặc bấm **Tiếp tục với Google**.
+**Đăng nhập:** dùng email và mật khẩu. *(Tiếp tục với Google: Sắp ra mắt.)*
 
-**Quên mật khẩu:** bấm **Quên mật khẩu?** → nhập email → mở email, bấm đường dẫn, đặt mật khẩu mới.
+**Quên mật khẩu:** có hai cách:
+1. Bấm **Quên mật khẩu?** dưới ô mật khẩu → nhập email → **Gửi link đặt lại mật khẩu** → mở email, bấm link (dùng được 30 phút) → nhập mật khẩu mới hai lần → **Đặt mật khẩu mới**. Không thấy email thì xem thư mục Spam.
+2. Không dùng email, hoặc dòng họ chưa bật gửi email: **nhờ ban quản lý tạo link đặt lại mật khẩu** và gửi cho bạn qua Zalo (link dùng được 24 giờ).
 
-**Xác thực 2 lớp (khuyên dùng cho quản trị):** vào **Tài khoản → Bảo mật → Bật xác thực 2 lớp**, quét mã QR bằng ứng dụng Google Authenticator hoặc tương tự. Mỗi lần đăng nhập nhập thêm mã 6 số trên ứng dụng. Cất kỹ các **mã dự phòng** hiện ra lúc bật.
+Đặt mật khẩu mới xong, bạn được đăng xuất khỏi mọi thiết bị khác; tài khoản đang bị khoá vì nhập sai cũng được mở khoá. Mỗi link chỉ dùng một lần; yêu cầu link mới thì link cũ hết hiệu lực.
 
-> Đăng nhập sai mật khẩu 5 lần, tài khoản tạm khoá 15 phút.
+**Xác thực 2 lớp** *(Sắp ra mắt)* **(khuyên dùng cho quản trị):** vào **Tài khoản → Bảo mật → Bật xác thực 2 lớp**, quét mã QR bằng ứng dụng Google Authenticator hoặc tương tự. Mỗi lần đăng nhập nhập thêm mã 6 số trên ứng dụng. Cất kỹ các **mã dự phòng** hiện ra lúc bật.
+
+> Đăng nhập sai mật khẩu 5 lần, tài khoản tạm khoá 15 phút. Thao tác quá nhiều lần trong thời gian ngắn (đăng nhập, xin link đặt lại mật khẩu…) cũng bị tạm chặn vài phút — màn hình báo khi nào thử lại được.
 
 **Một tài khoản, nhiều dòng họ:** nếu bạn được mời vào nhiều dòng họ (họ nội, họ ngoại), bấm tên dòng họ ở góc trên để chuyển qua lại.
 
@@ -329,6 +333,8 @@ Danh sách **Link mời còn hiệu lực** cho biết mỗi link đã dùng m�
 Quy tắc: bạn chỉ cấp được vai trò **thấp hơn** vai trò của mình (riêng Chủ sở hữu cấp được Quản trị), và chỉ đổi hoặc xoá được người có vai trò thấp hơn mình. Không ai tự đổi vai trò của chính mình.
 
 **Thành viên:** đổi vai trò bằng ô chọn cạnh tên; bấm **Xoá** → **Xoá khỏi dòng họ** để thu hồi quyền — người đó không vào được dòng họ nữa ngay lập tức.
+
+**Thành viên quên mật khẩu:** bấm **Tạo link đặt lại mật khẩu** dưới tên người đó → **Sao chép link** → gửi qua Zalo. Link dùng được 24 giờ, một lần, chỉ hiện một lần. Bạn chỉ tạo được cho người có vai trò thấp hơn mình; mật khẩu của chính bạn thì dùng **Quên mật khẩu?** ở trang đăng nhập.
 
 **Thông tin dòng họ:** sửa tên, họ, quê gốc, **cách xưng hô** (miền Trung, Bắc, Nam) và **đổi thuỷ tổ** — đời của mọi người được tính lại theo thuỷ tổ mới.
 

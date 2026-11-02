@@ -234,6 +234,37 @@ test("chủ sở hữu thấy thành viên mới và nâng vai trò", async ({ b
   await p.reload();
   await expect(p.getByLabel("Vai trò của Lê Thị Cháu")).toHaveValue("editor");
   await expect(p.getByText(/đã dùng 2\/10/)).toBeVisible();
+
+  // quản trị tạo link đặt lại mật khẩu hộ (gửi qua Zalo), người nhận đặt mật khẩu mới
+  await p.getByRole("listitem").filter({ hasText: "chau@e2e.test" }).getByRole("button", { name: "Tạo link đặt lại mật khẩu" }).click();
+  const resetUrl = await p.getByLabel("Link đặt lại mật khẩu của Lê Thị Cháu").inputValue();
+  const q = await browser.newPage();
+  await q.goto(new URL(resetUrl).pathname + new URL(resetUrl).search);
+  await q.getByLabel("Mật khẩu mới", { exact: true }).fill("cháu-đổi-mật-khẩu");
+  await q.getByLabel("Nhập lại mật khẩu mới").fill("cháu-đổi-mật-khẩu");
+  await q.getByRole("button", { name: "Đặt mật khẩu mới" }).click();
+  await expect(q.getByText("Đã đặt mật khẩu mới.")).toBeVisible();
+  await q.getByLabel("Email").fill("chau@e2e.test");
+  await q.getByLabel("Mật khẩu").fill("cháu-đổi-mật-khẩu");
+  await q.getByRole("button", { name: "Đăng nhập" }).click();
+  await expect(q.getByRole("heading", { level: 1, name: "Họ Lê Văn – thôn Thử" })).toBeVisible();
+  await q.close();
+  await p.close();
+});
+
+test("quên mật khẩu: trang gửi yêu cầu không tiết lộ email có tài khoản hay không", async ({ browser }) => {
+  const p = await browser.newPage();
+  await p.goto("/dang-nhap");
+  await p.getByRole("link", { name: "Quên mật khẩu?" }).click();
+  await p.getByLabel("Email").fill("khong-co-ai@e2e.test");
+  await p.getByRole("button", { name: "Gửi link đặt lại mật khẩu" }).click();
+  await expect(p.getByText(/Nếu khong-co-ai@e2e.test có tài khoản/)).toBeVisible();
+  await p.goto("/dat-lai-mat-khau?ma=ma-sai-khong-ton-tai-0123456789");
+  await p.getByLabel("Mật khẩu mới", { exact: true }).fill("mat-khau-bat-ky");
+  await p.getByLabel("Nhập lại mật khẩu mới").fill("mat-khau-bat-ky");
+  await p.getByRole("button", { name: "Đặt mật khẩu mới" }).click();
+  await expect(p.getByText(/đã hết hạn hoặc đã được dùng/)).toBeVisible();
+  await expect(p.getByRole("link", { name: "Yêu cầu link mới" })).toBeVisible();
   await p.close();
 });
 

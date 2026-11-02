@@ -174,8 +174,26 @@ model User {
   memberships ClanMember[]
   sessions    Session[]
   invitationsCreated Invitation[]
+  passwordResets PasswordReset[]
 
   @@map("users")
+}
+
+/// Link đặt lại mật khẩu (qua email hoặc do quản trị tạo cho thành viên). Chỉ lưu sha256 của mã. Không có RLS (cấp tài khoản).
+model PasswordReset {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  /// Quản trị viên tạo link hộ (null = người dùng tự yêu cầu qua email)
+  createdBy String?   @map("created_by") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_resets")
 }
 
 model Session {

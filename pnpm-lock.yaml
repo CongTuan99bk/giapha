@@ -56,6 +56,9 @@ importers:
       kysely:
         specifier: ^0.29.8
         version: 0.29.8
+      nodemailer:
+        specifier: 10.1.7
+        version: 10.1.7
       pg:
         specifier: ^8.23.1
         version: 8.23.1
@@ -163,12 +166,12 @@ importers:
       '@prisma/client':
         specifier: 6.19.3
         version: 6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)
+      pg:
+        specifier: ^8.13.0
+        version: 8.23.1
     devDependencies:
       '@types/pg':
         specifier: ^8.11.0
-        version: 8.23.1
-      pg:
-        specifier: ^8.13.0
         version: 8.23.1
       prisma:
         specifier: 6.19.3
@@ -2255,6 +2258,10 @@ packages:
 
   node-fetch-native@1.6.7:
     resolution: {integrity: sha512-g9yhqoedzIUm0nTnTqAQvueMPVOuIY16bqgAJJC8XOOubYFNwz6IER9qs0Gq2Xd0+CecCKFjtdDTMA4u4xG06Q==}
+
+  nodemailer@10.1.7:
+    resolution: {integrity: sha512-OQa6FDln5fLttmqSbjDiRYvFDOFNrBqfiOwHPlEbURil3b+vPB1v8xpi+Sp46drzNDlsTnNsS502vthmz56r4w==}
+    engines: {node: '>=20.0.0'}
 
   nypm@0.6.12:
     resolution: {integrity: sha512-4AhWntz+ds/P5kz1rN25yGegTPYsO5ffOy+8S0TeuXKZrgjlmgcEBLA1xubzcP/dWX4zYfNybv4TQERlL9Z0LQ==}
@@ -4906,6 +4913,8 @@ snapshots:
       - babel-plugin-macros
 
   node-fetch-native@1.6.7: {}
+
+  nodemailer@10.1.7: {}
 
   nypm@0.6.12:
     dependencies:

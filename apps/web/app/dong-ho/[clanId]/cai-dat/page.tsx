@@ -5,7 +5,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { Field, FormError } from "@/components/field";
 import { HomeSettingsForm } from "@/components/home-settings-form";
 import { PersonPicker } from "@/components/person-picker";
-import { fieldErrors } from "@/lib/api";
+import { api, fieldErrors } from "@/lib/api";
 import {
   useClan,
   useCreateInvitation,
@@ -272,6 +272,7 @@ function MemberList({ clan }: { clan: Clan }) {
                 </p>
                 <p className="truncate text-sm text-reu">{m.email}</p>
                 {m.person && <p className="text-sm text-reu">Trong phả: {m.person.fullName}</p>}
+                {editable && <ResetLink clanId={clan.id} memberId={m.id} name={m.name} />}
               </div>
               <div className="flex items-center gap-2">
                 {editable ? (
@@ -400,5 +401,63 @@ function ClanInfoForm({ clan }: { clan: Clan }) {
         )}
       </div>
     </form>
+  );
+}
+
+/** Tạo link đặt lại mật khẩu hộ thành viên — gửi qua Zalo cho người không dùng email. */
+function ResetLink({ clanId, memberId, name }: { clanId: string; memberId: string; name: string }) {
+  const [link, setLink] = useState<{ url: string; expiresAt: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function create() {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await api<{ path: string; expiresAt: string }>("POST", `/clans/${clanId}/members/${memberId}/password-reset`);
+      setLink({ url: `${window.location.origin}${res.path}`, expiresAt: res.expiresAt });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không tạo được link.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (link) {
+    return (
+      <div className="mt-2 rounded-md border border-thep bg-thep-nhat/60 p-3 text-sm" role="status">
+        <p>
+          Link đặt lại mật khẩu cho {name}, dùng được tới {new Date(link.expiresAt).toLocaleString("vi-VN")}. Chỉ hiện một lần:
+        </p>
+        <input
+          aria-label={`Link đặt lại mật khẩu của ${name}`}
+          readOnly
+          value={link.url}
+          onFocus={(e) => e.currentTarget.select()}
+          className="o-nhap mt-2 font-mono text-xs"
+        />
+        <button
+          type="button"
+          className="mt-2 font-medium text-son hover:underline"
+          onClick={() =>
+            navigator.clipboard
+              .writeText(link.url)
+              .then(() => setCopied(true))
+              .catch(() => setCopied(false))
+          }
+        >
+          {copied ? "Đã sao chép" : "Sao chép link"}
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-1">
+      <button type="button" className="text-sm text-son hover:underline" onClick={create} disabled={pending}>
+        {pending ? "Đang tạo…" : "Tạo link đặt lại mật khẩu"}
+      </button>
+      {error && <p className="text-sm text-loi">{error}</p>}
+    </div>
   );
 }

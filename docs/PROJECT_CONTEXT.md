@@ -5,10 +5,10 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.7.1 |
+| Phiên bản file | 0.8.0 |
 | Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
-| Giai đoạn hiện tại | **MVP phần 1 gần xong — phả đồ, mời thành viên, ảnh chân dung, trang chủ có banner; tiếp theo: triển khai lên VPS** |
+| Giai đoạn hiện tại | **Sẵn sàng demo: `pnpm demo` chạy trên máy cá nhân có link chia sẻ; tiếp theo: lịch giỗ** |
 | Mã nguồn | https://github.com/CongTuan99bk/giapha (nhánh `main`, CI xanh) |
 | Tài liệu đặc tả đầy đủ | "Tài liệu dự án: Hệ thống Gia Phả Cội Nguồn" v1.0 — https://claude.ai/artifact/1Wy2PqEVYSLqycMLH8LMzG |
 | Bản thảo kỹ thuật | https://claude.ai/artifact/T24kXNyJ9UkUPdRwMzBkFd |
@@ -59,7 +59,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 - (trống)
 
 ### 2.3. Việc tiếp theo
-1. Docker Compose production cho VPS 4 GB (Caddy, volume `media`, sao lưu DB + ảnh) + hướng dẫn demo bằng Cloudflare Tunnel.
+1. Lịch giỗ: "ngày giỗ sắp tới" trên trang chủ, lịch âm theo tháng, nhắc trước (email khi có SMTP).
 1b. Thư viện ảnh/tư liệu theo album (KI-022).
 2. Rate limit theo IP cho đăng nhập/đăng ký/xem lời mời (KI-010); quên mật khẩu + OTP email (KI-009).
 3. Giao diện: sắp xếp thứ tự con, con nuôi/con riêng, nhiều vợ/chồng (API đã có một phần — KI-017).
@@ -232,6 +232,9 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | `GET /instance` | công khai | `{clanMode, clan: {id,name,slug,surname} \| null}` — web biết cần "tạo dòng họ" hay vào thẳng |
 | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` | công khai / đã đăng nhập | trả `{user, csrfToken}`; lỗi `EMAIL_TAKEN`, `INVALID_CREDENTIALS`, `ACCOUNT_LOCKED` (423) |
 | `GET /me`, `GET /me/clans` | đã đăng nhập | |
+| `POST /auth/forgot-password` | công khai | `{email}` → luôn 202 (không lộ email có tài khoản); gửi link 30 phút qua SMTP hoặc ghi log |
+| `POST /auth/reset-password` | công khai | `{token, password}` → `{email}`; dùng một lần, mở khoá tài khoản, xoá mọi phiên; `RESET_LINK_INVALID` 410 |
+| `POST /clans/:clanId/members/:memberId/password-reset` | admin | link 24 giờ `{path, expiresAt}` cho thành viên vai trò thấp hơn (`USE_FORGOT_PASSWORD` nếu là chính mình) |
 | `POST /clans` | đã đăng nhập | người tạo = owner; `SLUG_TAKEN`; chế độ single đã có dòng họ → `SINGLE_CLAN_EXISTS` |
 | `GET /clans/:clanId`, `PATCH /clans/:clanId` | member / admin | đổi `rootPersonId`/`lineageMode` → tính lại đời |
 | `GET /clans/:clanId/persons?q&generation&living&page&pageSize` | member | tìm không dấu; người `hidden` chỉ admin thấy |
@@ -319,6 +322,14 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | --- | --- |
 | CLAN_MODE | `single` (mặc định — một dòng họ) / `multi` |
 | SEED_EMAIL, SEED_PASSWORD | Tài khoản cho dữ liệu mẫu (`seed`) |
+| PUBLIC_URL | Địa chỉ web công khai, dùng dựng link trong email (`pnpm demo` tự đặt theo link Quick Tunnel) |
+| SMTP_URL, SMTP_FROM | Gửi email (vd. `smtps://ten%40gmail.com:matkhauungdung@smtp.gmail.com:465`); trống = chỉ ghi log |
+| TRUST_PROXY | Express "trust proxy", mặc định `loopback, linklocal, uniquelocal` (tin các bước chuyển tiếp nội bộ) |
+| CLIENT_IP_HEADER | Header IP thật do proxy tin cậy gắn, vd. `cf-connecting-ip` sau Cloudflare Tunnel |
+| RATE_LIMIT | `on` (mặc định) / `off` (chỉ dùng trong test) |
+| DB_PASSWORD, APP_DB_PASSWORD, PLATFORM_DB_PASSWORD | (compose.prod) mật khẩu 3 role CSDL — `pnpm demo` tự sinh vào `.env.demo` |
+| DOMAIN | (compose.prod, profile `caddy`) tên miền hoặc `<IP-gạch-nối>.sslip.io` |
+| BACKUP_HOUR, BACKUP_KEEP_DAYS | Giờ sao lưu hằng ngày (mặc định 2) và số ngày giữ (14) |
 | API_ORIGIN | (web) địa chỉ API mà Next chuyển tiếp `/api/v1` tới, mặc định `http://localhost:4000` |
 | DATABASE_URL | PostgreSQL — role chủ, chạy migration |
 | APP_DATABASE_URL | Role `coinguon_app` (bị RLS) — dùng trong api/web |
@@ -350,6 +361,7 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | ADR-006 | 2026-11-01 | Liên hệ ban quản lý trong bảng `contacts` riêng, công khai từng trường + consent | Tuân thủ luật dữ liệu cá nhân, linh hoạt nhiều người | Gộp vào site_settings |
 | ADR-007 | 2026-11-01 (sửa) | Một VPS **ở Việt Nam** (Bizfly Cloud 4 GB ~240.000 đ/tháng) + Docker Compose + Caddy; ảnh lưu ổ đĩa VPS, sao lưu sang Google Drive; demo chạy máy cá nhân + Cloudflare Tunnel | Ngân sách ~10 USD/tháng, dữ liệu ở trong nước, chủ dự án chọn | Viettel IDC (gói 4 GB ~599.000 đ/tháng — vượt ngân sách), Singapore, R2 |
 | ADR-008 | 2026-11-01 | Prisma 6.19 (chưa lên 7/8) | Ổn định, ít thay đổi cấu hình; Prisma 7 bắt buộc driver adapter + prisma.config.ts — cân nhắc nâng cấp khi làm api | Prisma 7.10, Drizzle |
+| ADR-016 | 2026-11-02 | Triển khai bằng **một bộ Docker Compose** (`infra/docker/compose.prod.yml`): db, migrate (một lần), api, web, backup (pg_dump + ảnh hằng đêm), profile `tunnel` (Cloudflare Quick Tunnel — demo 0 đ trên máy cá nhân) và `caddy` (HTTPS tự động cho VPS/Oracle Free, tên miền hoặc `sslip.io`). Migration chạy bằng `migrate.mjs` ghi `_prisma_migrations` y hệt Prisma | Chủ dự án muốn demo miễn phí trước; cùng cấu hình dùng lại cho Bizfly; không phụ thuộc tải engine Prisma lúc triển khai (CI kiểm tra `prisma migrate status` công nhận) | Render/Fly free tier (ngủ, mất ổ đĩa), Supabase/Neon (không tạo được role BYPASSRLS dễ dàng) |
 | ADR-015 | 2026-11-02 | Ảnh: xử lý bằng `sharp` (xoay theo EXIF rồi **bỏ toàn bộ metadata/GPS**, tạo cỡ sm/md/lg WebP + bản gốc JPEG/PNG), lưu **ổ đĩa** `MEDIA_DIR/{clanId}/{mediaId}/`, phục vụ qua API dưới `/clans/:clanId/media/...` để RLS + TenantGuard kiểm quyền. Banner/câu đối lưu trong `site_settings.data.home` | Ngân sách ~10 USD/tháng (không R2); ảnh gia đình là dữ liệu riêng tư; lớp `MediaStorage` đổi được sang S3/R2 sau | Cloudflare R2 + URL ký sẵn; Next Image optimizer (không gửi cookie khi tải ảnh cần đăng nhập) |
 | ADR-014 | 2026-11-02 | Lời mời bằng link: mã ngẫu nhiên 18 byte, DB chỉ lưu sha256; tra theo mã dùng role `coinguon_platform` (BYPASSRLS) vì người nhận chưa có ngữ cảnh dòng họ — chỉ khớp đúng `token_hash`, mọi ghi đều qua `withClan` | Không thể đặt `app.clan_id` trước khi biết lời mời thuộc dòng họ nào; FORCE RLS chặn cả hàm SECURITY DEFINER | Hàm SECURITY DEFINER + bỏ FORCE RLS; mã chứa clan_id |
 | ADR-013 | 2026-11-01 | Xưng hô mặc định miền Trung: ba/mạ, chị-em gái của cha là "o", chồng o/dì là "dượng" | Chủ dự án chọn; bảng tạm, sẽ cho dòng họ tự sửa (KI-013) | Bắc làm mặc định |
@@ -363,6 +375,20 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.8.0] — 2026-11-02 — Sẵn sàng demo: quên mật khẩu, chặn dò mật khẩu, Docker, sao lưu
+### Thêm
+- Quên mật khẩu: bảng `password_resets` (migration `20261102000200_password_resets`, sha256, dùng một lần, link mới huỷ link cũ); email qua SMTP (nodemailer, `MailService`) hoặc ghi log khi chưa cấu hình; quản trị tạo link 24 giờ cho thành viên. Trang `/quen-mat-khau`, `/dat-lai-mat-khau`, link trên trang đăng nhập.
+- Giới hạn tần suất theo IP (+ theo email) cho đăng nhập, đăng ký, quên/đặt lại mật khẩu, lời mời, tải ảnh (`common/rate-limit.ts`, bộ đếm trong bộ nhớ, 429 kèm `Retry-After`); IP thật qua `TRUST_PROXY`/`CLIENT_IP_HEADER`.
+- Docker: `infra/docker/Dockerfile` (target api/web, chạy được x86 + ARM), `compose.prod.yml`, `postgres/init-roles.sh` (mật khẩu từ env), `backup/backup.sh`, `caddy/Caddyfile`, `.dockerignore`.
+- `packages/db/scripts/migrate.mjs` + `pnpm --filter @coinguon/db migrate`; `pnpm khoi-tao` dùng nó (máy cá nhân không cần tải engine Prisma).
+- `pnpm demo` (+ `demo:link`, `demo:dung`, `demo:sao-luu`, `demo:nhat-ky`): sinh `.env.demo` với mật khẩu ngẫu nhiên, build, chạy, lấy link trycloudflare, tự đặt `PUBLIC_URL`, tuỳ chọn `--du-lieu-mau`.
+- `docs/TRIEN-KHAI.md`: hướng dẫn 3 cách (máy cá nhân 0 đ, Oracle Free 0 đ, Bizfly), email Gmail, sao lưu/khôi phục, kiểm tra an toàn.
+- CI: job `docker` build image + chạy cả hệ thống + seed + đăng nhập qua web + sao lưu; DB e2e chạy bằng `migrate.mjs` rồi `prisma migrate status`.
+- Test: API 68 (thêm 8: quên/đặt lại mật khẩu, link quản trị, giới hạn tần suất), 18 Playwright.
+### Sửa
+- Biến môi trường để trống (`PUBLIC_URL=`) coi như không đặt.
+- Giấy phép: cho phép MIT-0 (nodemailer).
 
 ## [0.7.1] — 2026-11-02 — Xem ảnh lớn
 ### Thêm
@@ -481,20 +507,23 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-005 | Hướng dẫn sử dụng viết theo thiết kế, chưa có ảnh chụp màn hình | Thấp | Cập nhật cuối mỗi giai đoạn MVP |
 | KI-006 | ~~Migration SQL khởi tạo viết tay~~ — **đã xác nhận** khớp schema.prisma qua CI `check-drift` (2026-11-01) | Đã xử lý | Giữ bước check-drift trong CI |
 | KI-007 | `clan_id` ở nhiều bảng nội dung chưa có khoá ngoại tới `clans` (chỉ dựa RLS + xoá theo clan_id) | Thấp | Job xoá cứng dòng họ phải xoá mọi bảng theo `clan_id` |
-| KI-009 | Chưa có xác thực email (OTP) khi đăng ký và quên mật khẩu | Trung bình | Trước khi mở đăng ký công khai |
-| KI-010 | Chưa có rate limit theo IP cho đăng nhập/đăng ký (mới có khoá theo tài khoản) | Trung bình | Thêm cùng Redis ở MVP phần 2 |
+| KI-009 | Quên mật khẩu **đã có** (0.8.0); còn thiếu xác minh email khi đăng ký (người dùng gõ sai email thì không nhận được link) | Thấp | Khi bật SMTP cho bản chạy thật |
+| KI-010 | ~~Chưa có rate limit theo IP~~ — **đã có** (0.8.0), bộ đếm trong bộ nhớ: chạy nhiều bản API thì chuyển sang Redis | Thấp | Khi mở rộng nhiều máy |
 | KI-011 | Phân quyền theo chi (editor chỉ sửa chi được giao) chưa làm — editor sửa được cả cây | Thấp | Phase 2 theo kế hoạch |
 | KI-012 | `GET /tree` tính bố cục mỗi lần gọi (chưa cache); ổn với vài nghìn người | Thấp | Cache theo `clan.tree_version` khi cây > 5.000 người |
 | KI-013 | Xưng hô khác nhau theo vùng/gia đình: cần màn hình cho ban quản lý sửa bảng xưng hô riêng của dòng họ (lưu JSON trong cài đặt) | Trung bình | MVP phần 2 |
 | KI-014 | ~~Người đăng ký mới chưa vào được dòng họ~~ — **đã xử lý** bằng link mời (0.6.0) | Đã xử lý | — |
 | KI-017 | API sắp thứ tự con, con nuôi/con riêng đã có nhưng chưa có giao diện; thứ tự vợ/chồng chưa đổi được | Trung bình | Sau khi triển khai VPS |
-| KI-018 | Xem trước lời mời (`GET /invitations/:token`) chưa giới hạn tần suất — mã 18 byte nên dò không khả thi, nhưng nên chặn spam | Thấp | Cùng KI-010 |
+| KI-018 | ~~Xem trước lời mời chưa giới hạn tần suất~~ — **đã có** (0.8.0) | Đã xử lý | — |
 | KI-015 | `API_ORIGIN` của web được "đóng" vào lúc build (rewrites của Next) — đổi địa chỉ API phải build lại | Thấp | Docker build truyền `API_ORIGIN`; hoặc Caddy chuyển thẳng `/api` sang API |
 | KI-016 | Danh sách người hiện tối đa 50 người đầu, chưa có phân trang trên giao diện | Thấp | Thêm "Xem thêm" khi dòng họ > 50 người |
 | KI-019 | Ảnh HEIC chưa đọc được (sharp dựng sẵn không có HEVC). iPhone qua trình duyệt thường tự đổi sang JPG | Thấp | Nếu người dùng gặp nhiều: chuyển đổi trên trình duyệt (thư viện WASM) trước khi tải |
 | KI-020 | Chưa giới hạn tổng dung lượng ảnh mỗi dòng họ; VPS 40 GB | Trung bình | Thêm hạn mức + cảnh báo khi > 70% ổ đĩa, trước khi mở cho nhiều người tải |
 | KI-021 | Ảnh chỉ xem được khi đã đăng nhập (route dưới `/clans/:clanId`). Website công khai sẽ cần route ảnh công khai cho banner/ảnh người đã mất có `privacy=public` | Trung bình | Khi làm website công khai (MVP phần 2) |
 | KI-022 | Chưa có trang Thư viện ảnh/tư liệu (album) — API liệt kê ảnh đã có | Trung bình | Bước tiếp theo sau triển khai |
+| KI-023 | Quick Tunnel: link đổi mỗi lần khởi động lại, không cam kết hoạt động — chỉ để demo | Thấp | Chạy thật: Oracle Free/Bizfly + Caddy, hoặc Cloudflare Tunnel có tên (cần tài khoản + tên miền) |
+| KI-024 | Image `cloudflare/cloudflared:latest` chưa ghim phiên bản | Thấp | Ghim tag cụ thể khi chạy lâu dài |
+| KI-025 | Sao lưu nằm trên cùng máy; chưa tự đẩy sang Google Drive | Trung bình | Thêm rclone vào service backup khi chạy thật |
 | KI-008 | Bố cục phả đồ hiện là dạng "khối căn giữa", chưa nén nhánh kiểu Reingold–Tilford (cây rộng hơn cần thiết) | Thấp | Tối ưu khi làm trình chỉnh sửa phả đồ nếu cây quá rộng |
 
 ---

@@ -1,0 +1,125 @@
+# Chạy thật / chạy demo Gia Phả Cội Nguồn bằng Docker Compose (xem docs/TRIEN-KHAI.md).
+#
+#   Demo miễn phí có link chia sẻ (Cloudflare Quick Tunnel):  pnpm demo
+#   Máy chủ có tên miền (Caddy tự cấp HTTPS):
+#     docker compose -f infra/docker/compose.prod.yml --env-file .env.prod --profile caddy up -d --build
+#
+# Biến cần có trong file env: DB_PASSWORD, APP_DB_PASSWORD, PLATFORM_DB_PASSWORD (pnpm demo tự sinh).
+name: coinguon
+
+x-api-env: &api-env
+  NODE_ENV: production
+  APP_DATABASE_URL: postgresql://coinguon_app:${APP_DB_PASSWORD:?Thiếu APP_DB_PASSWORD}@db:5432/coinguon
+  PLATFORM_DATABASE_URL: postgresql://coinguon_platform:${PLATFORM_DB_PASSWORD:?Thiếu PLATFORM_DB_PASSWORD}@db:5432/coinguon
+  COOKIE_SECURE: ${COOKIE_SECURE:-true}
+  CLAN_MODE: ${CLAN_MODE:-single}
+  MEDIA_DIR: /data/media
+  MEDIA_MAX_MB: ${MEDIA_MAX_MB:-15}
+  PUBLIC_URL: ${PUBLIC_URL:-}
+  SMTP_URL: ${SMTP_URL:-}
+  SMTP_FROM: ${SMTP_FROM:-Gia Phả Cội Nguồn <no-reply@localhost>}
+  CLIENT_IP_HEADER: ${CLIENT_IP_HEADER:-}
+  TZ: Asia/Ho_Chi_Minh
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: coinguon
+      POSTGRES_DB: coinguon
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Thiếu DB_PASSWORD}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+      PLATFORM_DB_PASSWORD: ${PLATFORM_DB_PASSWORD}
+      TZ: UTC
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init-roles.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coinguon -d coinguon"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Chạy migration rồi thoát; API chỉ khởi động khi bước này thành công
+  migrate:
+    build: { context: ../.., dockerfile: infra/docker/Dockerfile, target: api }
+    image: coinguon-api:local
+    command: ["node", "migrate.mjs", "migrations"]
+    environment:
+      DATABASE_URL: postgresql://coinguon:${DB_PASSWORD}@db:5432/coinguon
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    image: coinguon-api:local
+    restart: unless-stopped
+    environment: *api-env
+    volumes:
+      - media:/data/media
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+      target: web
+      args: { API_ORIGIN: "http://api:4000" }
+    image: coinguon-web:local
+    restart: unless-stopped
+    ports:
+      # Chỉ mở trên máy này (xem thử http://localhost:3000); người ngoài vào qua tunnel hoặc Caddy
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    depends_on:
+      api: { condition: service_healthy }
+
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: coinguon
+      PGDATABASE: coinguon
+      PGPASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Ho_Chi_Minh
+      BACKUP_HOUR: ${BACKUP_HOUR:-2}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    volumes:
+      - ./backup/backup.sh:/backup.sh:ro
+      - media:/media:ro
+      - ${BACKUP_DIR:-../../backups}:/backups
+    depends_on:
+      db: { condition: service_healthy }
+
+  # Demo miễn phí: link https://<ngẫu-nhiên>.trycloudflare.com, đổi mỗi lần khởi động lại
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    profiles: ["tunnel"]
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "--url", "http://web:3000"]
+    depends_on:
+      web: { condition: service_healthy }
+
+  # Máy chủ có tên miền: HTTPS tự động
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["caddy"]
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-} # tên miền, hoặc <IP-dạng-gạch-nối>.sslip.io khi chưa có tên miền
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  media:
+  caddy_data:
+  caddy_config:
