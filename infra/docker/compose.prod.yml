@@ -52,6 +52,18 @@ services:
       db: { condition: service_healthy }
     restart: "no"
 
+  # Chỉnh quyền volume ảnh cho user "node" (chạy một lần). Cần vì volume có thể do service khác (backup) tạo trước,
+  # khi đó thuộc root và API không ghi được ảnh.
+  media-init:
+    image: coinguon-api:local
+    user: "0:0"
+    command: ["sh", "-c", "chown -R node:node /data/media"]
+    volumes:
+      - media:/data/media
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    restart: "no"
+
   api:
     image: coinguon-api:local
     restart: unless-stopped
@@ -59,7 +71,7 @@ services:
     volumes:
       - media:/data/media
     depends_on:
-      migrate: { condition: service_completed_successfully }
+      media-init: { condition: service_completed_successfully }
 
   web:
     build:
@@ -92,7 +104,7 @@ services:
       - media:/media:ro
       - ${BACKUP_DIR:-../../backups}:/backups
     depends_on:
-      db: { condition: service_healthy }
+      media-init: { condition: service_completed_successfully }
 
   # Demo miễn phí: link https://<ngẫu-nhiên>.trycloudflare.com, đổi mỗi lần khởi động lại
   tunnel:
