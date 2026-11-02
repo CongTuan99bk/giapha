@@ -155,7 +155,7 @@ describe("Trang chủ: banner, câu đối", () => {
   it("mặc định trống, có thống kê", async () => {
     const res = await member.get(`/clans/${clanId}/site/home`);
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ banners: [], couplet: null, motto: null, stats: { people: 1, generations: 1 } });
+    expect(res.body).toEqual({ banners: [], couplet: null, motto: null, templeAddress: null, stats: { people: 1, generations: 1 } });
   });
 
   it("quản trị đặt nhiều banner theo thứ tự + câu đối; ảnh xoá thì tự rơi khỏi banner", async () => {

@@ -233,7 +233,35 @@ export interface HomeSettings {
   banners: MediaItem[];
   couplet: { left: string; right: string } | null;
   motto: string | null;
+  templeAddress: string | null;
   stats: { people: number; generations: number };
+}
+
+/** Người liên hệ (quản trị xem đầy đủ) */
+export interface Contact {
+  id: string;
+  name: string;
+  role: string;
+  phone: string | null;
+  email: string | null;
+  showPhone: boolean;
+  showEmail: boolean;
+  consent: boolean;
+  consentAt: string | null;
+  consentNote: string | null;
+}
+
+/** Trang công khai (/api/v1/public/site) */
+export interface PublicSite {
+  clan: { name: string; surname: string; originPlace: string | null };
+  home: {
+    banners: Array<{ id: string; width: number | null; height: number | null; caption: string | null; urls: { sm: string; md: string; lg: string } }>;
+    couplet: { left: string; right: string } | null;
+    motto: string | null;
+    templeAddress: string | null;
+  };
+  stats: { people: number; generations: number };
+  contacts: Array<{ name: string; role: string; phone: string | null; email: string | null }>;
 }
 
 /** Một lần giỗ sắp tới (API /clans/:id/anniversaries) */

@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
+import { ContactsManager } from "@/components/contacts-manager";
 import { Field, FormError } from "@/components/field";
 import { HomeSettingsForm } from "@/components/home-settings-form";
 import { PersonPicker } from "@/components/person-picker";
@@ -42,6 +43,13 @@ export default function SettingsPage() {
         </Section>
         <Section id="trang-chu" title="Trang chủ" lead="Ảnh banner tự trượt, câu đối và khẩu hiệu hiện ở thẻ Trang chủ cho mọi thành viên.">
           <HomeSettingsForm clanId={clanId} />
+        </Section>
+        <Section
+          id="lien-he"
+          title="Ban liên lạc"
+          lead="Trưởng họ, trưởng các chi, quản trị website — hiện ở mục Liên hệ trên trang công khai, theo đúng thứ tự dưới đây."
+        >
+          <ContactsManager clanId={clanId} />
         </Section>
         <Section title="Thành viên">
           <MemberList clan={clan.data} />

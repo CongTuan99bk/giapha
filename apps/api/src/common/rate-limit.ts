@@ -72,7 +72,8 @@ export class RateLimitGuard implements CanActivate {
 
   canActivate(ctx: ExecutionContext): boolean {
     if (this.config.RATE_LIMIT === "off") return true;
-    const rule = this.reflector.get<(RateRule & { name: string }) | undefined>(RATE_LIMIT, ctx.getHandler());
+    // đặt ở hàm hoặc cả controller (hàm ưu tiên)
+    const rule = this.reflector.getAllAndOverride<(RateRule & { name: string }) | undefined>(RATE_LIMIT, [ctx.getHandler(), ctx.getClass()]);
     if (!rule) return true;
     const req = ctx.switchToHttp().getRequest<Request>();
     const ip = clientIp(req, this.config.CLIENT_IP_HEADER);

@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthShell } from "@/components/auth-shell";
 import { FormError } from "@/components/field";
 import { FullPageMessage, RequireAuth } from "@/components/require-auth";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { loginLabel } from "@/lib/format";
 import { keys, useInstance, useMe, useMyClans } from "@/lib/queries";
 import type { MyJoinRequest } from "@/lib/types";
@@ -125,7 +125,18 @@ function WaitingRoom({ clanName }: { clanName: string }) {
   );
 }
 
+/** Khách (chưa đăng nhập) vào trang công khai của dòng họ; chưa có dòng họ thì đăng nhập/tạo mới */
 export default function Home() {
+  const me = useMe();
+  const instance = useInstance();
+  const router = useRouter();
+  const guest = me.error instanceof ApiError && me.error.status === 401;
+  useEffect(() => {
+    if (!guest) return;
+    if (instance.data) router.replace(instance.data.clan ? "/xem" : "/dang-nhap");
+    else if (instance.error) router.replace("/dang-nhap");
+  }, [guest, instance.data, instance.error, router]);
+  if (guest) return <FullPageMessage>Đang mở gia phả…</FullPageMessage>;
   return (
     <RequireAuth>
       <Router />

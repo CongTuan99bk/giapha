@@ -1,6 +1,8 @@
 import { type DynamicModule, Module } from "@nestjs/common";
 import { APP_FILTER, APP_GUARD } from "@nestjs/core";
 import { AnniversariesController } from "./anniversaries/anniversaries.controller.js";
+import { ContactsController } from "./contacts/contacts.controller.js";
+import { PublicController } from "./public/public.controller.js";
 import { AuthController, MeController } from "./auth/auth.controller.js";
 import { AuthService } from "./auth/auth.service.js";
 import { PasswordResetService } from "./auth/password-reset.service.js";
@@ -33,7 +35,7 @@ export class AppModule {
   static forRoot(config: AppConfig): DynamicModule {
     return {
       module: AppModule,
-      controllers: [HealthController, InstanceController, AuthController, MeController, ClansController, PersonsController, TreeController, MembersController, InvitationsController, MediaController, AnniversariesController],
+      controllers: [HealthController, InstanceController, AuthController, MeController, ClansController, PersonsController, TreeController, MembersController, InvitationsController, MediaController, AnniversariesController, ContactsController, PublicController],
       providers: [
         { provide: APP_CONFIG, useValue: config },
         Database,

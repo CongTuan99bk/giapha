@@ -417,3 +417,51 @@ test("nhập phả đầy đủ: tên huý, nơi an táng, tiểu sử, con nuô
   await expect(pnl().getByText("Trưởng nam, trong 2 người con", { exact: true })).toBeVisible();
   await p.close();
 });
+
+test("trang công khai: ban quản lý nhập địa chỉ nhà thờ họ + ban liên lạc; khách chỉ thấy người đã khuất", async ({ browser }) => {
+  const o = await browser.newPage();
+  await loginOwner(o);
+  await o.getByRole("link", { name: "Cài đặt" }).click();
+  await o.getByLabel("Địa chỉ nhà thờ họ").fill("Thôn Thử, xã An Hoà");
+  await o.getByRole("button", { name: "Lưu trang chủ" }).click();
+  await expect(o.getByText("Đã lưu. Xem ở thẻ Trang chủ.")).toBeVisible();
+  const lienHe = o.locator("#lien-he");
+  await lienHe.getByRole("button", { name: "Thêm người liên hệ" }).click();
+  await lienHe.getByLabel("Họ và tên", { exact: true }).fill("Lê Văn Trưởng");
+  await lienHe.getByLabel("Vai trò", { exact: true }).fill("Trưởng họ");
+  await lienHe.getByLabel("Số điện thoại", { exact: true }).fill("0912 999 888");
+  await lienHe.getByRole("button", { name: "Thêm người liên hệ" }).click();
+  await expect(lienHe.getByText("Cần xác nhận người này đồng ý công khai")).toBeVisible();
+  await lienHe.getByText("đã đồng ý", { exact: false }).click();
+  await lienHe.getByRole("button", { name: "Thêm người liên hệ" }).click();
+  await expect(lienHe.getByText("Trang công khai: hiện số điện thoại")).toBeVisible();
+  await o.close();
+
+  // khách: trình duyệt mới, chưa đăng nhập
+  const g = await browser.newPage();
+  await g.goto("/");
+  await expect(g).toHaveURL(/\/xem$/);
+  await expect(g.getByRole("heading", { level: 1, name: "Họ Lê Văn – thôn Thử" })).toBeVisible();
+  await expect(g.getByText("Thôn Thử, xã An Hoà")).toBeVisible();
+  await expect(g.getByRole("link", { name: "Chỉ đường" })).toHaveAttribute("href", /google\.com\/maps/);
+  const contact = g.getByRole("listitem").filter({ hasText: "Lê Văn Trưởng" });
+  await expect(contact.getByText("Trưởng họ")).toBeVisible();
+  await expect(contact.getByRole("link", { name: "0912 999 888" })).toHaveAttribute("href", "tel:+84912999888");
+  await expect(contact.getByRole("link", { name: "Zalo" })).toHaveAttribute("href", "https://zalo.me/0912999888");
+
+  await g.getByRole("link", { name: "Phả đồ", exact: true }).click();
+  await expect(g.locator(node("Lê Văn Cả"))).toBeVisible();
+  await expect(g.locator(node("Lê Văn Con Trưởng"))).toHaveCount(0); // còn sống
+  await g.locator(node("Lê Văn Cả")).click();
+  const pnl = g.getByRole("complementary", { name: "Thông tin người được chọn" });
+  await expect(pnl.getByText("Đồi Thông")).toBeVisible();
+  await expect(pnl.getByRole("button", { name: /Lê Văn Nuôi/ })).toHaveCount(0); // con còn sống bị lược
+  await expect(pnl.getByRole("button", { name: "Sửa thông tin" })).toHaveCount(0);
+
+  await g.getByRole("link", { name: "Lịch giỗ" }).click();
+  await expect(g.getByRole("listitem").filter({ hasText: "Lê Văn Cả" })).toBeVisible();
+  // khu thành viên vẫn đòi đăng nhập
+  await g.getByRole("link", { name: "Đăng nhập" }).click();
+  await expect(g).toHaveURL(/\/dang-nhap/);
+  await g.close();
+});

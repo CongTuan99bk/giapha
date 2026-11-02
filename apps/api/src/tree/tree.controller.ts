@@ -17,6 +17,9 @@ const treeQuery = z.object({
     .transform((s) => new Set(s ? s.split(",").filter(Boolean) : [])),
 });
 
+/** Ô người rộng hơn mặc định để chứa ảnh chân dung + 2 dòng tên (dùng chung cho phả đồ công khai) */
+export const TREE_NODE_SIZE = { nodeWidth: 172, nodeHeight: 76 } as const;
+
 const kinshipQuery = z.object({ a: idSchema, b: idSchema });
 
 function yearOf(date: unknown): number | null {
@@ -46,9 +49,7 @@ export class TreeController {
 
       const layout = layoutTree(index, {
         rootId,
-        // ô người rộng hơn mặc định để chứa ảnh chân dung + 2 dòng tên
-        nodeWidth: 172,
-        nodeHeight: 76,
+        ...TREE_NODE_SIZE,
         orientation: q.orientation,
         collapsed: q.collapsed,
         ...(q.depth ? { maxDepth: q.depth } : {}),

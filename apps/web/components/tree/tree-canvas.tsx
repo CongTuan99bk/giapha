@@ -14,6 +14,8 @@ interface Props {
   onSelect: (personId: string) => void;
   /** Yêu cầu đưa một người vào giữa màn hình (đổi `nonce` để yêu cầu lại) */
   focus?: { personId: string; nonce: number } | null;
+  /** Đường dẫn ảnh chân dung (trang công khai dùng đường dẫn riêng) */
+  avatarSrc?: (mediaId: string) => string;
 }
 
 const CULL_THRESHOLD = 300; // cây lớn hơn thì chỉ vẽ phần đang nhìn thấy
@@ -24,7 +26,7 @@ const DRAG_SLOP = 5;
  * Kéo để di chuyển, cuộn/chụm hai ngón để phóng to, bấm vào người để chọn.
  * Dải bên trái ghi "Đời n" như lề cuốn gia phả, luôn khớp với hàng đang xem.
  */
-export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus }: Props) {
+export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus, avatarSrc }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [view, setView] = useState<View | null>(null);
@@ -210,7 +212,7 @@ export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus }: Prop
                 generation={rootGeneration + n.depth}
                 selected={n.personId === selectedId}
                 isRoot={n.personId === layout.rootId}
-                avatarUrl={n.person.avatarMediaId ? mediaUrl(clanId, n.person.avatarMediaId, "sm") : null}
+                avatarUrl={n.person.avatarMediaId ? (avatarSrc ? avatarSrc(n.person.avatarMediaId) : mediaUrl(clanId, n.person.avatarMediaId, "sm")) : null}
                 onSelect={select}
               />
             ))}

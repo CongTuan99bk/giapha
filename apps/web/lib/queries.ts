@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type {
   AnniversaryList,
+  Contact,
   ChildRelation,
   Clan,
   GrantableRole,
@@ -257,7 +258,12 @@ export const useHome = (clanId: string) =>
 export function useSaveHome(clanId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { banners: Array<{ mediaId: string; caption?: string | null }>; couplet: { left: string; right: string } | null; motto: string | null }) =>
+    mutationFn: (v: {
+      banners: Array<{ mediaId: string; caption?: string | null }>;
+      couplet: { left: string; right: string } | null;
+      motto: string | null;
+      templeAddress: string | null;
+    }) =>
       api<HomeSettings>("PUT", `/clans/${clanId}/site/home`, v),
     onSuccess: (data) => qc.setQueryData(["clan", clanId, "home"], data),
   });
@@ -268,5 +274,38 @@ export function useSetAvatar(clanId: string) {
   return useMutation({
     mutationFn: (v: { personId: string; mediaId: string | null }) => api<Person>("PUT", `/clans/${clanId}/persons/${v.personId}/avatar`, { mediaId: v.mediaId }),
     onSuccess: invalidate,
+  });
+}
+
+// ───────────── Ban liên lạc ─────────────
+
+export type ContactInput = Omit<Contact, "id" | "consentAt" | "consentNote"> & { consentNote?: string };
+const contactsKey = (clanId: string) => ["clan", clanId, "contacts"] as const;
+
+export const useContacts = (clanId: string) =>
+  useQuery({ queryKey: contactsKey(clanId), queryFn: () => api<Contact[]>("GET", `/clans/${clanId}/contacts`) });
+
+export function useSaveContact(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id?: string; data: ContactInput }) =>
+      v.id ? api<Contact>("PATCH", `/clans/${clanId}/contacts/${v.id}`, v.data) : api<Contact>("POST", `/clans/${clanId}/contacts`, v.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: contactsKey(clanId) }),
+  });
+}
+
+export function useDeleteContact(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<void>("DELETE", `/clans/${clanId}/contacts/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: contactsKey(clanId) }),
+  });
+}
+
+export function useReorderContacts(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) => api<void>("PUT", `/clans/${clanId}/contacts/order`, { ids }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: contactsKey(clanId) }),
   });
 }

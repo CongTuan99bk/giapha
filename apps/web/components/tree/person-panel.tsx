@@ -215,13 +215,13 @@ function PersonView({
   );
 }
 
-const OTHER_NAME: Record<string, string> = { huy: "Tên huý", tu: "Tên tự", thuy: "Tên thuỵ", hieu: "Tên hiệu", khac: "Tên thường gọi" };
+export const OTHER_NAME: Record<string, string> = { huy: "Tên huý", tu: "Tên tự", thuy: "Tên thuỵ", hieu: "Tên hiệu", khac: "Tên thường gọi" };
 
-const RELATION_LABEL: Record<ChildRelation, string> = { biological: "Con ruột", adopted: "Con nuôi", step: "Con riêng" };
+export const RELATION_LABEL: Record<ChildRelation, string> = { biological: "Con ruột", adopted: "Con nuôi", step: "Con riêng" };
 const ORDINAL = ["cả", "hai", "ba", "tư", "năm", "sáu", "bảy", "tám", "chín", "mười"];
 
 /** "Vợ cả", "Vợ hai"… khi có nhiều vợ; "Chồng thứ 2" với người nữ có nhiều đời chồng */
-function spouseLabel(gender: Gender, index: number, total: number): string {
+export function spouseLabel(gender: Gender, index: number, total: number): string {
   const base = gender === "female" ? "Chồng" : gender === "male" ? "Vợ" : "Vợ/chồng";
   if (total <= 1) return base;
   if (gender === "male") return `Vợ ${ORDINAL[index] ?? index + 1}`;
@@ -229,7 +229,7 @@ function spouseLabel(gender: Gender, index: number, total: number): string {
 }
 
 /** "Trưởng nam, 1 trong 3 người con" · "Con thứ 2 trong 3 người con" · "Con một" (+ "con nuôi") */
-function rankText(c: PersonDetail["childOf"][number], gender: Gender): string {
+export function rankText(c: PersonDetail["childOf"][number], gender: Gender): string {
   const head = c.birthOrder === 1 ? (gender === "male" ? "Trưởng nam" : gender === "female" ? "Trưởng nữ" : "Con trưởng") : `Con thứ ${c.birthOrder}`;
   const text = c.siblings <= 1 ? "Con một" : `${head}, trong ${c.siblings} người con`;
   return c.relation === "adopted" ? `${text} (con nuôi)` : text;
@@ -237,7 +237,7 @@ function rankText(c: PersonDetail["childOf"][number], gender: Gender): string {
 
 const shortName = (name: string) => name.trim().split(/\s+/).slice(-1)[0] ?? name;
 
-function PersonLink({ person, onSelect }: { person: PersonBrief; onSelect: (id: string) => void }) {
+export function PersonLink({ person, onSelect }: { person: PersonBrief; onSelect: (id: string) => void }) {
   return (
     <button type="button" onClick={() => onSelect(person.id)} className="group mt-1 block text-left">
       <span className="font-serif text-lg text-then underline decoration-ngoc-300 underline-offset-4 group-hover:decoration-son">{person.fullName}</span>

@@ -16,6 +16,7 @@ export function HomeSettingsForm({ clanId }: { clanId: string }) {
   const [left, setLeft] = useState("");
   const [right, setRight] = useState("");
   const [motto, setMotto] = useState("");
+  const [address, setAddress] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +29,7 @@ export function HomeSettingsForm({ clanId }: { clanId: string }) {
     setLeft(home.data.couplet?.left ?? "");
     setRight(home.data.couplet?.right ?? "");
     setMotto(home.data.motto ?? "");
+    setAddress(home.data.templeAddress ?? "");
     setLoaded(true);
   }, [home.data, loaded]);
 
@@ -68,6 +70,7 @@ export function HomeSettingsForm({ clanId }: { clanId: string }) {
         banners: banners.map((b) => ({ mediaId: b.id, caption: b.caption?.trim() || null })),
         couplet: left.trim() || right.trim() ? { left: left.trim(), right: right.trim() } : null,
         motto: motto.trim() || null,
+        templeAddress: address.trim() || null,
       });
       setBanners(res.banners);
       setSaved(true);
@@ -160,6 +163,18 @@ export function HomeSettingsForm({ clanId }: { clanId: string }) {
       <label className="block">
         <span className="nhan">Khẩu hiệu dưới tên dòng họ</span>
         <input className="o-nhap font-serif" maxLength={80} value={motto} onChange={(e) => setMotto(e.target.value)} placeholder="Uống nước nhớ nguồn" />
+      </label>
+
+      <label className="block">
+        <span className="nhan">Địa chỉ nhà thờ họ</span>
+        <input
+          className="o-nhap"
+          maxLength={200}
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="Ví dụ: Thôn Đông, xã An Hoà, huyện Hoài Nhơn, Bình Định"
+        />
+        <span className="mt-1 block text-sm text-reu">Hiện trên trang chủ và trang công khai, kèm nút mở bản đồ để con cháu tìm đường về.</span>
       </label>
 
       <div className="flex items-center gap-4">

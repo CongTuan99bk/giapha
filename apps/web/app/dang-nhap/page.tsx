@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AuthShell } from "@/components/auth-shell";
 import { Field, FormError } from "@/components/field";
 import { api, ApiError, fieldErrors } from "@/lib/api";
-import { keys } from "@/lib/queries";
+import { keys, useInstance } from "@/lib/queries";
 import { safeNext } from "@/lib/redirect";
 import type { User } from "@/lib/types";
 
@@ -17,6 +17,7 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const qc = useQueryClient();
+  const instance = useInstance();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -79,6 +80,14 @@ function LoginForm() {
           Tạo tài khoản
         </Link>
       </p>
+      {instance.data?.clan && (
+        <p className="border-t border-ngoc-200 pt-4 text-sm text-reu">
+          Chỉ muốn xem?{" "}
+          <Link href="/xem" className="font-medium text-son underline-offset-4 hover:underline">
+            Trang gia phả công khai của {instance.data.clan.name}
+          </Link>
+        </p>
+      )}
     </form>
   );
 }

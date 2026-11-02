@@ -18,11 +18,13 @@ export const homeSettingsSchema = z
       .strict()
       .nullable(),
     motto: z.string().trim().max(80).nullable(),
+    /** Địa chỉ nhà thờ họ — hiện trên trang chủ kèm nút mở bản đồ */
+    templeAddress: z.string().trim().max(200).nullable().optional(),
   })
   .strict();
 export type HomeSettings = z.infer<typeof homeSettingsSchema>;
 
-const DEFAULT_HOME: HomeSettings = { banners: [], couplet: null, motto: null };
+const DEFAULT_HOME: HomeSettings = { banners: [], couplet: null, motto: null, templeAddress: null };
 
 @Injectable()
 export class SiteService {
@@ -60,6 +62,7 @@ export class SiteService {
         .map((b) => ({ ...byId.get(b.mediaId)!, caption: b.caption ?? byId.get(b.mediaId)!.caption })),
       couplet: home.couplet,
       motto: home.motto,
+      templeAddress: home.templeAddress ?? null,
       stats: { people: Number(stats.people), generations: stats.generations ?? 0 },
     };
   }
@@ -67,7 +70,7 @@ export class SiteService {
   async updateHome(trx: Tx, actor: Membership, input: HomeSettings) {
     await this.media.assertExists(trx, input.banners.map((b) => b.mediaId));
     const couplet = input.couplet && (input.couplet.left || input.couplet.right) ? input.couplet : null;
-    const home: HomeSettings = { banners: input.banners, couplet, motto: input.motto || null };
+    const home: HomeSettings = { banners: input.banners, couplet, motto: input.motto || null, templeAddress: input.templeAddress || null };
     // Ghi đè riêng khoá "home", giữ nguyên các cài đặt website khác trong data
     await trx
       .insertInto("site_settings")

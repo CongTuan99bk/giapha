@@ -2,7 +2,7 @@ import { Controller, Get, Header, Query, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { z } from "zod";
 import { CurrentMembership, type Membership, ROLE_RANK } from "../common/context.js";
-import { Database } from "../db/database.js";
+import { Database, type Tx } from "../db/database.js";
 import {
   type AnniversarySource,
   deathLunarYearOf,
@@ -23,46 +23,54 @@ const query = z.object({
 
 const icsQuery = z.object({ years: z.coerce.number().int().min(1).max(5).default(2) });
 
+/**
+ * Người đã mất có ngày giỗ, theo quyền xem:
+ * - "admin": cả người ẩn thông tin; "member": trừ người ẩn;
+ * - "public" (website công khai): chỉ người để chế độ "Mọi người".
+ */
+export async function loadAnniversarySources(trx: Tx, clanId: string, mode: "admin" | "member" | "public") {
+  const clan = await trx.selectFrom("clans").select(["name", "slug", "day30_rule"]).where("id", "=", clanId).executeTakeFirstOrThrow();
+  let q = trx
+    .selectFrom("persons")
+    .select(["id", "full_name", "gender", "generation", "in_clan", "death_date", "death_anniv_lunar"])
+    .where("deleted_at", "is", null)
+    .where("is_living", "=", false);
+  if (mode === "member") q = q.where("privacy", "<>", "hidden");
+  if (mode === "public") q = q.where("privacy", "=", "public");
+  const rows = await q.execute();
+
+  const sources: AnniversarySource[] = [];
+  let missing = 0;
+  for (const r of rows) {
+    const a = r.death_anniv_lunar as { day?: number; month?: number; isLeapMonth?: boolean } | null;
+    if (!a?.day || !a.month) {
+      if (r.in_clan) missing++;
+      continue;
+    }
+    const death = r.death_date as { year?: number } | null;
+    sources.push({
+      id: r.id,
+      fullName: r.full_name,
+      gender: r.gender,
+      generation: r.generation,
+      inClan: r.in_clan,
+      anniv: { day: a.day, month: a.month, isLeapMonth: Boolean(a.isLeapMonth) },
+      deathLunarYear: deathLunarYearOf(r.death_date),
+      deathYear: typeof death?.year === "number" ? death.year : null,
+    });
+  }
+  return { clan, sources, missing };
+}
+
 /** Lịch giỗ (FR-EVENT-01): tính từ ngày mất âm lịch của từng người, không cần nhập riêng. */
 @Controller("clans/:clanId")
 export class AnniversariesController {
   constructor(private readonly db: Database) {}
 
-  private async load(m: Membership) {
-    return this.db.withClan({ clanId: m.clanId, userId: m.userId }, async (trx) => {
-      const clan = await trx.selectFrom("clans").select(["name", "slug", "day30_rule"]).where("id", "=", m.clanId).executeTakeFirstOrThrow();
-      // Người "ẩn thông tin" chỉ quản trị thấy (giống phả đồ)
-      const canSeeHidden = ROLE_RANK[m.role] >= ROLE_RANK.admin;
-      let q = trx
-        .selectFrom("persons")
-        .select(["id", "full_name", "gender", "generation", "in_clan", "death_date", "death_anniv_lunar"])
-        .where("deleted_at", "is", null)
-        .where("is_living", "=", false);
-      if (!canSeeHidden) q = q.where("privacy", "<>", "hidden");
-      const rows = await q.execute();
-
-      const sources: AnniversarySource[] = [];
-      let missing = 0;
-      for (const r of rows) {
-        const a = r.death_anniv_lunar as { day?: number; month?: number; isLeapMonth?: boolean } | null;
-        if (!a?.day || !a.month) {
-          if (r.in_clan) missing++;
-          continue;
-        }
-        const death = r.death_date as { year?: number } | null;
-        sources.push({
-          id: r.id,
-          fullName: r.full_name,
-          gender: r.gender,
-          generation: r.generation,
-          inClan: r.in_clan,
-          anniv: { day: a.day, month: a.month, isLeapMonth: Boolean(a.isLeapMonth) },
-          deathLunarYear: deathLunarYearOf(r.death_date),
-          deathYear: typeof death?.year === "number" ? death.year : null,
-        });
-      }
-      return { clan, sources, missing };
-    });
+  private load(m: Membership) {
+    // Người "ẩn thông tin" chỉ quản trị thấy (giống phả đồ)
+    const mode = ROLE_RANK[m.role] >= ROLE_RANK.admin ? "admin" : "member";
+    return this.db.withClan({ clanId: m.clanId, userId: m.userId }, (trx) => loadAnniversarySources(trx, m.clanId, mode));
   }
 
   /** Các ngày giỗ trong `days` ngày kể từ `from` (mặc định hôm nay theo giờ Việt Nam) */

@@ -2,7 +2,10 @@ import { expect, test } from "@playwright/test";
 import { node, OWNER } from "./data";
 
 test("điện thoại: đăng nhập, xem phả đồ, chạm vào người mở bảng thông tin", async ({ page }) => {
+  // khách mở trang đầu → trang công khai → Đăng nhập
   await page.goto("/");
+  await expect(page).toHaveURL(/\/xem$/);
+  await page.getByRole("link", { name: "Đăng nhập" }).tap();
   await expect(page).toHaveURL(/\/dang-nhap/);
   await page.getByLabel("Số điện thoại hoặc email").fill(OWNER.email);
   await page.getByLabel("Mật khẩu").fill(OWNER.password);

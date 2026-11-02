@@ -29,7 +29,8 @@ export interface LoadedGraph {
  */
 @Injectable()
 export class GraphService {
-  async load(trx: Tx, clanId: string): Promise<LoadedGraph> {
+  /** `only`: giữ lại một phần người (vd. website công khai chỉ người đã mất) — quan hệ với người bị bỏ cũng bị bỏ */
+  async load(trx: Tx, clanId: string, only?: (p: PersonSummaryRow) => boolean): Promise<LoadedGraph> {
     const [persons, unions, links] = await Promise.all([
       trx
         .selectFrom("persons")
@@ -61,9 +62,10 @@ export class GraphService {
         .where("clan_id", "=", clanId)
         .execute(),
     ]);
-    const personMap = new Map(persons.map((p) => [p.id, p as PersonSummaryRow]));
+    const kept = only ? (persons as PersonSummaryRow[]).filter(only) : (persons as PersonSummaryRow[]);
+    const personMap = new Map(kept.map((p) => [p.id, p]));
     const graph: FamilyGraph = {
-      persons: persons.map((p) => ({ id: p.id, gender: p.gender, birthYear: p.birth_year })),
+      persons: kept.map((p) => ({ id: p.id, gender: p.gender, birthYear: p.birth_year })),
       unions: unions
         .filter((u) => personMap.has(u.partner_a_id))
         .map((u) => ({

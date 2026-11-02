@@ -46,7 +46,18 @@ export function CalendarLeaf({ a, size = "md" }: { a: UpcomingAnniversary; size?
 }
 
 /** Một dòng giỗ: tờ lịch, tên (mở trên phả đồ), giỗ lần thứ, còn bao nhiêu ngày */
-export function AnniversaryRow({ a, clanId, compact = false }: { a: UpcomingAnniversary; clanId: string; compact?: boolean }) {
+export function AnniversaryRow({
+  a,
+  clanId,
+  compact = false,
+  personHref,
+}: {
+  a: UpcomingAnniversary;
+  clanId: string;
+  compact?: boolean;
+  /** Mặc định mở người đó trên phả đồ thành viên */
+  personHref?: (personId: string) => string;
+}) {
   const [y, m, d] = a.solarDate.split("-");
   const soon = a.daysUntil <= 7;
   const details = [
@@ -59,7 +70,7 @@ export function AnniversaryRow({ a, clanId, compact = false }: { a: UpcomingAnni
     <li className="flex items-center gap-4 py-3">
       <CalendarLeaf a={a} size={compact ? "sm" : "md"} />
       <div className="min-w-0 flex-1">
-        <Link href={`/dong-ho/${clanId}/pha-do?nguoi=${a.personId}`} className="font-serif text-lg leading-snug text-then underline-offset-4 hover:underline">
+        <Link href={personHref ? personHref(a.personId) : `/dong-ho/${clanId}/pha-do?nguoi=${a.personId}`} className="font-serif text-lg leading-snug text-then underline-offset-4 hover:underline">
           {a.fullName}
         </Link>
         <p className="text-sm text-reu">

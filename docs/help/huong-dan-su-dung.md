@@ -1,6 +1,6 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.7
+version: 1.8
 updated: 2026-11-02
 audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
@@ -34,20 +34,14 @@ Gia Phả Cội Nguồn giúp dòng họ lưu giữ gia phả trên mạng: xem 
 
 ## 1. Xem website của dòng họ
 
-Mỗi dòng họ có một địa chỉ web riêng, ví dụ `ho-nguyen.<tên-miền-hệ-thống>` hoặc tên miền riêng của họ. Mở địa chỉ đó bằng trình duyệt trên máy tính hoặc điện thoại.
+Mở địa chỉ web của dòng họ (ban liên lạc gửi qua Zalo) bằng trình duyệt trên máy tính hoặc điện thoại. **Không cần tài khoản** — bạn vào thẳng trang công khai, gồm các thẻ:
 
-Website có các mục:
+- **Trang chủ** — ảnh nhà thờ họ tự trượt, câu đối, **địa chỉ nhà thờ họ** (bấm **Chỉ đường** để mở bản đồ), các ngày **giỗ sắp tới**, và **ban liên lạc**.
+- **Phả đồ** — cây gia phả **chỉ gồm các cụ đã khuất**. Bấm vào một người để xem tiểu sử, ngày giỗ, nơi an táng, cha mẹ, vợ chồng, con (chỉ những người đã khuất).
+- **Lịch giỗ** — ngày giỗ các cụ trong 12 tháng tới.
+- **Liên hệ** — trưởng họ, trưởng các chi, quản trị website.
 
-- **Trang chủ** — giới thiệu dòng họ, tin mới, sự kiện sắp tới.
-- **Phả ký** — lịch sử, nguồn gốc dòng họ.
-- **Phả đồ** — cây gia phả.
-- **Tin tức** — bài viết, thông báo của ban liên lạc.
-- **Thư viện** — ảnh, video của dòng họ.
-- **Sự kiện** — lịch giỗ, họp họ, chạp mả.
-- **Bản đồ** — vị trí nhà thờ họ, mộ phần.
-- **Liên hệ** — thông tin ban liên lạc.
-
-Trên điện thoại, các mục chính nằm ở thanh dưới cùng màn hình; các mục khác bấm nút **☰ Menu**.
+**Người còn sống không hiện trên trang công khai.** Con cháu trong họ bấm **Đăng nhập** (góc trên) để xem đầy đủ. Người đã khuất mà gia đình để chế độ *Chỉ thành viên dòng họ* hoặc *Ẩn* cũng không hiện. *(Phả ký, tin tức, thư viện, bản đồ mộ phần: Sắp ra mắt.)*
 
 **Trang chủ khi đã đăng nhập:** vào dòng họ, bạn thấy ngay **Trang chủ** với dải ảnh lớn (ảnh nhà thờ họ, cổng làng, đại gia đình…) tự trượt lần lượt và quay vòng, hai bên là **câu đối** (trên điện thoại câu đối nằm dưới ảnh).
 - Rê chuột lên ảnh để dừng trượt; bấm **‹ ›** hoặc các chấm phía dưới để chuyển ảnh. Trên điện thoại, vuốt sang trái/phải.
@@ -106,12 +100,10 @@ Nếu bạn đã đăng nhập và liên kết tài khoản với chính mình t
 
 ## 6. Liên hệ ban liên lạc
 
-- Thông tin ban liên lạc nằm ở **chân trang** mọi trang và trong mục **Liên hệ**.
-- Trên điện thoại, bấm **Gọi**, **Zalo** hoặc **Email** để liên hệ ngay.
-- Email có thể hiện dạng che bớt (ví dụ `ng***@gmail.com`); bấm **Hiện** để xem đầy đủ.
-- Muốn gửi lời nhắn: vào **Liên hệ**, điền họ tên, cách liên lạc lại, nội dung → **Gửi**. Ban liên lạc sẽ nhận qua email.
-
-Cuối trang có thể có **bộ đếm**: số người đang xem website, lượt xem hôm nay và tổng lượt xem (nếu dòng họ bật).
+- Thông tin ban liên lạc nằm cuối **Trang chủ** và ở thẻ **Liên hệ** của trang công khai.
+- Bấm **Gọi** để gọi ngay, **Zalo** để mở Zalo nhắn tin, bấm vào email để soạn thư.
+- Ai chưa đồng ý công khai số điện thoại thì chỉ hiện tên và vai trò.
+- *(Sắp ra mắt)* Gửi lời nhắn ngay trên trang; bộ đếm số người đang xem.
 
 ## 7. Cài lên điện thoại như một ứng dụng
 
@@ -301,9 +293,12 @@ Vào **Quản trị → Thống kê**:
 2. Gõ **chú thích** cho từng ảnh nếu muốn (hiện ở góc ảnh). Dùng nút **↑ ↓** để đổi thứ tự trượt, **Bỏ** để gỡ ảnh khỏi banner.
 3. Gõ **câu đối**: **Vế bên trái**, **Vế bên phải** (mỗi vế tối đa 40 ký tự). Để trống cả hai nếu không dùng.
 4. Gõ **khẩu hiệu** hiện dưới tên dòng họ, ví dụ *Uống nước nhớ nguồn*.
-5. Bấm **Lưu trang chủ**, rồi mở thẻ **Trang chủ** để xem.
+5. Gõ **địa chỉ nhà thờ họ** — hiện trên trang chủ (cả trang công khai) kèm nút **Chỉ đường** mở Google Maps.
+6. Bấm **Lưu trang chủ**, rồi mở thẻ **Trang chủ** để xem.
 
-Các mục dưới đây thuộc website công khai *(Sắp ra mắt)* — vào **Quản trị → Website**:
+**Trang công khai (đã có):** dòng họ có sẵn trang cho khách xem không cần đăng nhập — địa chỉ là trang đầu của website, hoặc `…/xem`. Trang này dùng chung ảnh banner, câu đối, khẩu hiệu, địa chỉ ở trên; phả đồ và lịch giỗ **chỉ gồm người đã mất** để chế độ *Mọi người* (mặc định của người đã mất). Muốn giấu một cụ khỏi trang công khai: sửa người đó → **Ai được xem thông tin** → *Chỉ thành viên dòng họ*. Ảnh trên trang công khai chỉ có cỡ xem, không tải được ảnh gốc.
+
+Các mục dưới đây *(Sắp ra mắt)*:
 
 - **Giao diện:** tải logo, ảnh bìa (banner), ảnh cuốn thư; chọn màu chủ đạo. Bấm **Xem trước** trước khi **Lưu**.
 - **Menu:** bật/tắt, đổi tên, kéo thả thứ tự các mục; thêm mục trỏ tới một chuyên mục bài viết.
@@ -313,19 +308,15 @@ Các mục dưới đây thuộc website công khai *(Sắp ra mắt)* — vào 
 
 ## 20. Thông tin liên hệ ban quản lý
 
-Vào **Quản trị → Website → Liên hệ**:
+Vào **Cài đặt → Ban liên lạc**:
 
-1. Bấm **Thêm người liên hệ**. Chọn từ danh sách người dùng của dòng họ, hoặc nhập tay.
-2. Điền **họ tên**, **vai trò** (ví dụ *Trưởng ban liên lạc*, *Thủ quỹ*), **số điện thoại**, **email**, **Zalo**, ảnh.
-3. Bật/tắt **công khai từng mục** — ví dụ công khai số điện thoại nhưng không công khai email.
-4. Kéo thả để sắp thứ tự hiển thị.
-5. Bấm **Lưu**. Chân trang và trang Liên hệ cập nhật trong khoảng 1 phút.
+1. Bấm **Thêm người liên hệ**.
+2. Điền **họ tên**, **vai trò** (gõ hoặc chọn gợi ý: *Trưởng họ*, *Trưởng chi 2*, *Thủ từ*, *Quản trị website*…), **số điện thoại**, **email**.
+3. Đánh dấu **Hiện số điện thoại** và/hoặc **Hiện email** trên trang công khai.
+4. Đánh dấu **Người này đã đồng ý** công khai — bắt buộc khi bật hiện số điện thoại/email. Có thể ghi cách xác nhận, ví dụ *"đồng ý qua điện thoại ngày 2/11"*.
+5. Bấm **Thêm người liên hệ**. Dùng **↑ ↓** để sắp thứ tự (trưởng họ trước), **Sửa**, **Xoá** khi cần.
 
-**Sự đồng ý của người liên hệ:** số điện thoại, email của một người chỉ được hiện công khai khi chính người đó đồng ý.
-- Nếu người đó có tài khoản: họ nhận yêu cầu và bấm **Đồng ý** trong tài khoản của mình.
-- Nếu không có tài khoản: quản trị đánh dấu **Đã được đồng ý** và ghi cách xác nhận (ví dụ *"đồng ý qua điện thoại ngày …"*).
-- Chưa đồng ý: website chỉ hiện tên, vai trò và form gửi tin nhắn.
-- Người liên hệ có thể **rút lại đồng ý** bất cứ lúc nào; thông tin sẽ ẩn ngay.
+Dưới mỗi người có dòng tóm tắt *Trang công khai: hiện số điện thoại…* hoặc *chỉ hiện tên và vai trò*. Bỏ đánh dấu **đã đồng ý** thì số điện thoại, email ẩn ngay. Số điện thoại Việt Nam có thêm nút **Zalo**.
 
 ## 21. Người dùng và phân quyền
 

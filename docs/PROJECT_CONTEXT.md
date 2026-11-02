@@ -5,7 +5,7 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.11.0 |
+| Phiên bản file | 0.12.0 |
 | Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **Sẵn sàng demo: `pnpm demo` chạy trên máy cá nhân có link chia sẻ; tiếp theo: lịch giỗ** |
@@ -51,7 +51,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Tài liệu đặc tả – phân tích – thiết kế v1.0 | Xong (2026-11-01) | FR/NFR/BR, use case, ERD, API, UI, thống kê, bảo mật, test, vận hành |
 | Sổ tay chủ sở hữu & Hướng dẫn sử dụng v1.0 | Xong (2026-11-01) | Viết theo thiết kế; đối chiếu lại tên nút, thêm ảnh chụp khi có giao diện |
 | Giai đoạn 0 — Nền móng (tuần 1–2) | **Xong (2026-11-01)** | Monorepo, CI, schema + RLS, genealogy-core, lunar-vn, schemas — 126 test xanh |
-| MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Xong phần chính (2026-11-02)** | Đăng nhập email/số điện thoại, tạo dòng họ, phả đồ, thêm/sửa/xoá người, danh sách, xưng hô, mời/duyệt thành viên, vai trò, ảnh, trang chủ, lịch giỗ, PWA, demo Docker — 108 test API + 23 test trình duyệt. Nhập phả đầy đủ xong 0.11.0 |
+| MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Xong phần chính (2026-11-02)** | Đăng nhập email/số điện thoại, tạo dòng họ, phả đồ, thêm/sửa/xoá người, danh sách, xưng hô, mời/duyệt thành viên, vai trò, ảnh, trang chủ, lịch giỗ, PWA, demo Docker — 118 test API + 24 test trình duyệt. Nhập phả đầy đủ xong 0.11.0 |
 | MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | Chưa bắt đầu | |
 | Phase 2 (tuần 15–24), Phase 3 (tuần 25–32) | Chưa bắt đầu | |
 
@@ -61,7 +61,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 ### 2.3. Việc tiếp theo (thứ tự chủ dự án đã chốt)
 1. ~~Lịch giỗ~~ — xong 0.10.0 (còn: nhắc qua email khi có SMTP, sự kiện họp họ/chạp mả).
 2. ~~Hoàn thiện nhập phả~~ — xong 0.11.0 (còn: tiểu sử định dạng chữ đậm/nghiêng, ảnh trong tiểu sử; nhánh/chi).
-3. Website công khai + thống kê truy cập + thông tin liên hệ.
+3. ~~Website công khai + thông tin liên hệ~~ — xong 0.12.0. Còn: **thống kê truy cập** (bảng analytics_* đã có), form gửi lời nhắn, SEO (trang công khai đang dựng phía trình duyệt).
 3b. Thư viện ảnh/tư liệu theo album (KI-022); nhập Excel / xuất PDF.
 4. Ứng dụng iOS/Android (Capacitor bọc PWA).
 4. Sửa bảng xưng hô riêng của dòng họ (KI-013); "Tôi gọi người này là gì?" từ người đã gắn "Đây là tôi".
@@ -259,7 +259,11 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | `GET /clans/:clanId/media` · `GET …/media/:id/:variant` | member | thư viện ảnh; tải file theo cỡ `sm` (vuông 320) / `md` 960 / `lg` 1920 (WebP) / `orig` (JPEG/PNG, tải về) — `Cache-Control: private, immutable` |
 | `PATCH/DELETE /clans/:clanId/media/:id` | editor | sửa chú thích; xoá (gỡ khỏi ảnh chân dung, banner tự bỏ, xoá file sau commit) |
 | `PUT /clans/:clanId/persons/:id/avatar` | editor | `{mediaId \| null}` — không tăng `version`; ảnh phải cùng dòng họ (`MEDIA_NOT_FOUND`) |
-| `GET /clans/:clanId/site/home` · `PUT` (admin) | member | `{banners[], couplet {left,right} \| null, motto, stats {people, generations}}`; lưu trong `site_settings.data.home` |
+| `GET /clans/:clanId/site/home` · `PUT` (admin) | member | `{banners[], couplet {left,right} \| null, motto, templeAddress, stats {people, generations}}`; lưu trong `site_settings.data.home` |
+| `GET /public/site` | công khai | chế độ single: `{clan, home {banners[{id, urls sm/md/lg}], couplet, motto, templeAddress}, stats {people, generations} (người đã mất công khai), contacts[{name, role, phone, email}]}`; multi → `NO_PUBLIC_SITE` 404 |
+| `GET /public/tree` · `GET /public/persons/:id` · `GET /public/anniversaries?days` | công khai | chỉ người **đã mất** + `privacy = public` (ADR-017); người thân không công khai bị lược; hồ sơ không có `version`, `privacy` |
+| `GET /public/media/:id/:variant` | công khai | chỉ `sm/md/lg` (không ảnh gốc), chỉ ảnh banner hoặc chân dung người công khai; `Cache-Control: public, max-age=86400` |
+| `GET/POST /clans/:clanId/contacts` · `PATCH/DELETE …/:id` · `PUT …/order` | admin | ban liên lạc `{name, role, phone?, email?, showPhone, showEmail, consent, consentNote?}`; bật hiện mà chưa `consent` → 422; trang công khai chỉ hiện trường bật + đã đồng ý |
 | `GET /invitations/:token` | công khai | xem trước `{clanId, clanName, role, invitedBy, expiresAt, forSpecificEmail, status}` |
 | `POST /invitations/:token/accept` | đã đăng nhập | `{clanId, alreadyMember, role}` (đã là thành viên → giữ vai trò cũ, không tốn lượt); đóng yêu cầu tham gia đang chờ; lỗi `INVITE_NOT_FOUND` 404, `INVITE_EXPIRED`/`INVITE_REVOKED`/`INVITE_USED` 410, `INVITE_EMAIL_MISMATCH` 403 |
 
@@ -375,6 +379,7 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | ADR-014 | 2026-11-02 | Lời mời bằng link: mã ngẫu nhiên 18 byte, DB chỉ lưu sha256; tra theo mã dùng role `coinguon_platform` (BYPASSRLS) vì người nhận chưa có ngữ cảnh dòng họ — chỉ khớp đúng `token_hash`, mọi ghi đều qua `withClan` | Không thể đặt `app.clan_id` trước khi biết lời mời thuộc dòng họ nào; FORCE RLS chặn cả hàm SECURITY DEFINER | Hàm SECURITY DEFINER + bỏ FORCE RLS; mã chứa clan_id |
 | ADR-013 | 2026-11-01 | Xưng hô mặc định miền Trung: ba/mạ, chị-em gái của cha là "o", chồng o/dì là "dượng" | Chủ dự án chọn; bảng tạm, sẽ cho dòng họ tự sửa (KI-013) | Bắc làm mặc định |
 | ADR-012 | 2026-11-01 | Điện thoại: PWA trước, rồi **Capacitor** đóng gói chính web app thành app iOS/Android, thêm tính năng gốc (thông báo đẩy ngày giỗ, chụp ảnh, xem offline) | Một mã nguồn, chi phí thấp; App Store yêu cầu app có tính năng gốc, không chỉ bọc web | React Native/Expo (viết lại giao diện), Flutter |
+| ADR-017 | 2026-11-02 | Website công khai: chỉ người đã mất + `privacy = public`; không mật khẩu xem chung; ảnh công khai không có bản gốc; trang công khai dựng phía trình duyệt (chưa SSR) | Chủ dự án chốt; bảo vệ người còn sống; làm nhanh, SEO để sau | Hiện cả tên người còn sống; mã xem chung |
 | ADR-011 | 2026-11-01 | `CLAN_MODE=single`: chỉ tạo được dòng họ đầu tiên, `GET /instance` cho web biết dòng họ chính; vẫn giữ RLS đa dòng họ | Chủ dự án dùng riêng cho một dòng họ; giữ đường mở rộng | Bỏ hẳn `clan_id` / RLS |
 | ADR-010 | 2026-11-01 | API dùng **Kysely** (query builder có kiểu) thay Prisma Client; Prisma chỉ giữ schema + migration. NestJS 12 ESM | Đặt `set_config('app.clan_id')` trong cùng transaction cho RLS rõ ràng; ltree, CTE đệ quy, `update … from (values …)` viết thẳng SQL; không cần engine nhị phân của Prisma | Prisma Client + `$extends` cho RLS, Drizzle |
 | ADR-009 | 2026-11-01 | Ràng buộc phả hệ cả ở DB (trigger chặn vòng lặp, tự làm cha mẹ, nối chéo dòng họ) ngoài kiểm tra ở `genealogy-core` | Phòng thủ nhiều lớp; FK không xét RLS nên cần trigger chặn nối người khác dòng họ | Chỉ kiểm tra ở service |
@@ -384,6 +389,17 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.12.0] — 2026-11-02 — Website công khai, ban liên lạc
+### Thêm
+- Trang công khai `/xem` (không cần đăng nhập): trang chủ (banner, câu đối, khẩu hiệu, **địa chỉ nhà thờ họ** + nút Chỉ đường Google Maps, giỗ sắp tới, ban liên lạc), phả đồ, lịch giỗ, liên hệ. Khách mở `/` được đưa thẳng vào `/xem`; trang đăng nhập có lối sang trang công khai.
+- Quyết định chủ dự án (ADR-017): khách chỉ thấy người **đã mất** để chế độ "Mọi người"; không có mật khẩu xem chung; liên hệ gồm trưởng họ, trưởng các chi, quản trị (tên, số điện thoại, email).
+- API `PublicController` (`/public/site|tree|persons/:id|anniversaries|media/:id/:variant`, giới hạn 600 lượt/5 phút/IP), `ContactsController` (bảng `contacts` sẵn có: `public_fields` + `consent_at`), `GraphService.load(…, only)` lọc người, `loadAnniversarySources(…, "public")`, `homeSettings.templeAddress`.
+- Cài đặt → **Ban liên lạc** (thêm/sửa/xoá/sắp thứ tự, bắt xác nhận đồng ý trước khi công khai). Liên hệ có nút Gọi, Zalo (`zalo.me/0…`), email.
+### Sửa
+- `Field` dùng `useId` làm mã ô: trước đây hai form cùng tên trường trên một trang (vd. "name") làm nhãn gắn nhầm ô.
+- API nhận `null` như ô trống ở các trường không bắt buộc (form gửi email trống dạng null bị 422).
+- `RateLimitGuard` đọc cấu hình ở cả controller lẫn hàm.
 
 ## [0.11.0] — 2026-11-02 — Hoàn thiện nhập phả
 ### Thêm

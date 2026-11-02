@@ -1,6 +1,6 @@
 "use client";
 
-import { type InputHTMLAttributes, type ReactNode, useState } from "react";
+import { type InputHTMLAttributes, type ReactNode, useId, useState } from "react";
 
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -10,7 +10,9 @@ interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
 
 /** Ô nhập có nhãn, gợi ý và lỗi gắn với aria-describedby. Ô mật khẩu có nút Hiện/Ẩn. */
 export function Field({ label, error, hint, id, name, type, ...rest }: FieldProps) {
-  const fid = id ?? name;
+  // mã riêng cho từng ô: một trang có thể có hai form cùng tên trường (vd. "name"), nhãn không được gắn nhầm ô
+  const auto = useId();
+  const fid = id ?? `${name ?? "o"}${auto}`;
   const describedBy = error ? `${fid}-loi` : hint ? `${fid}-goiy` : undefined;
   const isPassword = type === "password";
   const [shown, setShown] = useState(false);

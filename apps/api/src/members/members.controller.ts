@@ -19,8 +19,8 @@ const createInvitationSchema = z
   })
   .strict();
 
-/** Chuỗi rỗng từ form = không nhập */
-const optional = <T extends z.ZodTypeAny>(s: T) => z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), s.optional());
+/** Chuỗi rỗng hoặc null từ form = không nhập */
+const optional = <T extends z.ZodTypeAny>(s: T) => z.preprocess((v) => (v === null || (typeof v === "string" && v.trim() === "") ? undefined : v), s.optional());
 
 const createAccountSchema = z
   .object({

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { AnniversaryRow } from "@/components/anniversary-list";
 import { BannerCarousel } from "@/components/banner-carousel";
+import { CoupletPanel, TempleAddress } from "@/components/clan-home-parts";
 import { Lightbox } from "@/components/lightbox";
 import { FormError } from "@/components/field";
 import { useAnniversaries, useClan, useHome } from "@/lib/queries";
@@ -78,6 +79,7 @@ export default function ClanHomePage() {
             ? "Phả đồ chưa có ai."
             : `Phả đồ đang ghi ${h.stats.people.toLocaleString("vi-VN")} người qua ${h.stats.generations} đời.`}
         </p>
+        {h.templeAddress && <TempleAddress address={h.templeAddress} />}
         <UpcomingCard clanId={clanId} />
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href={`${base}/pha-do`} className="btn-chinh">
@@ -116,20 +118,5 @@ function UpcomingCard({ clanId }: { clanId: string }) {
         ))}
       </ul>
     </section>
-  );
-}
-
-/** Một vế câu đối dựng đứng: mỗi chữ một dòng, chữ vàng trên nền son. */
-function CoupletPanel({ text, side }: { text: string; side: "trái" | "phải" }) {
-  const words = text.split(/\s+/).filter(Boolean);
-  const size = words.length <= 7 ? "text-[1.35rem]" : words.length <= 9 ? "text-[1.15rem]" : "text-base";
-  return (
-    <div className="hidden bg-son-dam p-1.5 md:block" aria-label={`Câu đối vế ${side}: ${text}`} role="note">
-      <div className={`flex h-full flex-col items-center justify-evenly border border-thep/70 py-3 font-serif capitalize leading-none text-thep-nhat ${size}`} aria-hidden>
-        {words.map((w, i) => (
-          <span key={i}>{w}</span>
-        ))}
-      </div>
-    </div>
   );
 }
