@@ -26,6 +26,8 @@ Cả ba dùng chung một bộ cấu hình Docker (`infra/docker/compose.prod.ym
      npm install -g pnpm@10
      ```
    - Kiểm tra: `node -v` ra `v22…` trở lên, `pnpm -v` ra `10…`.
+   - Windows báo lỗi **"pnpm.ps1 cannot be loaded because running scripts is disabled on this system"**: PowerShell đang chặn chạy script. Gõ một lần
+     `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` → `Y` → Enter, rồi chạy lại. (Hoặc gõ `pnpm.cmd` thay cho `pnpm`, hoặc dùng Command Prompt.)
    (Node.js từ bản 25 không còn kèm `corepack`, nên dùng lệnh `npm install -g pnpm@10` ở trên thay cho `corepack enable`.)
 
 ### Chạy demo
