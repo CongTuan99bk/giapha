@@ -24,7 +24,8 @@
     "demo:link": "node scripts/demo.mjs link",
     "demo:sao-luu": "node scripts/demo.mjs backup",
     "demo:nhat-ky": "node scripts/demo.mjs logs",
-    "demo:dung": "node scripts/demo.mjs stop"
+    "demo:dung": "node scripts/demo.mjs stop",
+    "demo:xoa": "node scripts/demo.mjs reset"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

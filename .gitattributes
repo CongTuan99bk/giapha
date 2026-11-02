@@ -1,0 +1,9 @@
+# Giữ kiểu xuống dòng LF cho mọi file văn bản, kể cả khi clone trên Windows.
+# Script chạy trong container Linux (init-roles.sh, backup.sh…) bị hỏng nếu Git đổi sang CRLF.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.woff2 binary
+*.ico binary

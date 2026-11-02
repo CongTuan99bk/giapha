@@ -7,11 +7,12 @@
 //   pnpm demo:sao-luu          sao lưu ngay (CSDL + ảnh) vào thư mục backups/
 //   pnpm demo:nhat-ky          xem nhật ký máy chủ (Ctrl+C để thoát)
 //   pnpm demo:dung             dừng (giữ nguyên dữ liệu; chạy pnpm demo để bật lại)
+//   pnpm demo:xoa              XOÁ toàn bộ dữ liệu demo (CSDL, ảnh) để làm lại từ đầu
 //
 // Lưu ý: link đổi mỗi lần tunnel khởi động lại; máy tính phải bật thì người khác mới vào được.
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -32,6 +33,56 @@ function docker(args, opts = {}) {
     process.exit(r.status ?? 1);
   }
   return r;
+}
+
+/** Docker Desktop có đang chạy không (lệnh docker có, nhưng máy chủ Docker chưa bật là lỗi hay gặp nhất) */
+function checkDocker() {
+  const r = docker(["info", "--format", "{{.ServerVersion}}"], { capture: true, allowFail: true });
+  if (r.status !== 0) {
+    console.error(
+      "✗ Docker chưa chạy. Mở Docker Desktop, đợi tới khi báo \"Engine running\" (biểu tượng cá voi đứng yên), rồi chạy lại lệnh.",
+    );
+    process.exit(1);
+  }
+}
+
+/**
+ * Git trên Windows có thể đổi kiểu xuống dòng sang CRLF; script shell chạy trong container Linux sẽ hỏng
+ * (CSDL không khởi tạo được). Tự đổi lại LF cho các file chạy trong container.
+ */
+function fixLineEndings() {
+  const dirs = ["infra/docker"];
+  const fixed = [];
+  const walk = (rel) => {
+    for (const name of readdirSync(join(root, rel))) {
+      const r = join(rel, name);
+      const full = join(root, r);
+      if (statSync(full).isDirectory()) walk(r);
+      else if (/\.(sh|ya?ml)$|Caddyfile$|Dockerfile$/.test(name)) {
+        const text = readFileSync(full, "utf8");
+        if (text.includes("\r\n")) {
+          writeFileSync(full, text.replace(/\r\n/g, "\n"));
+          fixed.push(r);
+        }
+      }
+    }
+  };
+  for (const d of dirs) walk(d);
+  if (fixed.length) console.log(`  Đã sửa kiểu xuống dòng (CRLF → LF) cho: ${fixed.join(", ")}`);
+}
+
+/** In trạng thái và nhật ký các dịch vụ để biết lỗi ở đâu */
+function diagnose() {
+  console.error("\n──────── Trạng thái các dịch vụ ────────");
+  docker([...compose, "ps", "-a"], { allowFail: true });
+  console.error("\n──────── Nhật ký gần nhất ────────");
+  docker([...compose, "logs", "--no-color", "--tail", "40", "db", "migrate", "media-init", "api", "web"], { allowFail: true });
+  console.error(`
+Gợi ý:
+  • Nhật ký "db" có lỗi "role … does not exist" hoặc "password authentication failed":
+    dữ liệu demo cũ hỏng hoặc lệch mật khẩu → chạy  pnpm demo:xoa  rồi  pnpm demo  lại.
+  • Lỗi tải gói (npm, registry, ETIMEDOUT) khi build: kiểm tra mạng/proxy công ty rồi chạy lại.
+  • Gửi phần nhật ký ở trên cho người hỗ trợ nếu vẫn chưa rõ.`);
 }
 
 function readEnv() {
@@ -93,7 +144,11 @@ async function waitForLink(timeoutSec = 120) {
   return null;
 }
 
-if (cmd === "stop") {
+if (cmd === "reset") {
+  checkDocker();
+  docker([...compose, "down", "-v", "--remove-orphans"], { allowFail: true });
+  console.log("\nĐã xoá dữ liệu demo (CSDL, ảnh). File backups/ và .env.demo vẫn giữ. Chạy `pnpm demo` để bắt đầu lại.");
+} else if (cmd === "stop") {
   docker([...compose, "stop"]);
   console.log("\nĐã dừng. Dữ liệu vẫn còn — chạy `pnpm demo` để bật lại (link mới sẽ khác).");
 } else if (cmd === "logs") {
@@ -105,9 +160,15 @@ if (cmd === "stop") {
   const link = currentLink();
   console.log(link ? `Link hiện tại: ${link}` : "Chưa có link — bản demo có đang chạy không? (pnpm demo)");
 } else if (cmd === "start") {
+  checkDocker();
+  fixLineEndings();
   const env = ensureEnv();
   console.log("▶ Build và khởi động (lần đầu mất vài phút để tải và build)…\n");
-  docker([...compose, "up", "-d", "--build"]);
+  const up = docker([...compose, "up", "-d", "--build"], { allowFail: true });
+  if (up.status !== 0) {
+    diagnose();
+    process.exit(1);
+  }
 
   console.log("\n▶ Đang lấy link chia sẻ từ Cloudflare…");
   const link = await waitForLink();
@@ -142,6 +203,6 @@ ${
   Sao lưu tự động lúc ${env.BACKUP_HOUR}:00 hằng ngày vào thư mục backups/ (máy phải đang bật).
   Dừng: pnpm demo:dung — link đổi mỗi lần khởi động lại.`);
 } else {
-  console.error(`Lệnh không rõ: ${cmd}. Dùng: start | stop | logs | link | backup`);
+  console.error(`Lệnh không rõ: ${cmd}. Dùng: start | stop | logs | link | backup | reset`);
   process.exit(1);
 }

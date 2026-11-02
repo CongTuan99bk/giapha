@@ -53,6 +53,7 @@ pnpm demo --du-lieu-mau
 | `pnpm demo:dung` | Dừng (giữ dữ liệu) |
 | `pnpm demo:sao-luu` | Sao lưu ngay vào thư mục `backups/` |
 | `pnpm demo:nhat-ky` | Xem nhật ký máy chủ (Ctrl+C để thoát) |
+| `pnpm demo:xoa` | **Xoá hết dữ liệu demo** (CSDL, ảnh) để làm lại từ đầu. Thư mục `backups/` giữ nguyên |
 
 ### Lưu ý
 
@@ -60,6 +61,21 @@ pnpm demo --du-lieu-mau
 - Quick Tunnel là dịch vụ thử nghiệm của Cloudflare: không cam kết luôn chạy, tối đa 200 người truy cập cùng lúc — thừa cho một dòng họ.
 - Mật khẩu CSDL được sinh ngẫu nhiên trong file `.env.demo`. **Không gửi file này cho ai, không đưa lên GitHub** (đã được bỏ qua sẵn).
 - Cập nhật bản mới: `git pull` rồi `pnpm demo` (tự build lại và nâng cấp CSDL, dữ liệu giữ nguyên).
+
+### Khi `pnpm demo` báo lỗi
+
+Khi lỗi, lệnh tự in **trạng thái các dịch vụ** và **nhật ký gần nhất** — nguyên nhân nằm trong phần đó, không phải ở dòng cuối.
+Dòng `WARN Local package.json exists, but node_modules missing` là cảnh báo vô hại, bỏ qua được (bản demo chạy trong Docker, không cần `pnpm install`).
+
+| Thấy gì | Làm gì |
+| --- | --- |
+| `Docker chưa chạy` | Mở Docker Desktop, đợi *Engine running*, chạy lại |
+| Nhật ký `db` có `role … does not exist`, `password authentication failed`, hoặc `bad interpreter` | Lần chạy trước hỏng giữa chừng → `pnpm demo:xoa` rồi `pnpm demo --du-lieu-mau` |
+| Lỗi tải gói khi build (`ETIMEDOUT`, `ECONNRESET`, `registry`) | Mạng chập chờn hoặc proxy công ty — chạy lại; vẫn lỗi thì đổi mạng (ví dụ phát từ điện thoại) |
+| `port is already allocated` / cổng 3000 bận | Thêm dòng `WEB_PORT=3001` vào `.env.demo` rồi chạy lại |
+| Windows: `WSL 2 installation is incomplete` | Mở PowerShell **Run as administrator** → `wsl --update` → khởi động lại máy |
+
+Trên Windows, Git có thể đổi kiểu xuống dòng của các script chạy trong máy chủ Linux (CRLF); `pnpm demo` tự sửa lại trước khi chạy, và repo có `.gitattributes` để bản clone mới không bị đổi.
 
 ---
 
@@ -157,4 +173,4 @@ Với cách A, `PUBLIC_URL` (địa chỉ trong link email) được `pnpm demo`
 - [ ] Đã thử **Tạo link đặt lại mật khẩu** cho một thành viên.
 - [ ] Đã chạy `pnpm demo:sao-luu` (hoặc lệnh sao lưu) và thấy file trong `backups/`.
 - [ ] Đổi mật khẩu tài khoản dữ liệu mẫu, hoặc xoá dữ liệu mẫu trước khi nhập dữ liệu thật:
-      `docker compose -f infra/docker/compose.prod.yml --env-file .env.demo --profile tunnel down -v` (**xoá hết dữ liệu**) rồi `pnpm demo`.
+      `pnpm demo:xoa` (**xoá hết dữ liệu**) rồi `pnpm demo`.

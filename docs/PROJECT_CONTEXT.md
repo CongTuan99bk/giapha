@@ -5,7 +5,7 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.8.0 |
+| Phiên bản file | 0.8.1 |
 | Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **Sẵn sàng demo: `pnpm demo` chạy trên máy cá nhân có link chia sẻ; tiếp theo: lịch giỗ** |
@@ -375,6 +375,13 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.8.1] — 2026-11-02 — Demo chạy ổn trên Windows
+### Sửa
+- `pnpm demo` kiểm tra Docker Desktop đã chạy chưa, tự đổi CRLF → LF cho file trong `infra/docker/` (Git trên Windows đổi kiểu xuống dòng làm hỏng script khởi tạo CSDL), và khi lỗi tự in `compose ps -a` + nhật ký 40 dòng của db/migrate/media-init/api/web kèm gợi ý.
+- Thêm `.gitattributes` (`* text=auto eol=lf`, ảnh/font là binary).
+### Thêm
+- `pnpm demo:xoa` (`compose down -v`): xoá dữ liệu demo hỏng để làm lại. Mục "Khi `pnpm demo` báo lỗi" trong `docs/TRIEN-KHAI.md`.
 
 ## [0.8.0] — 2026-11-02 — Sẵn sàng demo: quên mật khẩu, chặn dò mật khẩu, Docker, sao lưu
 ### Thêm
