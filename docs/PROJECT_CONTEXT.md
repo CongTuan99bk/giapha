@@ -5,7 +5,7 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.12.0 |
+| Phiên bản file | 0.12.1 |
 | Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **Sẵn sàng demo: `pnpm demo` chạy trên máy cá nhân có link chia sẻ; tiếp theo: lịch giỗ** |
@@ -389,6 +389,10 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.12.1] — 2026-11-03 — Nền phả đồ khít cả chiều ngang
+### Sửa
+- Nền phả đồ có ba bản ghép lại từ các lớp PSD theo tỉ lệ 1.41 / 1.75 / 2.1 (`scripts/ghep-nen-pha-do.py`: lớp giữ nguyên cỡ, chỉ dời ngang; hàng hoa văn trên/dưới lát nối khít; khung rất rộng thêm một cặp rồng chầu). Khung phả đồ dùng container query `aspect-ratio` chọn bản gần nhất rồi `cover` — phủ kín hai chiều, không méo, cắt tối đa ~12%.
 
 ## [0.12.0] — 2026-11-02 — Website công khai, ban liên lạc
 ### Thêm

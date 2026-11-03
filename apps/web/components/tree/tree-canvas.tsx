@@ -166,9 +166,9 @@ export function TreeCanvas({ layout, clanId, selectedId, onSelect, focus, avatar
       aria-label="Phả đồ. Dùng phím mũi tên để di chuyển, phím cộng trừ để phóng to thu nhỏ, phím Tab để đi qua từng người."
     >
       {/* Nền hoàng: rồng, mây, tròn lót chìm (từ file thiết kế giaphatrangdengoc.psd) + khung son đôi — đứng yên khi kéo phả đồ */}
-      <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 left-14">
-        {/* Màn hình ngang: hiện trọn bố cục (mép ảnh cùng màu nền nên hai bên liền mạch); màn hình dọc (điện thoại): phủ kín, thấy vòng rồng ở giữa */}
-        <div className="absolute inset-0 bg-[url(/hoa-van/nen-rong-vang.webp)] bg-cover bg-center bg-no-repeat landscape:bg-contain" />
+      <div aria-hidden className="nen-pha-do pointer-events-none absolute inset-y-0 right-0 left-14">
+        {/* Phủ kín cả ngang lẫn dọc: chọn bản ghép có tỉ lệ gần khung nhất (globals.css, .nen-pha-do) */}
+        <div className="anh-nen" />
         <div className="absolute inset-2 border-2 border-khung/70">
           <div className="absolute inset-1 border border-khung/40" />
         </div>

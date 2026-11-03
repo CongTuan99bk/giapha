@@ -108,3 +108,27 @@
   & hr { @apply my-10 border-ngoc-200; }
 }
 
+
+/*
+ * Nền phả đồ (rồng, mây, tròn lót): ba bản ghép lại từ các lớp của giaphatrangdengoc.psd theo tỉ lệ khung
+ * 1.41 (gốc), 1.75, 2.1 — hoạ tiết không bị kéo méo; khung chọn bản gần nhất rồi phủ kín (chỉ cắt rất ít).
+ * Sinh lại bằng scripts/ghep-nen-pha-do.py.
+ */
+.nen-pha-do {
+  container-type: size;
+}
+.nen-pha-do > .anh-nen {
+  position: absolute;
+  inset: 0;
+  background: var(--color-hoang) url(/hoa-van/nen-rong-vang.webp) center / cover no-repeat;
+}
+@container (min-aspect-ratio: 8/5) {
+  .anh-nen {
+    background-image: url(/hoa-van/nen-rong-vang-175.webp);
+  }
+}
+@container (min-aspect-ratio: 19/10) {
+  .anh-nen {
+    background-image: url(/hoa-van/nen-rong-vang-21.webp);
+  }
+}
