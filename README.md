@@ -39,7 +39,9 @@ Cần **Docker Desktop**, **Git**, **Node.js LTS ≥ 22** và **pnpm 10** (`npm 
 
 ```bash
 git clone https://github.com/CongTuan99bk/giapha.git && cd giapha
-pnpm demo --du-lieu-mau     # in ra link https://….trycloudflare.com + tài khoản mẫu
+pnpm server --mau           # dữ liệu mẫu (giả): in link https://….trycloudflare.com + tài khoản mẫu
+pnpm server --that          # dữ liệu thật: sao lưu, chạy bản mới nhất, giữ nguyên dữ liệu
+# Windows: bấm đúp chay-server.cmd
 ```
 
 Chi tiết, cách chạy 24/7 miễn phí (Oracle Cloud) hoặc trên VPS: **`docs/TRIEN-KHAI.md`**.

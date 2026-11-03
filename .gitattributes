@@ -7,3 +7,5 @@
 *.webp binary
 *.woff2 binary
 *.ico binary
+# File chạy trên Windows (bấm đúp) cần CRLF
+*.cmd text eol=crlf

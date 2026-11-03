@@ -30,52 +30,69 @@ Cả ba dùng chung một bộ cấu hình Docker (`infra/docker/compose.prod.ym
      `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` → `Y` → Enter, rồi chạy lại. (Hoặc gõ `pnpm.cmd` thay cho `pnpm`, hoặc dùng Command Prompt.)
    (Node.js từ bản 25 không còn kèm `corepack`, nên dùng lệnh `npm install -g pnpm@10` ở trên thay cho `corepack enable`.)
 
-### Chạy demo
+### Chạy server — một lệnh
 
 ```bash
 git clone https://github.com/CongTuan99bk/giapha.git
 cd giapha
-pnpm demo --du-lieu-mau
+pnpm server --mau      # dữ liệu MẪU (giả) để thử, để demo
+pnpm server --that     # dữ liệu THẬT của dòng họ
 ```
 
+**Windows:** bấm đúp file **`chay-server.cmd`** ở thư mục repo → chọn **1** (dữ liệu mẫu), **2** (dữ liệu thật) hoặc **3** (dữ liệu thật, chỉ xem trên máy này). macOS/Linux: `./chay-server.sh mau` hoặc `./chay-server.sh that`.
+
+Mỗi lần chạy, lệnh tự làm hết: kiểm tra Docker → **dọn server cũ** (cả bản `pnpm demo` cũ) → build bản mới nhất → chạy → in **link chia sẻ** `https://….trycloudflare.com` (gửi qua Zalo là mở được trên điện thoại).
+
+| | `--mau` (dữ liệu mẫu) | `--that` (dữ liệu thật) |
+| --- | --- | --- |
+| Dữ liệu cũ | **Xoá sạch, tạo lại** 60 người giả mỗi lần | **Giữ nguyên**; tự **sao lưu trước** khi dựng lại server |
+| Tài khoản | In ra tài khoản quản lý mẫu | CSDL trống: mở link → **Tạo tài khoản** → người đầu tiên là quản lý chính |
+| File cấu hình (mật khẩu CSDL) | `.env.demo` | `.env.that` |
+| Thư mục sao lưu | `backups/du-lieu-mau/` (giữ 3 ngày) | `backups/` (giữ 30 ngày) |
+
+Hai loại dữ liệu nằm ở **hai bộ dữ liệu Docker riêng** (`coinguon-mau` và `coinguon`): chạy dữ liệu mẫu không bao giờ đụng tới dữ liệu thật. Mỗi lúc chỉ chạy một server (cùng cổng 3000) — chạy loại này sẽ tắt loại kia.
+
 - Lần đầu mất khoảng 5–10 phút (tải và build). Các lần sau nhanh hơn.
-- Xong, màn hình in ra:
-  - **Link gửi cho người khác**: `https://….trycloudflare.com` — gửi qua Zalo là mở được trên điện thoại.
-  - **Tài khoản dữ liệu mẫu** (email + mật khẩu) để đăng nhập xem thử.
-- Không muốn dữ liệu giả: chạy `pnpm demo` (không có `--du-lieu-mau`), mở link → **Tạo tài khoản** → bạn là người tạo dòng họ.
+- Cập nhật bản mới: `git pull` rồi chạy lại đúng lệnh (dữ liệu thật giữ nguyên, CSDL tự nâng cấp).
+- **Từng chạy `pnpm demo` bản cũ?** Dữ liệu của bản cũ được coi là "dữ liệu thật" (vì cùng chỗ lưu). Lần đầu chạy `pnpm server --that`, lệnh dùng lại mật khẩu cũ để vẫn mở được, và **cảnh báo nếu trong đó là dữ liệu giả**. Muốn bắt đầu dữ liệu thật sạch sẽ:
+  ```bash
+  pnpm server --that --xoa-du-lieu-cu    # sao lưu trước, rồi xoá, rồi chạy CSDL trống
+  ```
 
 ### Các lệnh thường dùng
 
 | Lệnh | Làm gì |
 | --- | --- |
-| `pnpm demo` | Bật lại (giữ dữ liệu). **Link mới sẽ khác** — gửi lại link cho mọi người |
-| `pnpm demo:link` | In lại link hiện tại |
-| `pnpm demo:dung` | Dừng (giữ dữ liệu) |
-| `pnpm demo:sao-luu` | Sao lưu ngay vào thư mục `backups/` |
-| `pnpm demo:nhat-ky` | Xem nhật ký máy chủ (Ctrl+C để thoát) |
-| `pnpm demo:xoa` | **Xoá hết dữ liệu demo** (CSDL, ảnh) để làm lại từ đầu. Thư mục `backups/` giữ nguyên |
+| `pnpm server --mau` / `pnpm demo` | Chạy lại với dữ liệu mẫu mới tinh |
+| `pnpm server --that` | Chạy (hoặc cập nhật) server dữ liệu thật |
+| thêm `--khong-link` | Không mở link Cloudflare, chỉ xem trên máy này (http://localhost:3000) |
+| `pnpm server:link` | In lại link chia sẻ của server đang chạy |
+| `pnpm server:sao-luu` | Sao lưu ngay (CSDL + ảnh) |
+| `pnpm server:nhat-ky` | Xem nhật ký máy chủ (Ctrl+C để thoát) |
+| `pnpm server:dung` | Dừng server (giữ dữ liệu) |
 
 ### Lưu ý
 
-- Máy tính **ngủ hoặc tắt thì link không vào được**. Windows: *Settings → System → Power* → để *Sleep: Never* khi đang demo.
+- Máy tính **ngủ hoặc tắt thì link không vào được**. Windows: *Settings → System → Power* → để *Sleep: Never* khi đang chạy.
+- **Link đổi mỗi lần chạy lại** — gửi lại link mới cho mọi người. Muốn link cố định 24/7: xem cách B (Oracle Free) bên dưới.
 - Quick Tunnel là dịch vụ thử nghiệm của Cloudflare: không cam kết luôn chạy, tối đa 200 người truy cập cùng lúc — thừa cho một dòng họ.
-- Mật khẩu CSDL được sinh ngẫu nhiên trong file `.env.demo`. **Không gửi file này cho ai, không đưa lên GitHub** (đã được bỏ qua sẵn).
-- Cập nhật bản mới: `git pull` rồi `pnpm demo` (tự build lại và nâng cấp CSDL, dữ liệu giữ nguyên).
+- Mật khẩu CSDL sinh ngẫu nhiên trong `.env.demo` / `.env.that`. **Không gửi cho ai, không đưa lên GitHub** (đã được bỏ qua sẵn). **Giữ kỹ `.env.that`** — mất file này thì không mở được CSDL thật (vẫn khôi phục được từ bản sao lưu).
 
-### Khi `pnpm demo` báo lỗi
+### Khi `pnpm server` báo lỗi
 
 Khi lỗi, lệnh tự in **trạng thái các dịch vụ** và **nhật ký gần nhất** — nguyên nhân nằm trong phần đó, không phải ở dòng cuối.
-Dòng `WARN Local package.json exists, but node_modules missing` là cảnh báo vô hại, bỏ qua được (bản demo chạy trong Docker, không cần `pnpm install`).
+Dòng `WARN Local package.json exists, but node_modules missing` là cảnh báo vô hại, bỏ qua được (server chạy trong Docker, không cần `pnpm install`).
 
 | Thấy gì | Làm gì |
 | --- | --- |
 | `Docker chưa chạy` | Mở Docker Desktop, đợi *Engine running*, chạy lại |
-| Nhật ký `db` có `role … does not exist`, `password authentication failed`, hoặc `bad interpreter` | Lần chạy trước hỏng giữa chừng → `pnpm demo:xoa` rồi `pnpm demo --du-lieu-mau` |
-| Lỗi tải gói khi build (`ETIMEDOUT`, `ECONNRESET`, `registry`) | Mạng chập chờn hoặc proxy công ty — chạy lại; vẫn lỗi thì đổi mạng (ví dụ phát từ điện thoại) |
-| `port is already allocated` / cổng 3000 bận | Thêm dòng `WEB_PORT=3001` vào `.env.demo` rồi chạy lại |
+| Nhật ký `db` có `password authentication failed` / `role … does not exist` | Dữ liệu mẫu: chạy lại `pnpm server --mau` (luôn tạo mới). Dữ liệu thật: mật khẩu trong `.env.that` không khớp — khôi phục đúng file `.env.that` cũ |
+| `Sao lưu không được — dừng lại` | Lệnh dừng để không mất dữ liệu; xem lỗi in ra, thường do CSDL chưa chạy |
+| Lỗi tải gói khi build (`ETIMEDOUT`, `ECONNRESET`, `registry`) | Mạng chập chờn hoặc proxy công ty — chạy lại; vẫn lỗi thì đổi mạng |
+| `port is already allocated` / cổng 3000 bận | Thêm dòng `WEB_PORT=3001` vào `.env.that` (hoặc `.env.demo`) rồi chạy lại |
 | Windows: `WSL 2 installation is incomplete` | Mở PowerShell **Run as administrator** → `wsl --update` → khởi động lại máy |
 
-Trên Windows, Git có thể đổi kiểu xuống dòng của các script chạy trong máy chủ Linux (CRLF); `pnpm demo` tự sửa lại trước khi chạy, và repo có `.gitattributes` để bản clone mới không bị đổi.
+Trên Windows, Git có thể đổi kiểu xuống dòng của các script chạy trong máy chủ Linux (CRLF); `pnpm server` tự sửa lại trước khi chạy, và repo có `.gitattributes` để bản clone mới không bị đổi.
 
 ---
 
@@ -136,14 +153,14 @@ Chưa cấu hình thì hệ thống **không gửi email**; quản trị dùng *
 Muốn gửi email bằng Gmail:
 
 1. Bật xác minh 2 bước cho tài khoản Gmail, tạo **Mật khẩu ứng dụng** (App password) — 16 ký tự.
-2. Thêm vào file env (`.env.demo` hoặc `.env.prod`), đổi `@` trong email thành `%40`:
+2. Thêm vào file env (`.env.that` hoặc `.env.prod`), đổi `@` trong email thành `%40`:
    ```
    SMTP_URL=smtps://tenban%40gmail.com:matkhauungdung16kytu@smtp.gmail.com:465
    SMTP_FROM=Gia phả họ Nguyễn <tenban@gmail.com>
    ```
-3. Chạy lại `pnpm demo` (hoặc lệnh `docker compose … up -d`).
+3. Chạy lại `pnpm server --that` (hoặc lệnh `docker compose … up -d`).
 
-Với cách A, `PUBLIC_URL` (địa chỉ trong link email) được `pnpm demo` tự cập nhật theo link Quick Tunnel mới.
+Với cách A, `PUBLIC_URL` (địa chỉ trong link email) được `pnpm server` tự cập nhật theo link Quick Tunnel mới.
 
 ---
 
@@ -152,9 +169,9 @@ Với cách A, `PUBLIC_URL` (địa chỉ trong link email) được `pnpm demo`
 - Tự động mỗi ngày lúc `BACKUP_HOUR` giờ (mặc định 2 giờ sáng), giữ `BACKUP_KEEP_DAYS` ngày (mặc định 14), vào thư mục `backups/`:
   `db_<ngày>.dump` (cơ sở dữ liệu) và `media_<ngày>.tar.gz` (ảnh).
 - **Nên chép thư mục `backups/` sang nơi khác** (Google Drive, ổ cứng ngoài) định kỳ — máy hỏng thì bản sao lưu trên chính máy đó cũng mất.
-- Khôi phục (ví dụ với cách A; cách B/C đổi `.env.demo` thành `.env.prod`):
+- Khôi phục (ví dụ với cách A; cách B/C đổi `.env.that` thành `.env.prod`):
   ```bash
-  F="docker compose -f infra/docker/compose.prod.yml --env-file .env.demo"
+  F="docker compose -p coinguon -f infra/docker/compose.prod.yml --env-file .env.that"
   $F stop api web
   # CSDL
   $F exec -T db pg_restore -U coinguon -d coinguon --clean --if-exists < backups/db_2026-11-02_0200.dump
@@ -168,9 +185,8 @@ Với cách A, `PUBLIC_URL` (địa chỉ trong link email) được `pnpm demo`
 
 ## Kiểm tra an toàn trước khi mời cả họ
 
-- [ ] File `.env.demo` / `.env.prod` không nằm trên GitHub (`git status` không thấy nó).
+- [ ] File `.env.that` / `.env.demo` / `.env.prod` không nằm trên GitHub (`git status` không thấy nó).
 - [ ] Đăng nhập bằng HTTPS (link `https://…`).
 - [ ] Đã thử **Tạo link đặt lại mật khẩu** cho một thành viên.
-- [ ] Đã chạy `pnpm demo:sao-luu` (hoặc lệnh sao lưu) và thấy file trong `backups/`.
-- [ ] Đổi mật khẩu tài khoản dữ liệu mẫu, hoặc xoá dữ liệu mẫu trước khi nhập dữ liệu thật:
-      `pnpm demo:xoa` (**xoá hết dữ liệu**) rồi `pnpm demo`.
+- [ ] Đã chạy `pnpm server:sao-luu` (hoặc lệnh sao lưu) và thấy file trong `backups/`.
+- [ ] Nhập dữ liệu thật bằng `pnpm server --that` (không dùng `--mau` — dữ liệu mẫu bị xoá mỗi lần chạy).

@@ -5,7 +5,7 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.12.1 |
+| Phiên bản file | 0.13.0 |
 | Cập nhật lần cuối | 2026-11-02 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **Sẵn sàng demo: `pnpm demo` chạy trên máy cá nhân có link chia sẻ; tiếp theo: lịch giỗ** |
@@ -389,6 +389,14 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.13.0] — 2026-11-03 — Lệnh chạy server: dữ liệu mẫu / dữ liệu thật
+### Thêm
+- `scripts/server.mjs` (`pnpm server --mau | --that`, `server:link|nhat-ky|sao-luu|dung`; `pnpm demo` = `--mau`): kiểm tra Docker, sửa CRLF, gỡ server cũ theo nhãn project (cả bản `pnpm demo` cũ, không cần file env), build + chạy, tạo dữ liệu mẫu, lấy link Cloudflare, in tóm tắt; khi lỗi in trạng thái + nhật ký.
+- Tách dữ liệu: `--mau` → project `coinguon-mau` + `.env.demo`, xoá sạch và seed lại mỗi lần, sao lưu `backups/du-lieu-mau/` (3 ngày); `--that` → project `coinguon` + `.env.that`, tự sao lưu trước khi dựng lại, giữ dữ liệu, sao lưu `backups/` (30 ngày). Lần đầu `--that` trên máy từng chạy `pnpm demo` cũ: dùng lại mật khẩu `.env.demo` và cảnh báo nếu CSDL chứa dữ liệu giả; `--xoa-du-lieu-cu` sao lưu rồi xoá. `--khong-link` bỏ tunnel.
+- `chay-server.cmd` (Windows, bấm đúp, menu 1/2/3; `.gitattributes` giữ CRLF cho `*.cmd`), `chay-server.sh` (macOS/Linux).
+### Xoá
+- `scripts/demo.mjs`, `pnpm demo:xoa` (dữ liệu mẫu luôn tạo mới).
 
 ## [0.12.1] — 2026-11-03 — Nền phả đồ khít cả chiều ngang
 ### Sửa
