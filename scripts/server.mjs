@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 // Chạy server Gia Phả Cội Nguồn bằng Docker — một lệnh: dọn server cũ, build, chạy server mới, in link chia sẻ.
 //
-//   pnpm server --mau          Dữ liệu MẪU (giả): xoá sạch server + dữ liệu mẫu cũ, tạo lại 60 người giả. Để thử, để demo.
-//   pnpm server --that         Dữ liệu THẬT: sao lưu, dỡ server cũ, build bản mới nhất, chạy lại. Dữ liệu giữ nguyên.
+//   pnpm chay --mau          Dữ liệu MẪU (giả): xoá sạch server + dữ liệu mẫu cũ, tạo lại 60 người giả. Để thử, để demo.
+//   pnpm chay --that         Dữ liệu THẬT: sao lưu, dỡ server cũ, build bản mới nhất, chạy lại. Dữ liệu giữ nguyên.
 //
 //   Tuỳ chọn thêm:
 //     --khong-link             không mở link Cloudflare (chỉ xem trên máy này: http://localhost:3000)
 //     --xoa-du-lieu-cu         (với --that) XOÁ dữ liệu đang có rồi bắt đầu trống — đã sao lưu trước khi xoá
 //
-//   pnpm server:link           in lại link chia sẻ của server đang chạy
-//   pnpm server:nhat-ky        xem nhật ký (Ctrl+C để thoát)
-//   pnpm server:sao-luu        sao lưu ngay (CSDL + ảnh)
-//   pnpm server:dung           dừng server (giữ dữ liệu)
+//   pnpm chay:link           in lại link chia sẻ của server đang chạy
+//   pnpm chay:nhat-ky        xem nhật ký (Ctrl+C để thoát)
+//   pnpm chay:sao-luu        sao lưu ngay (CSDL + ảnh)
+//   pnpm chay:dung           dừng server (giữ dữ liệu)
 //
 // Dữ liệu mẫu và dữ liệu thật nằm ở hai bộ dữ liệu Docker riêng (project "coinguon-mau" và "coinguon"),
 // mật khẩu riêng (.env.demo và .env.that), thư mục sao lưu riêng — chạy mẫu không bao giờ đụng tới dữ liệu thật.
@@ -108,7 +108,7 @@ function readEnv(file) {
 }
 
 function writeEnv(file, env, title) {
-  const header = `# ${title} — sinh tự động bởi \`pnpm server\`. KHÔNG đưa file này lên GitHub.\n`;
+  const header = `# ${title} — sinh tự động bởi \`pnpm chay\`. KHÔNG đưa file này lên GitHub.\n`;
   writeFileSync(join(root, file), header + Object.entries(env).map(([k, v]) => `${k}=${v}`).join("\n") + "\n");
 }
 
@@ -202,7 +202,7 @@ function backupNow(mode, why) {
   step(`Sao lưu ${why}`);
   const r = docker([...composeArgs(mode, false), "exec", "-T", "backup", "/bin/sh", "/backup.sh", "now"], { allowFail: true });
   if (r.status !== 0) {
-    console.error("✗ Sao lưu không được — dừng lại để không mất dữ liệu. Xem lỗi phía trên, hoặc chạy `pnpm server:nhat-ky`.");
+    console.error("✗ Sao lưu không được — dừng lại để không mất dữ liệu. Xem lỗi phía trên, hoặc chạy `pnpm chay:nhat-ky`.");
     process.exit(1);
   }
 }
@@ -215,7 +215,7 @@ function diagnose(mode) {
   console.error(`
 Gợi ý:
   • Nhật ký "db" có "password authentication failed" hoặc "role … does not exist": mật khẩu trong ${MODES[mode].envFile}
-    không khớp CSDL đã có. Dữ liệu mẫu: chạy lại \`pnpm server --mau\` (luôn tạo mới). Dữ liệu thật: khôi phục đúng file env cũ.
+    không khớp CSDL đã có. Dữ liệu mẫu: chạy lại \`pnpm chay --mau\` (luôn tạo mới). Dữ liệu thật: khôi phục đúng file env cũ.
   • Lỗi tải gói (npm, registry, ETIMEDOUT) khi build: kiểm tra mạng rồi chạy lại.`);
 }
 
@@ -231,7 +231,7 @@ function activeMode() {
 async function start() {
   const mode = flag("--that") ? "that" : flag("--mau") || flag("--demo") ? "mau" : null;
   if (!mode) {
-    console.error("Chọn loại dữ liệu:\n  pnpm server --mau    dữ liệu mẫu (giả), xoá làm lại mỗi lần\n  pnpm server --that   dữ liệu thật, giữ nguyên");
+    console.error("Chọn loại dữ liệu:\n  pnpm chay --mau    dữ liệu mẫu (giả), xoá làm lại mỗi lần\n  pnpm chay --that   dữ liệu thật, giữ nguyên");
     process.exit(1);
   }
   const m = MODES[mode];
@@ -290,12 +290,12 @@ async function start() {
   const local = `http://localhost:${env.WEB_PORT || 3000}`;
   const lines = [
     `\n✓ Server ${m.label} đang chạy.`,
-    tunnel ? `  Link gửi cho người khác: ${link ?? "(chưa lấy được — chạy `pnpm server:link` sau ít phút)"}` : "  Không mở link chia sẻ (--khong-link).",
+    tunnel ? `  Link gửi cho người khác: ${link ?? "(chưa lấy được — chạy `pnpm chay:link` sau ít phút)"}` : "  Không mở link chia sẻ (--khong-link).",
     `  Trên máy này:            ${local}`,
   ];
   if (mode === "mau") {
     lines.push(`  Tài khoản quản lý mẫu:   ${env.SEED_EMAIL} / ${env.SEED_PASSWORD}`);
-    lines.push("  Dữ liệu mẫu bị xoá và tạo lại mỗi lần chạy `pnpm server --mau`.");
+    lines.push("  Dữ liệu mẫu bị xoá và tạo lại mỗi lần chạy `pnpm chay --mau`.");
   } else {
     if (!clans) lines.push("  CSDL trống: mở link → Tạo tài khoản → người đầu tiên là quản lý chính, tạo dòng họ.");
     else lines.push(`  Dòng họ: ${clans}`);
@@ -303,12 +303,12 @@ async function start() {
       lines.push(
         "",
         "  ⚠ Dữ liệu thật đang chứa DỮ LIỆU GIẢ (do `pnpm demo` bản cũ để lại).",
-        "    Muốn bắt đầu sạch: pnpm server --that --xoa-du-lieu-cu   (sao lưu trước rồi xoá)",
+        "    Muốn bắt đầu sạch: pnpm chay --that --xoa-du-lieu-cu   (sao lưu trước rồi xoá)",
       );
     }
     lines.push(`  Sao lưu tự động lúc ${env.BACKUP_HOUR}:00 hằng ngày vào thư mục backups/ (máy phải đang bật); nên chép ra Google Drive định kỳ.`);
   }
-  lines.push("  Dừng: pnpm server:dung" + (tunnel ? " — link đổi mỗi lần chạy lại." : ""));
+  lines.push("  Dừng: pnpm chay:dung" + (tunnel ? " — link đổi mỗi lần chạy lại." : ""));
   console.log(lines.join("\n"));
 }
 
@@ -317,7 +317,7 @@ async function start() {
 function needActive() {
   const mode = activeMode();
   if (!mode) {
-    console.error("Chưa có server nào đang chạy. Chạy: pnpm server --mau  hoặc  pnpm server --that");
+    console.error("Chưa có server nào đang chạy. Chạy: pnpm chay --mau  hoặc  pnpm chay --that");
     process.exit(1);
   }
   return mode;
@@ -341,8 +341,8 @@ if (cmd === "start") {
     const ids = docker(["ps", "-q", "--filter", `label=com.docker.compose.project=${MODES[mode].project}`], { capture: true, allowFail: true }).stdout.split(/\s+/).filter(Boolean);
     if (ids.length) docker(["stop", ...ids], { capture: true, allowFail: true });
   }
-  console.log("\nĐã dừng. Dữ liệu thật vẫn còn; chạy lại bằng `pnpm server --that` (hoặc `--mau`).");
+  console.log("\nĐã dừng. Dữ liệu thật vẫn còn; chạy lại bằng `pnpm chay --that` (hoặc `--mau`).");
 } else {
-  console.error(`Lệnh không rõ: ${cmd}. Dùng: pnpm server --mau | --that  ·  server:link · server:nhat-ky · server:sao-luu · server:dung`);
+  console.error(`Lệnh không rõ: ${cmd}. Dùng: pnpm chay --mau | --that  ·  chay:link · chay:nhat-ky · chay:sao-luu · chay:dung`);
   process.exit(1);
 }

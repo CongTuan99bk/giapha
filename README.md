@@ -39,8 +39,8 @@ Cần **Docker Desktop**, **Git**, **Node.js LTS ≥ 22** và **pnpm 10** (`npm 
 
 ```bash
 git clone https://github.com/CongTuan99bk/giapha.git && cd giapha
-pnpm server --mau           # dữ liệu mẫu (giả): in link https://….trycloudflare.com + tài khoản mẫu
-pnpm server --that          # dữ liệu thật: sao lưu, chạy bản mới nhất, giữ nguyên dữ liệu
+pnpm chay --mau           # dữ liệu mẫu (giả): in link https://….trycloudflare.com + tài khoản mẫu
+pnpm chay --that          # dữ liệu thật: sao lưu, chạy bản mới nhất, giữ nguyên dữ liệu
 # Windows: bấm đúp chay-server.cmd
 ```
 
