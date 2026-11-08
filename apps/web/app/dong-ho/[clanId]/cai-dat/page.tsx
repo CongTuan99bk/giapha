@@ -5,6 +5,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { ContactsManager } from "@/components/contacts-manager";
 import { Field, FormError } from "@/components/field";
 import { HomeSettingsForm } from "@/components/home-settings-form";
+import { MessagesInbox } from "@/components/messages-inbox";
 import { PersonPicker } from "@/components/person-picker";
 import { api, fieldErrors } from "@/lib/api";
 import { formatPhone, loginLabel } from "@/lib/format";
@@ -38,6 +39,7 @@ export default function SettingsPage() {
       <div className="mx-auto max-w-3xl px-4 pb-20 pt-8">
         <h1 className="font-serif text-3xl">Cài đặt dòng họ</h1>
         <JoinRequestsSection clan={clan.data} />
+        <MessagesInbox clanId={clanId} />
         <Section id="them-nguoi" title="Thêm người vào dòng họ">
           <AddPeople clan={clan.data} />
         </Section>

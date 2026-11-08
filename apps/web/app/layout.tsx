@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/sw-register";
+import { VisitTracker } from "@/components/visit-tracker";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
@@ -23,6 +24,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <Providers>{children}</Providers>
         <ServiceWorkerRegister />
+        {/* useSearchParams cần Suspense để các trang còn lại vẫn dựng sẵn được */}
+        <Suspense fallback={null}>
+          <VisitTracker />
+        </Suspense>
       </body>
     </html>
   );

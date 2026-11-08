@@ -4,6 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type {
   AnniversaryList,
+  ContactMessage,
+  DailyStats,
+  LiveStats,
   Contact,
   ChildRelation,
   Clan,
@@ -307,5 +310,47 @@ export function useReorderContacts(clanId: string) {
   return useMutation({
     mutationFn: (ids: string[]) => api<void>("PUT", `/clans/${clanId}/contacts/order`, { ids }),
     onSuccess: () => qc.invalidateQueries({ queryKey: contactsKey(clanId) }),
+  });
+}
+
+/* ——— Thống kê truy cập, lời nhắn của khách (quản trị) ——— */
+
+export const useLiveStats = (clanId: string) =>
+  useQuery({
+    queryKey: ["clan", clanId, "stats", "live"],
+    queryFn: () => api<LiveStats>("GET", `/clans/${clanId}/stats/live`),
+    refetchInterval: 30_000,
+  });
+
+export const useDailyStats = (clanId: string, from: string, to: string) =>
+  useQuery({
+    queryKey: ["clan", clanId, "stats", "daily", from, to],
+    queryFn: () => api<DailyStats>("GET", `/clans/${clanId}/stats/daily?from=${from}&to=${to}`),
+    refetchInterval: 120_000,
+  });
+
+const messagesKey = (clanId: string) => ["clan", clanId, "messages"] as const;
+
+export const useMessages = (clanId: string, enabled = true) =>
+  useQuery({
+    queryKey: messagesKey(clanId),
+    queryFn: () => api<{ items: ContactMessage[]; open: number }>("GET", `/clans/${clanId}/messages`),
+    enabled,
+    refetchInterval: 120_000,
+  });
+
+export function useMarkMessage(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; handled: boolean }) => api<ContactMessage>("PATCH", `/clans/${clanId}/messages/${v.id}`, { handled: v.handled }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: messagesKey(clanId) }),
+  });
+}
+
+export function useDeleteMessage(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<void>("DELETE", `/clans/${clanId}/messages/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: messagesKey(clanId) }),
   });
 }

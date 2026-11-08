@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { useClan, useJoinRequests, useMe } from "@/lib/queries";
+import { useClan, useJoinRequests, useMe, useMessages } from "@/lib/queries";
 import { ROLE_LABEL, ROLE_RANK } from "@/lib/roles";
 
 const TABS = [
@@ -25,6 +25,7 @@ export function ClanHeader({ clanId }: { clanId: string }) {
   const base = `/dong-ho/${clanId}`;
   const isAdmin = Boolean(clan.data && ROLE_RANK[clan.data.role] >= ROLE_RANK.admin);
   const waiting = useJoinRequests(clanId, isAdmin).data?.length ?? 0;
+  const unread = useMessages(clanId, isAdmin).data?.open ?? 0;
 
   async function logout() {
     await api("POST", "/auth/logout").catch(() => undefined);
@@ -48,7 +49,7 @@ export function ClanHeader({ clanId }: { clanId: string }) {
         </button>
       </div>
       <nav aria-label="Mục chính" className="mt-2 flex gap-1 overflow-x-auto px-2 md:px-4">
-        {[...TABS, ...(isAdmin ? [{ href: "/cai-dat", label: "Cài đặt" } as const] : [])].map((t) => {
+        {[...TABS, ...(isAdmin ? ([{ href: "/thong-ke", label: "Thống kê" }, { href: "/cai-dat", label: "Cài đặt" }] as const) : [])].map((t) => {
           const href = base + t.href;
           const active = t.href === "" ? path === base : path.startsWith(href);
           return (
@@ -68,6 +69,15 @@ export function ClanHeader({ clanId }: { clanId: string }) {
                   <span className="ml-1.5 rounded-full bg-son px-1.5 py-0.5 text-xs font-medium text-white">
                     {waiting}
                     <span className="sr-only"> yêu cầu tham gia chờ duyệt</span>
+                  </span>
+                </>
+              )}
+              {t.href === "/cai-dat" && unread > 0 && (
+                <>
+                  <span className="sr-only">, có </span>
+                  <span className="ml-1.5 rounded-full bg-thep px-1.5 py-0.5 text-xs font-medium text-then">
+                    {unread}
+                    <span className="sr-only"> lời nhắn mới của khách</span>
                   </span>
                 </>
               )}

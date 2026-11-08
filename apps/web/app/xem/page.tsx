@@ -7,6 +7,7 @@ import { BannerCarousel } from "@/components/banner-carousel";
 import { CoupletPanel, TempleAddress } from "@/components/clan-home-parts";
 import { ContactList } from "@/components/contact-list";
 import { Lightbox } from "@/components/lightbox";
+import { PublicCounter } from "@/components/public-counter";
 import { usePublicAnniversaries, usePublicSite } from "@/lib/public";
 import type { MediaItem } from "@/lib/types";
 
@@ -97,7 +98,11 @@ export default function PublicHome() {
           </h2>
           <p className="mb-5 mt-1 text-reu">Con cháu xa quê muốn bổ sung gia phả, hỏi ngày giỗ, đường về nhà thờ họ — xin liên hệ:</p>
           <ContactList contacts={contacts} />
+          <Link href="/xem/lien-he#gui-loi-nhan" className="mt-5 inline-block font-medium text-son underline-offset-4 hover:underline">
+            Gửi lời nhắn cho ban quản lý
+          </Link>
         </section>
+        <PublicCounter />
       </div>
     </div>
   );

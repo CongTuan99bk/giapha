@@ -19,12 +19,33 @@ x-api-env: &api-env
   SMTP_URL: ${SMTP_URL:-}
   SMTP_FROM: ${SMTP_FROM:-Gia Phả Cội Nguồn <no-reply@localhost>}
   CLIENT_IP_HEADER: ${CLIENT_IP_HEADER:-}
+  # Chịu tải đông người: số kết nối DB, bộ nhớ đệm phả đồ/lịch giỗ/trang công khai (MB)
+  DB_POOL_MAX: ${DB_POOL_MAX:-20}
+  CACHE_MAX_MB: ${CACHE_MAX_MB:-64}
   TZ: Asia/Ho_Chi_Minh
 
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    # Cấu hình cho VPS ~2 GB RAM (đổi bằng biến PG_SHARED_BUFFERS… trong file env nếu máy lớn hơn)
+    command:
+      - postgres
+      - -c
+      - max_connections=${PG_MAX_CONNECTIONS:-100}
+      - -c
+      - shared_buffers=${PG_SHARED_BUFFERS:-256MB}
+      - -c
+      - effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-768MB}
+      - -c
+      - work_mem=${PG_WORK_MEM:-8MB}
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - idle_in_transaction_session_timeout=60s
+    shm_size: 256mb
     environment:
       POSTGRES_USER: coinguon
       POSTGRES_DB: coinguon
@@ -81,6 +102,9 @@ services:
       args: { API_ORIGIN: "http://api:4000" }
     image: coinguon-web:local
     restart: unless-stopped
+    environment:
+      # địa chỉ đầy đủ cho ảnh xem trước khi chia sẻ link (Zalo, Facebook)
+      PUBLIC_URL: ${PUBLIC_URL:-}
     ports:
       # Chỉ mở trên máy này (xem thử http://localhost:3000); người ngoài vào qua tunnel hoặc Caddy
       - "127.0.0.1:${WEB_PORT:-3000}:3000"

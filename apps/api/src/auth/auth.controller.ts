@@ -46,7 +46,7 @@ export class AuthController {
   ) {}
 
   @Public()
-  @RateLimit("register", { limit: 10, windowSec: 3600 })
+  @RateLimit("register", { limit: 40, windowSec: 3600 })
   @Post("register")
   async register(@Body() body: unknown, @Req() req: AppRequest, @Res({ passthrough: true }) res: Response) {
     const input = registerSchema.parse(body);
@@ -56,7 +56,7 @@ export class AuthController {
   }
 
   @Public()
-  @RateLimit("login", { limit: 30, windowSec: 900, bodyField: ["identifier", "email"], fieldLimit: 15 })
+  @RateLimit("login", { limit: 120, windowSec: 900, bodyField: ["identifier", "email"], fieldLimit: 15 })
   @Post("login")
   @HttpCode(200)
   async login(@Body() body: unknown, @Req() req: AppRequest, @Res({ passthrough: true }) res: Response) {

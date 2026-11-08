@@ -1,7 +1,7 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.8
-updated: 2026-11-02
+version: 1.9
+updated: 2026-11-09
 audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
 
@@ -103,7 +103,10 @@ Nếu bạn đã đăng nhập và liên kết tài khoản với chính mình t
 - Thông tin ban liên lạc nằm cuối **Trang chủ** và ở thẻ **Liên hệ** của trang công khai.
 - Bấm **Gọi** để gọi ngay, **Zalo** để mở Zalo nhắn tin, bấm vào email để soạn thư.
 - Ai chưa đồng ý công khai số điện thoại thì chỉ hiện tên và vai trò.
-- *(Sắp ra mắt)* Gửi lời nhắn ngay trên trang; bộ đếm số người đang xem.
+- Không tiện gọi điện: ở thẻ **Liên hệ**, phần **Gửi lời nhắn cho ban quản lý**, điền **Họ tên**, **Số điện thoại hoặc email** (để ban quản lý liên lạc lại — không hiện công khai) và **Lời nhắn**, rồi bấm **Gửi lời nhắn**. Màn hình báo *Đã gửi lời nhắn*.
+- Cuối trang chủ và trang Liên hệ có dòng nhỏ *Đang xem · Hôm nay · Tổng cộng* — số người đang mở trang dòng họ và số lượt xem.
+
+**Gửi link trang dòng họ cho người thân:** chép địa chỉ trang (trang đầu, hoặc `…/xem`) dán vào Zalo, Messenger, Facebook. Tin nhắn tự hiện tên dòng họ, câu khẩu hiệu và ảnh banner đầu tiên.
 
 ## 7. Cài lên điện thoại như một ứng dụng
 
@@ -259,31 +262,35 @@ Dành cho dòng họ đã có danh sách trên Excel. Thường do quản trị 
 
 # Phần D — Dành cho quản trị dòng họ
 
-## 17. Bảng điều khiển và số người đang truy cập
+## 17. Số người đang xem trang
 
-Vào **Quản trị** sẽ thấy **Bảng điều khiển**:
+Vào thẻ **Thống kê** (chỉ ban quản lý thấy). Ô trên cùng **Đang xem ngay lúc này** cho biết bao nhiêu người đang mở trang dòng họ, chia ra **khách** (chưa đăng nhập) và **con cháu đã đăng nhập**, kèm từng trang đang được xem. Số tự cập nhật mỗi 30 giây.
 
-- **Đang truy cập** — số người đang mở website dòng họ lúc này, tự cập nhật khoảng 10 giây một lần (có chấm xanh nhấp nháy). Bấm vào để xem họ đang xem trang nào, bao nhiêu là khách, bao nhiêu là thành viên.
-- **Lượt xem hôm nay**, **Khách hôm nay**.
-- Biểu đồ lượt xem 7 ngày gần nhất.
-- Sự kiện sắp tới, đề xuất sửa đang chờ duyệt.
-
-> Một người mở nhiều thẻ trình duyệt cùng lúc vẫn chỉ tính là 1. Người đóng trang sẽ biến khỏi con số sau khoảng 1 phút.
+> Một người được tính là đang xem nếu mở trang trong khoảng 1 phút rưỡi gần nhất. Một người mở nhiều thẻ trình duyệt vẫn chỉ tính là 1.
 
 ## 18. Thống kê truy cập
 
-Vào **Quản trị → Thống kê**:
+Cũng trong thẻ **Thống kê**:
 
-1. Chọn khoảng thời gian: **7 ngày**, **30 ngày**, **90 ngày** hoặc tự chọn.
-2. Biểu đồ hiện **lượt xem** (số lần mở trang) và **khách** (số người khác nhau) theo từng ngày, so với kỳ trước.
-3. Các bảng bên dưới: trang được xem nhiều nhất, người trong cây được xem nhiều nhất, khách đến từ đâu (Facebook, Zalo, Google…), xem bằng điện thoại hay máy tính.
-4. Bấm **Xuất Excel** để tải số liệu theo ngày.
+1. Chọn khoảng thời gian: **7 ngày**, **30 ngày** hoặc **3 tháng**.
+2. Bốn con số: **Lượt xem** trong khoảng đã chọn, **Người xem trung bình mỗi ngày**, **Ngày đông nhất**, **Tổng từ trước đến nay**.
+3. Biểu đồ cột **lượt xem theo ngày** — rê chuột (hoặc chạm) vào cột để xem số của ngày đó. Bấm **Xem dạng bảng** để xem đủ số từng ngày.
+4. Bên dưới: **Trang được xem nhiều**, **Người được xem nhiều** (bấm tên để mở trên phả đồ), **Đến từ đâu** (Facebook, Zalo, Google…), **Thiết bị** (điện thoại, máy tính bảng, máy tính).
 
 **Cách tính:**
 - Ngày tính theo giờ Việt Nam (từ 0 giờ đến 24 giờ).
-- Không tính máy tìm kiếm tự động (bot) và không tính lượt xem trang quản trị.
-- Số liệu hôm nay cập nhật liên tục; số liệu các ngày trước được chốt lúc 0 giờ 05 sáng hôm sau.
-- Người chặn cookie hoặc tắt JavaScript sẽ không được đếm, nên con số có thể thấp hơn thực tế một chút.
+- Tính cả khách và con cháu đã đăng nhập; không tính máy tìm kiếm tự động (bot) hay máy lấy ảnh xem trước của Facebook/Zalo.
+- Không lưu địa chỉ IP hay tên người xem. Mỗi trình duyệt có một mã ngẫu nhiên chỉ để đếm "bao nhiêu người".
+- Số liệu ghi lại khoảng mỗi phút. Người xem ở chế độ ẩn danh, hoặc chặn lưu trữ trên trình duyệt, có thể bị đếm thành nhiều người.
+
+## 18b. Lời nhắn của khách
+
+Khi có khách gửi lời nhắn từ trang công khai, thẻ **Cài đặt** hiện số lời nhắn mới (ô màu vàng). Nếu máy chủ đã cài gửi email, quản trị có email còn nhận được thư báo.
+
+Vào **Cài đặt → Lời nhắn của khách**:
+- Mỗi lời nhắn có tên, số điện thoại hoặc email (bấm để gọi / soạn thư), giờ gửi và nội dung.
+- Liên lạc lại xong, bấm **Đã trả lời** — lời nhắn chuyển xuống mục *Đã trả lời* (bấm **Chuyển lại chưa trả lời** nếu bấm nhầm).
+- Lời nhắn rác: bấm **Xoá**.
 
 ## 19. Cài đặt website
 
@@ -298,12 +305,13 @@ Vào **Quản trị → Thống kê**:
 
 **Trang công khai (đã có):** dòng họ có sẵn trang cho khách xem không cần đăng nhập — địa chỉ là trang đầu của website, hoặc `…/xem`. Trang này dùng chung ảnh banner, câu đối, khẩu hiệu, địa chỉ ở trên; phả đồ và lịch giỗ **chỉ gồm người đã mất** để chế độ *Mọi người* (mặc định của người đã mất). Muốn giấu một cụ khỏi trang công khai: sửa người đó → **Ai được xem thông tin** → *Chỉ thành viên dòng họ*. Ảnh trên trang công khai chỉ có cỡ xem, không tải được ảnh gốc.
 
+**Ảnh khi chia sẻ link:** gửi link trang dòng họ lên Zalo/Facebook sẽ hiện tên dòng họ, khẩu hiệu và **ảnh banner đầu tiên** — nên đặt ảnh đẹp nhất (ảnh nhà thờ họ) lên đầu. Đổi ảnh xong khoảng nửa phút là link mới có ảnh mới; link đã gửi trước đó có thể vẫn hiện ảnh cũ do Zalo/Facebook nhớ lại.
+
 Các mục dưới đây *(Sắp ra mắt)*:
 
 - **Giao diện:** tải logo, ảnh bìa (banner), ảnh cuốn thư; chọn màu chủ đạo. Bấm **Xem trước** trước khi **Lưu**.
 - **Menu:** bật/tắt, đổi tên, kéo thả thứ tự các mục; thêm mục trỏ tới một chuyên mục bài viết.
 - **Thông tin chung:** tên website, lời giới thiệu ngắn, địa chỉ nhà thờ họ, email chung, fanpage, giờ mở cửa nhà thờ.
-- **Bộ đếm công khai:** bật để hiện "Đang online · Hôm nay · Tổng" ở chân trang.
 - **Tên miền riêng** (chỉ chủ sở hữu): nhập tên miền bạn đã mua (ví dụ `honguyenvan.vn`), làm theo hướng dẫn cấu hình DNS hiện trên màn hình, rồi bấm **Kiểm tra**. Chứng chỉ bảo mật (https) được cấp tự động, thường trong vài phút sau khi DNS đúng.
 
 ## 20. Thông tin liên hệ ban quản lý

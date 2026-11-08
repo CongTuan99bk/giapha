@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { emailSchema, idSchema, vnPhoneSchema } from "./common.js";
+import { emailSchema, idSchema, parseLoginId, vnPhoneSchema } from "./common.js";
 
 /** Các trường liên hệ có thể bật công khai từng cái (FR-SITE-05). */
 export const CONTACT_PUBLIC_FIELDS = ["phone", "email", "zalo", "photo"] as const;
@@ -90,10 +90,22 @@ export function toPublicContact(c: ContactRecord): PublicContactView {
   };
 }
 
-/** Form liên hệ trên website (FR-SITE-08), có token Cloudflare Turnstile. */
+/**
+ * Form "Gửi lời nhắn" trên trang công khai (FR-SITE-08).
+ * Chống spam: giới hạn tần suất theo IP + ô bẫy `website` (người thật không thấy, máy tự điền).
+ * `turnstileToken` để dành khi bật Cloudflare Turnstile.
+ */
 export const contactMessageSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  replyTo: z.string().trim().min(3).max(254),
-  message: z.string().trim().min(5, { message: "Nội dung quá ngắn" }).max(4000),
-  turnstileToken: z.string().min(1),
+  name: z.string().trim().min(1, { message: "Cần nhập họ tên" }).max(120),
+  /** Số điện thoại hoặc email để ban quản lý liên lạc lại */
+  replyTo: z
+    .string()
+    .trim()
+    .min(1, { message: "Cần nhập số điện thoại hoặc email để liên lạc lại" })
+    .max(254)
+    .refine((v) => parseLoginId(v) !== null, { message: "Số điện thoại hoặc email chưa đúng" }),
+  message: z.string().trim().min(5, { message: "Nội dung quá ngắn" }).max(4000, { message: "Tối đa 4000 ký tự" }),
+  website: z.string().max(500).optional(),
+  turnstileToken: z.string().optional(),
 });
+export type ContactMessageInput = z.infer<typeof contactMessageSchema>;

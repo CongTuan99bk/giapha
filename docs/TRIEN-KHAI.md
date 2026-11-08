@@ -160,7 +160,39 @@ Muốn gửi email bằng Gmail:
    ```
 3. Chạy lại `pnpm chay --that` (hoặc lệnh `docker compose … up -d`).
 
-Với cách A, `PUBLIC_URL` (địa chỉ trong link email) được `pnpm chay` tự cập nhật theo link Quick Tunnel mới.
+Với cách A, `PUBLIC_URL` (địa chỉ trong link email và ảnh xem trước khi gửi link lên Zalo/Facebook) được `pnpm chay` tự cập nhật theo link Quick Tunnel mới.
+Cách B/C: ghi `PUBLIC_URL=https://giapha.tenmien.vn` vào file env.
+
+---
+
+## Khi đông người xem cùng lúc (ngày giỗ Tổ, họp họ)
+
+Hệ thống đã sẵn sàng cho đông người, không cần làm gì thêm:
+
+- API nhớ sẵn phả đồ, lịch giỗ và trang công khai; chỉ tính lại khi ban quản lý sửa dữ liệu. Phản hồi được nén (phả đồ 2.000 người: 1 MB → khoảng 110 KB) và trình duyệt đã có bản mới nhất thì máy chủ chỉ trả lời "không đổi".
+- Trang công khai được dựng sẵn, tự làm mới khi trang chủ công khai thay đổi.
+- Cả nhà thờ họ dùng chung một wifi (cùng địa chỉ IP) vẫn xem thoải mái: giới hạn chống dò mật khẩu tính riêng cho từng tài khoản.
+- Với cách B/C (Caddy), đường `/api/` đi thẳng tới API.
+
+Số đo trên máy thử (dòng họ 2.000 người, 9 đời, 100 kết nối cùng lúc, một bản API):
+
+| Trang | Trước | Sau |
+| --- | --- | --- |
+| Phả đồ (thành viên) | 38 lượt/giây, chậm nhất 5,6 giây | 401 lượt/giây, chậm nhất 0,5 giây |
+| Phả đồ công khai | 84 lượt/giây | 2.747 lượt/giây |
+| Trang chủ công khai (dữ liệu) | 500 lượt/giây | 4.045 lượt/giây |
+| Lịch giỗ công khai | 97 lượt/giây | 1.275 lượt/giây |
+
+Máy chủ lớn hơn (từ 4 GB RAM) có thể chỉnh trong file env (mặc định hợp với VPS 2 GB):
+
+| Biến | Mặc định | Gợi ý cho 4 GB |
+| --- | --- | --- |
+| `PG_SHARED_BUFFERS` | `256MB` | `1GB` |
+| `PG_EFFECTIVE_CACHE_SIZE` | `768MB` | `3GB` |
+| `DB_POOL_MAX` | `20` | `30` |
+| `CACHE_MAX_MB` | `64` | `256` |
+
+Chỉ chạy **một** bản API (không nhân bản API sau bộ cân bằng tải): bộ nhớ đệm và số đếm thống kê nằm trong bộ nhớ của bản đó (KI-028).
 
 ---
 

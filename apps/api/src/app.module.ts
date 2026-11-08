@@ -1,12 +1,17 @@
 import { type DynamicModule, Module } from "@nestjs/common";
-import { APP_FILTER, APP_GUARD } from "@nestjs/core";
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { AnalyticsService } from "./analytics/analytics.service.js";
+import { PublicStatsController, StatsController, TrackController } from "./analytics/analytics.controller.js";
 import { AnniversariesController } from "./anniversaries/anniversaries.controller.js";
 import { ContactsController } from "./contacts/contacts.controller.js";
+import { MessagesController, PublicMessagesController } from "./contacts/messages.controller.js";
+import { MainClanService } from "./public/main-clan.service.js";
 import { PublicController } from "./public/public.controller.js";
 import { AuthController, MeController } from "./auth/auth.controller.js";
 import { AuthService } from "./auth/auth.service.js";
 import { PasswordResetService } from "./auth/password-reset.service.js";
 import { RateLimitGuard, RateLimitStore } from "./common/rate-limit.js";
+import { CacheInvalidator, ResponseCache } from "./common/response-cache.js";
 import { MailService } from "./mail/mail.service.js";
 import { ClansController } from "./clans/clans.controller.js";
 import { ClansService } from "./clans/clans.service.js";
@@ -35,7 +40,26 @@ export class AppModule {
   static forRoot(config: AppConfig): DynamicModule {
     return {
       module: AppModule,
-      controllers: [HealthController, InstanceController, AuthController, MeController, ClansController, PersonsController, TreeController, MembersController, InvitationsController, MediaController, AnniversariesController, ContactsController, PublicController],
+      controllers: [
+        HealthController,
+        InstanceController,
+        AuthController,
+        MeController,
+        ClansController,
+        PersonsController,
+        TreeController,
+        MembersController,
+        InvitationsController,
+        MediaController,
+        AnniversariesController,
+        ContactsController,
+        PublicController,
+        PublicStatsController,
+        PublicMessagesController,
+        MessagesController,
+        TrackController,
+        StatsController,
+      ],
       providers: [
         { provide: APP_CONFIG, useValue: config },
         Database,
@@ -43,6 +67,9 @@ export class AppModule {
         PasswordResetService,
         MailService,
         RateLimitStore,
+        ResponseCache,
+        MainClanService,
+        AnalyticsService,
         ClansService,
         GraphService,
         PersonsService,
@@ -55,6 +82,8 @@ export class AppModule {
         { provide: APP_GUARD, useClass: SessionGuard },
         { provide: APP_GUARD, useClass: TenantGuard },
         { provide: APP_FILTER, useClass: ErrorFilter },
+        // ghi thành công → bỏ kết quả cũ trong bộ nhớ đệm của dòng họ đó
+        { provide: APP_INTERCEPTOR, useClass: CacheInvalidator },
       ],
     };
   }

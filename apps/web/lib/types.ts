@@ -289,3 +289,41 @@ export interface AnniversaryList {
   items: UpcomingAnniversary[];
   missingDeathDay: number;
 }
+
+/** Thống kê truy cập (API /clans/:id/stats/…) */
+export interface LiveStats {
+  online: number;
+  guests: number;
+  members: number;
+  pages: Array<{ path: string; online: number }>;
+  at: string;
+}
+
+export interface DailyStats {
+  from: string;
+  to: string;
+  days: Array<{ date: string; pageViews: number; uniqueVisitors: number; memberViews: number }>;
+  allTimeViews: number;
+  pages: Array<{ key: string; views: number }>;
+  referrers: Array<{ key: string; views: number }>;
+  devices: Array<{ key: string; views: number }>;
+  persons: Array<{ key: string; views: number; fullName: string }>;
+}
+
+/** Bộ đếm nhỏ ở trang công khai */
+export interface PublicCounter {
+  online: number;
+  today: number;
+  total: number;
+}
+
+/** Lời nhắn khách gửi từ trang công khai */
+export interface ContactMessage {
+  id: string;
+  name: string;
+  /** Số điện thoại (+84…) hoặc email */
+  replyTo: string;
+  message: string;
+  createdAt: string;
+  handledAt: string | null;
+}

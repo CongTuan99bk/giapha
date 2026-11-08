@@ -31,7 +31,7 @@ export class Database implements OnModuleDestroy {
 
   constructor(@Inject(APP_CONFIG) config: AppConfig) {
     this.app = new Kysely<DB>({
-      dialect: new PostgresDialect({ pool: new pg.Pool({ connectionString: config.APP_DATABASE_URL, max: 20 }) }),
+      dialect: new PostgresDialect({ pool: new pg.Pool({ connectionString: config.APP_DATABASE_URL, max: config.DB_POOL_MAX, idleTimeoutMillis: 30_000 }) }),
     });
     this.platform = new Kysely<DB>({
       dialect: new PostgresDialect({ pool: new pg.Pool({ connectionString: config.PLATFORM_DATABASE_URL, max: 5 }) }),

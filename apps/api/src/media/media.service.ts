@@ -128,6 +128,12 @@ export class MediaService {
     return row;
   }
 
+  /** Nhiều ảnh một lần (bỏ qua ảnh đã xoá) */
+  async getMany(trx: Tx, ids: string[]): Promise<MediaRow[]> {
+    if (ids.length === 0) return [];
+    return trx.selectFrom("media").select(COLUMNS).where("id", "in", ids).where("deleted_at", "is", null).execute();
+  }
+
   /** Đường dẫn file trên đĩa của một cỡ ảnh (sau khi đã kiểm tra quyền qua RLS ở `get`). */
   filePath(row: MediaRow, variant: Variant): string {
     return this.storage.pathOf(`${row.storage_key}/${fileNameOf(variant, extOfMime(row.mime))}`);

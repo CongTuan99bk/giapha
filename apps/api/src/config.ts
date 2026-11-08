@@ -34,6 +34,12 @@ const envSchema = z.object({
   CLIENT_IP_HEADER: z.string().optional(),
   /** Giới hạn tần suất (chặn dò mật khẩu, spam). Chỉ tắt trong test. */
   RATE_LIMIT: z.enum(["on", "off"]).default("on"),
+  /** Số kết nối tối đa tới Postgres của API (Postgres mặc định cho 100; chừa chỗ cho sao lưu, migration) */
+  DB_POOL_MAX: z.coerce.number().int().min(2).max(200).default(20),
+  /** Bộ nhớ đệm phả đồ / lịch giỗ / trang công khai (MB). 0 = tắt */
+  CACHE_MAX_MB: z.coerce.number().int().min(0).max(4096).default(64),
+  /** Thời hạn tối đa một kết quả trong bộ nhớ đệm (giây) — phòng khi dữ liệu bị sửa ngoài API */
+  CACHE_TTL_SEC: z.coerce.number().int().min(1).default(600),
   /** Địa chỉ web công khai, vd. https://giapha.example.vn — dùng để dựng link trong email */
   PUBLIC_URL: z.string().url().optional(),
   /** Gửi email qua SMTP (Gmail: smtp.gmail.com, cổng 465, mật khẩu ứng dụng). Trống = chỉ ghi link vào log máy chủ */

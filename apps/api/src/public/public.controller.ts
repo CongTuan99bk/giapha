@@ -1,49 +1,52 @@
 import { layoutTree } from "@coinguon/genealogy-core";
 import { idSchema } from "@coinguon/schemas";
-import { Controller, Get, Inject, Param, Query, Res } from "@nestjs/common";
-import type { Response } from "express";
+import { Controller, Get, Param, Query, Req, Res } from "@nestjs/common";
+import type { Request, Response } from "express";
 import { z } from "zod";
 import { loadAnniversarySources } from "../anniversaries/anniversaries.controller.js";
 import { todayInVietnam, upcomingAnniversaries } from "../anniversaries/upcoming.js";
 import { Public } from "../common/context.js";
-import { AppError, notFound } from "../common/errors.js";
+import { notFound } from "../common/errors.js";
 import { RateLimit } from "../common/rate-limit.js";
-import { APP_CONFIG, type AppConfig } from "../config.js";
+import { ResponseCache, sendCached } from "../common/response-cache.js";
 import { listContacts, publicContact } from "../contacts/contacts.controller.js";
 import { Database, type Tx } from "../db/database.js";
-import { MediaService, type Variant } from "../media/media.service.js";
+import { MediaService, type MediaRow, type Variant } from "../media/media.service.js";
 import { PersonsService } from "../persons/persons.service.js";
 import { SiteService } from "../site/site.service.js";
 import { GraphService, type PersonSummaryRow } from "../tree/graph.service.js";
 import { TREE_NODE_SIZE } from "../tree/tree.controller.js";
+import { type MainClan, MainClanService } from "./main-clan.service.js";
 
 /** Website công khai chỉ có người ĐÃ MẤT và để chế độ "Mọi người" (quyết định chủ dự án 2026-11-02) */
 export const isPublicPerson = (p: { is_living: boolean; privacy: string }) => !p.is_living && p.privacy === "public";
 
 /** Ảnh công khai chỉ có cỡ xem; ảnh gốc độ phân giải cao dành cho thành viên */
 const PUBLIC_VARIANTS = ["sm", "md", "lg"] as const;
-const publicUrls = (id: string) => Object.fromEntries(PUBLIC_VARIANTS.map((v) => [v, `/api/v1/public/media/${id}/${v}`])) as Record<(typeof PUBLIC_VARIANTS)[number], string>;
+const publicUrls = (id: string) =>
+  Object.fromEntries(PUBLIC_VARIANTS.map((v) => [v, `/api/v1/public/media/${id}/${v}`])) as Record<(typeof PUBLIC_VARIANTS)[number], string>;
 
 function yearOf(date: unknown): number | null {
   const y = (date as { year?: unknown } | null)?.year;
   return typeof y === "number" ? y : null;
 }
 
-interface MainClan {
-  id: string;
-  name: string;
-  surname: string;
-  origin_place: string | null;
-  root_person_id: string | null;
-  day30_rule: "day29" | "nextMonthDay1";
-}
+
+/**
+ * Khách xem: trình duyệt (và Cloudflare nếu có) được giữ bản sao nhưng luôn hỏi lại máy chủ —
+ * câu trả lời "không đổi" (304) rất nhẹ, còn khi ban quản lý sửa thì khách thấy ngay.
+ */
+const PUBLIC_JSON_CACHE = "public, no-cache";
 
 /**
  * Trang công khai của dòng họ chính (chế độ một dòng họ) — không cần đăng nhập.
  * Mọi truy vấn vẫn qua RLS với ngữ cảnh dòng họ, không có người dùng.
+ * Kết quả được nhớ trong bộ nhớ đệm đến khi dòng họ có thay đổi (ResponseCache): đông người xem cùng lúc
+ * (ngày giỗ Tổ, họp họ) chỉ tốn một lần truy vấn.
  */
 @Public()
-@RateLimit("public", { limit: 600, windowSec: 300 })
+// Rộng tay: cả nhà thờ họ dùng chung một wifi / mạng di động (cùng IP) vẫn xem được thoải mái
+@RateLimit("public", { limit: 3000, windowSec: 300 })
 @Controller("public")
 export class PublicController {
   constructor(
@@ -52,19 +55,19 @@ export class PublicController {
     private readonly persons: PersonsService,
     private readonly site: SiteService,
     private readonly media: MediaService,
-    @Inject(APP_CONFIG) private readonly config: AppConfig,
+    private readonly cache: ResponseCache,
+    private readonly clans: MainClanService,
   ) {}
 
-  private async run<T>(fn: (trx: Tx, clan: MainClan) => Promise<T>): Promise<T> {
-    if (this.config.CLAN_MODE !== "single") throw new AppError(404, "NO_PUBLIC_SITE", "Chưa có trang công khai");
-    const clan = await this.db.app
-      .selectFrom("clans")
-      .select(["id", "name", "surname", "origin_place", "root_person_id", "day30_rule"])
-      .where("deleted_at", "is", null)
-      .orderBy("created_at")
-      .executeTakeFirst();
-    if (!clan) throw new AppError(404, "NO_PUBLIC_SITE", "Chưa có trang công khai");
-    return this.db.withClan({ clanId: clan.id, userId: null }, (trx) => fn(trx, clan));
+  private mainClan(): Promise<MainClan> {
+    return this.clans.get();
+  }
+
+  /** Dựng (hoặc lấy lại) phản hồi JSON theo khoá rồi gửi đi */
+  private async respond(req: Request, res: Response, key: string, build: (trx: Tx, clan: MainClan) => Promise<unknown>): Promise<void> {
+    const clan = await this.mainClan();
+    const body = await this.cache.json(clan.id, `public:${key}`, () => this.db.withClan({ clanId: clan.id, userId: null }, (trx) => build(trx, clan)));
+    await sendCached(req, res, body, PUBLIC_JSON_CACHE);
   }
 
   private async publicIds(trx: Tx): Promise<Set<string>> {
@@ -78,10 +81,25 @@ export class PublicController {
     return new Set(rows.map((r) => r.id));
   }
 
+  /** Ảnh khách được xem: banner trang chủ + chân dung người công khai (mã ảnh → bản ghi ảnh) */
+  private async publicMedia(trx: Tx, clanId: string): Promise<Map<string, MediaRow>> {
+    const home = await this.site.getHome(trx, clanId);
+    const avatars = await trx
+      .selectFrom("persons")
+      .select("avatar_media_id")
+      .where("avatar_media_id", "is not", null)
+      .where("deleted_at", "is", null)
+      .where("is_living", "=", false)
+      .where("privacy", "=", "public")
+      .execute();
+    const ids = [...new Set([...home.banners.map((b) => b.id), ...avatars.map((a) => a.avatar_media_id!)])];
+    return new Map((await this.media.getMany(trx, ids)).map((r) => [r.id, r]));
+  }
+
   /** Trang chủ: tên dòng họ, banner, câu đối, địa chỉ nhà thờ họ, số người, ban liên lạc */
   @Get("site")
-  siteInfo(): Promise<unknown> {
-    return this.run(async (trx, clan) => {
+  siteInfo(@Req() req: Request, @Res() res: Response): Promise<void> {
+    return this.respond(req, res, "site", async (trx, clan) => {
       const home = await this.site.getHome(trx, clan.id);
       const stats = await trx
         .selectFrom("persons")
@@ -106,8 +124,8 @@ export class PublicController {
 
   /** Phả đồ chỉ người đã mất (để công khai), bố cục giống phả đồ thành viên */
   @Get("tree")
-  tree(): Promise<unknown> {
-    return this.run(async (trx, clan) => {
+  tree(@Req() req: Request, @Res() res: Response): Promise<void> {
+    return this.respond(req, res, "tree", async (trx, clan) => {
       const empty = { rootId: null, nodes: [], edges: [], width: 0, height: 0 };
       if (!clan.root_person_id) return empty;
       const { index, persons } = await this.graph.load(trx, clan.id, (p: PersonSummaryRow) => isPublicPerson(p));
@@ -142,10 +160,10 @@ export class PublicController {
 
   /** Hồ sơ một người đã mất; người thân còn sống hoặc không công khai bị lược bỏ */
   @Get("persons/:personId")
-  person(@Param("personId") personId: string): Promise<unknown> {
+  person(@Param("personId") personId: string, @Req() req: Request, @Res() res: Response): Promise<void> {
     const id = idSchema.parse(personId);
-    return this.run(async (trx) => {
-      const allowed = await this.publicIds(trx);
+    return this.respond(req, res, `person:${id}`, async (trx, clan) => {
+      const allowed = await this.cache.memo(clan.id, "public:ids", () => this.publicIds(trx), { sizeOf: (s) => s.size * 80 });
       if (!allowed.has(id)) throw notFound("Không tìm thấy người này trên trang công khai");
       const d = await this.persons.detail(trx, id);
       const keep = <T extends { id: string }>(xs: T[]) => xs.filter((x) => allowed.has(x.id));
@@ -171,10 +189,12 @@ export class PublicController {
   }
 
   @Get("anniversaries")
-  anniversaries(@Query() raw: unknown): Promise<unknown> {
+  anniversaries(@Query() raw: unknown, @Req() req: Request, @Res() res: Response): Promise<void> {
     const { days } = z.object({ days: z.coerce.number().int().min(1).max(400).default(365) }).parse(raw);
-    return this.run(async (trx, clan) => {
-      const from = todayInVietnam();
+    const from = todayInVietnam();
+    // khoá theo ngày: sang ngày mới thì "còn mấy ngày" tự tính lại
+    const today = `${from.year}-${from.month}-${from.day}`;
+    return this.respond(req, res, `anniversaries:${today}:${days}`, async (trx, clan) => {
       const { sources } = await loadAnniversarySources(trx, clan.id, "public");
       const items = upcomingAnniversaries(sources, { from, days, day30Rule: clan.day30_rule });
       return { from: `${from.year}-${String(from.month).padStart(2, "0")}-${String(from.day).padStart(2, "0")}`, days, items, missingDeathDay: 0 };
@@ -186,22 +206,17 @@ export class PublicController {
   async file(@Param("mediaId") mediaId: string, @Param("variant") variant: string, @Res() res: Response) {
     const v = z.enum(PUBLIC_VARIANTS).parse(variant) as Variant;
     const id = idSchema.parse(mediaId);
-    const row = await this.run(async (trx, clan) => {
-      const home = await this.site.getHome(trx, clan.id);
-      const isBanner = home.banners.some((b) => b.id === id);
-      const isAvatar =
-        !isBanner &&
-        (await trx
-          .selectFrom("persons")
-          .select("id")
-          .where("avatar_media_id", "=", id)
-          .where("deleted_at", "is", null)
-          .where("is_living", "=", false)
-          .where("privacy", "=", "public")
-          .executeTakeFirst());
-      if (!isBanner && !isAvatar) throw notFound("Không tìm thấy ảnh");
-      return this.media.get(trx, id);
-    });
+    const clan = await this.mainClan();
+    const allowed = await this.cache.memo(
+      clan.id,
+      "public:media",
+      () => this.db.withClan({ clanId: clan.id, userId: null }, (trx) => this.publicMedia(trx, clan.id)),
+      {
+        sizeOf: (m) => m.size * 400,
+      },
+    );
+    const row = allowed.get(id);
+    if (!row) throw notFound("Không tìm thấy ảnh");
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.type("image/webp");

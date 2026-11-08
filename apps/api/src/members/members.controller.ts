@@ -150,13 +150,13 @@ export class InvitationsController {
   constructor(private readonly members: MembersService) {}
 
   @Public()
-  @RateLimit("invite-view", { limit: 60, windowSec: 900 })
+  @RateLimit("invite-view", { limit: 300, windowSec: 900 })
   @Get(":token")
   preview(@Param("token") token: string) {
     return this.members.preview(token);
   }
 
-  @RateLimit("invite-accept", { limit: 20, windowSec: 900 })
+  @RateLimit("invite-accept", { limit: 100, windowSec: 900 })
   @Post(":token/accept")
   @HttpCode(200)
   accept(@Param("token") token: string, @CurrentUser() user: SessionUser) {

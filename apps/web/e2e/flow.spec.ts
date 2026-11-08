@@ -465,3 +465,55 @@ test("trang công khai: ban quản lý nhập địa chỉ nhà thờ họ + ban
   await expect(g).toHaveURL(/\/dang-nhap/);
   await g.close();
 });
+
+test("khách gửi lời nhắn, link chia sẻ có ảnh xem trước; ban quản lý trả lời và xem thống kê", async ({ browser }) => {
+  const g = await browser.newPage();
+  // thẻ xem trước khi gửi link lên Zalo / Facebook: trang dựng sẵn, máy chủ web tự làm mới trong ~15 giây sau khi có ảnh banner
+  await expect
+    .poll(
+      async () => {
+        await g.goto("/xem");
+        return g.locator('meta[property="og:image"]').getAttribute("content").catch(() => null);
+      },
+      { timeout: 45_000, intervals: [2000] },
+    )
+    .toMatch(/^http:\/\/localhost:3000\/api\/v1\/public\/media\/[0-9a-f-]+\/lg$/);
+  await expect(g.locator('meta[property="og:title"]')).toHaveAttribute("content", "Họ Lê Văn – thôn Thử");
+  await expect(g).toHaveTitle("Họ Lê Văn – thôn Thử");
+
+  await g.getByRole("link", { name: "Gửi lời nhắn cho ban quản lý" }).click();
+  await expect(g).toHaveURL(/\/xem\/lien-he#gui-loi-nhan$/);
+  await expect(g).toHaveTitle("Liên hệ · Họ Lê Văn – thôn Thử");
+  await g.getByLabel("Họ tên").fill("Lê Thị Xa Quê");
+  await g.getByLabel("Số điện thoại hoặc email").fill("abc");
+  await g.getByRole("textbox", { name: "Lời nhắn", exact: true }).fill("Xin bổ sung tên các cháu ở Sài Gòn");
+  await g.getByRole("button", { name: "Gửi lời nhắn" }).click();
+  await expect(g.getByText("Số điện thoại hoặc email chưa đúng")).toBeVisible();
+  await g.getByLabel("Số điện thoại hoặc email").fill("0903 111 222");
+  await g.getByRole("button", { name: "Gửi lời nhắn" }).click();
+  await expect(g.getByRole("status")).toContainText("Ban quản lý sẽ liên lạc lại qua 0903 111 222");
+  await expect(g.getByText(/Đang xem: \d+ · Hôm nay: \d+ lượt/)).toBeVisible();
+  await g.close();
+
+  const o = await browser.newPage();
+  await loginOwner(o);
+  await expect(o.getByRole("link", { name: /Cài đặt\s*, có 1\s*lời nhắn mới của khách/ })).toBeVisible();
+  await o.getByRole("link", { name: /Cài đặt/ }).click();
+  const inbox = o.locator("#loi-nhan");
+  await expect(inbox.getByRole("heading", { name: "Lời nhắn của khách (1 chưa trả lời)" })).toBeVisible();
+  await expect(inbox.getByText("Xin bổ sung tên các cháu ở Sài Gòn")).toBeVisible();
+  await expect(inbox.getByRole("link", { name: "0903 111 222" })).toHaveAttribute("href", "tel:+84903111222");
+  await inbox.getByRole("button", { name: "Đã trả lời" }).click();
+  await expect(inbox.getByText("Đã trả lời hết lời nhắn.")).toBeVisible();
+
+  await o.getByRole("link", { name: "Thống kê" }).click();
+  await expect(o.getByRole("heading", { name: "Thống kê truy cập" })).toBeVisible();
+  await expect(o.getByText("Đang xem ngay lúc này")).toBeVisible();
+  const total = o.locator("dt", { hasText: "Tổng từ trước đến nay" }).locator("xpath=following-sibling::dd");
+  await expect(total).not.toHaveText("0");
+  await expect(o.getByRole("heading", { name: "Trang được xem nhiều" })).toBeVisible();
+  await expect(o.getByText("Liên hệ (công khai)")).toBeVisible();
+  await o.getByRole("button", { name: "7 ngày" }).click();
+  await expect(o.getByRole("button", { name: "7 ngày" })).toHaveAttribute("aria-pressed", "true");
+  await o.close();
+});

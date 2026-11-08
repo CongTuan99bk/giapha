@@ -5,10 +5,10 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.13.1 |
-| Cập nhật lần cuối | 2026-11-02 |
+| Phiên bản file | 0.14.0 |
+| Cập nhật lần cuối | 2026-11-09 |
 | Người cập nhật | TuanLC, Claude |
-| Giai đoạn hiện tại | **Sẵn sàng demo: `pnpm demo` chạy trên máy cá nhân có link chia sẻ; tiếp theo: lịch giỗ** |
+| Giai đoạn hiện tại | **MVP phần 2: website công khai, thống kê truy cập, lời nhắn của khách xong; chịu tải đông người xem (bộ nhớ đệm, nén). Tiếp theo: thư viện ảnh, nhập Excel / xuất PDF** |
 | Mã nguồn | https://github.com/CongTuan99bk/giapha (nhánh `main`, CI xanh) |
 | Tài liệu đặc tả đầy đủ | "Tài liệu dự án: Hệ thống Gia Phả Cội Nguồn" v1.0 — https://claude.ai/artifact/1Wy2PqEVYSLqycMLH8LMzG |
 | Bản thảo kỹ thuật | https://claude.ai/artifact/T24kXNyJ9UkUPdRwMzBkFd |
@@ -52,7 +52,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Sổ tay chủ sở hữu & Hướng dẫn sử dụng v1.0 | Xong (2026-11-01) | Viết theo thiết kế; đối chiếu lại tên nút, thêm ảnh chụp khi có giao diện |
 | Giai đoạn 0 — Nền móng (tuần 1–2) | **Xong (2026-11-01)** | Monorepo, CI, schema + RLS, genealogy-core, lunar-vn, schemas — 126 test xanh |
 | MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Xong phần chính (2026-11-02)** | Đăng nhập email/số điện thoại, tạo dòng họ, phả đồ, thêm/sửa/xoá người, danh sách, xưng hô, mời/duyệt thành viên, vai trò, ảnh, trang chủ, lịch giỗ, PWA, demo Docker — 118 test API + 24 test trình duyệt. Nhập phả đầy đủ xong 0.11.0 |
-| MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | Chưa bắt đầu | |
+| MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | **Đang làm** | Xong: website công khai + ban liên lạc (0.12), thống kê truy cập, lời nhắn của khách, ảnh xem trước khi chia sẻ link, tối ưu đông người dùng (0.14) — 134 test API + 25 test trình duyệt. Còn: sự kiện họp họ, xuất PDF/Excel |
 | Phase 2 (tuần 15–24), Phase 3 (tuần 25–32) | Chưa bắt đầu | |
 
 ### 2.2. Việc đang làm
@@ -61,7 +61,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 ### 2.3. Việc tiếp theo (thứ tự chủ dự án đã chốt)
 1. ~~Lịch giỗ~~ — xong 0.10.0 (còn: nhắc qua email khi có SMTP, sự kiện họp họ/chạp mả).
 2. ~~Hoàn thiện nhập phả~~ — xong 0.11.0 (còn: tiểu sử định dạng chữ đậm/nghiêng, ảnh trong tiểu sử; nhánh/chi).
-3. ~~Website công khai + thông tin liên hệ~~ — xong 0.12.0. Còn: **thống kê truy cập** (bảng analytics_* đã có), form gửi lời nhắn, SEO (trang công khai đang dựng phía trình duyệt).
+3. ~~Website công khai + thông tin liên hệ~~ — xong 0.12.0; ~~thống kê truy cập, form gửi lời nhắn, ảnh xem trước khi chia sẻ link, chịu tải đông người~~ — xong 0.14.0. Còn: nội dung trang công khai cho máy tìm kiếm (Google) vẫn dựng phía trình duyệt; Turnstile cho form lời nhắn khi bị spam.
 3b. Thư viện ảnh/tư liệu theo album (KI-022); nhập Excel / xuất PDF.
 4. Ứng dụng iOS/Android (Capacitor bọc PWA).
 4. Sửa bảng xưng hô riêng của dòng họ (KI-013); "Tôi gọi người này là gì?" từ người đã gắn "Đây là tôi".
@@ -263,21 +263,30 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | `GET /public/site` | công khai | chế độ single: `{clan, home {banners[{id, urls sm/md/lg}], couplet, motto, templeAddress}, stats {people, generations} (người đã mất công khai), contacts[{name, role, phone, email}]}`; multi → `NO_PUBLIC_SITE` 404 |
 | `GET /public/tree` · `GET /public/persons/:id` · `GET /public/anniversaries?days` | công khai | chỉ người **đã mất** + `privacy = public` (ADR-017); người thân không công khai bị lược; hồ sơ không có `version`, `privacy` |
 | `GET /public/media/:id/:variant` | công khai | chỉ `sm/md/lg` (không ảnh gốc), chỉ ảnh banner hoặc chân dung người công khai; `Cache-Control: public, max-age=86400` |
+| `POST /t/pv` · `POST /t/hb` | công khai | thống kê: `{h, v (mã khách 10–32 ký tự), p (đường dẫn, bỏ query), m 0/1, r? (nguồn), pid? (người đang xem)}` → luôn 204; bot (theo user-agent) bị bỏ qua; giới hạn 3000/5 phút/IP |
+| `GET /public/stats` | công khai | `{online, today, total}` — nhớ 30 giây |
+| `POST /public/messages` | công khai | lời nhắn `{name, replyTo (số điện thoại hoặc email), message 5–4000, website? (ô bẫy — có chữ thì bỏ qua, vẫn 204)}` → 204, email báo quản trị (nếu có SMTP); 10 lần/giờ/IP |
+| `GET /clans/:clanId/messages?status=open\|all` · `PATCH …/:id {handled}` · `DELETE …/:id` | admin | `{items[{id, name, replyTo, message, createdAt, handledAt}], open}` (200 mới nhất) |
+| `GET /clans/:clanId/stats/live` | admin | `{online, guests, members, pages[{path, online}], at}` — khách gửi tín hiệu trong 90 giây |
+| `GET /clans/:clanId/stats/daily?from&to` | admin | ≤ 366 ngày: `{days[{date, pageViews, uniqueVisitors, memberViews}], allTimeViews, pages, referrers, devices, persons[{key, views, fullName}]}` (đường dẫn gộp `/dong-ho/:id/...`) |
 | `GET/POST /clans/:clanId/contacts` · `PATCH/DELETE …/:id` · `PUT …/order` | admin | ban liên lạc `{name, role, phone?, email?, showPhone, showEmail, consent, consentNote?}`; bật hiện mà chưa `consent` → 422; trang công khai chỉ hiện trường bật + đã đồng ý |
 | `GET /invitations/:token` | công khai | xem trước `{clanId, clanName, role, invitedBy, expiresAt, forSpecificEmail, status}` |
 | `POST /invitations/:token/accept` | đã đăng nhập | `{clanId, alreadyMember, role}` (đã là thành viên → giữ vai trò cũ, không tốn lượt); đóng yêu cầu tham gia đang chờ; lỗi `INVITE_NOT_FOUND` 404, `INVITE_EXPIRED`/`INVITE_REVOKED`/`INVITE_USED` 410, `INVITE_EMAIL_MISMATCH` 403 |
 
 Không phải thành viên → **404** (không lộ dòng họ có tồn tại). Mã lỗi DB: trigger `ANCESTOR_CYCLE`/`SELF_PARENT`/`CROSS_CLAN_REFERENCE` → 422.
 
+**Bộ nhớ đệm & nén (0.14.0, ADR-018):** `GET …/tree`, `GET …/anniversaries`, mọi `GET /public/*` trả `ETag`; gửi lại `If-None-Match` → **304**. Thành viên: `Cache-Control: private, no-cache`; công khai: `public, no-cache` (trình duyệt luôn hỏi lại → sửa xong thấy ngay). Phản hồi ≥ 1 KB nén `br`/`gzip` theo `Accept-Encoding` (phả đồ 2.000 người: 1 MB → 108 KB). Ghi thành công dưới `/clans/:clanId` → bỏ toàn bộ kết quả nhớ của dòng họ đó.
+
 ---
 
-## 11. Thống kê truy cập (tóm tắt)
+## 11. Thống kê truy cập (tóm tắt) — đã chạy (0.14.0, ADR-019)
 
-- Trình duyệt (`apps/web/lib/tracker.ts`): `visitor_id` ngẫu nhiên trong cookie 1 năm; `sendBeacon` `/t/pv` mỗi lần tải trang; `/t/hb` mỗi 30s khi tab hiển thị.
-- Redis: `ZADD online:{clan} now visitor` + `ZREMRANGEBYSCORE` cửa sổ 60s → `ZCARD` = đang online. `INCR pv:{clan}:{date}`, `PFADD uv:{clan}:{date}`, `HINCRBY dim:{clan}:{date}`.
-- Worker `stats.rollup` 00:05 UTC+7: UPSERT `analytics_daily`, `analytics_dims`; key Redis đã chốt đặt TTL 3 ngày.
-- Bảng điều khiển: SSE 10s. Trang Thống kê: ngày cũ từ PostgreSQL + hôm nay từ Redis. Bộ đếm công khai cache 30s.
-- Không lưu IP thô. Redis bật AOF.
+- Trình duyệt (`apps/web/components/visit-tracker.tsx`, gắn ở layout gốc): mã khách ngẫu nhiên trong `localStorage` (`coinguon:khach`, không cookie, không gắn tài khoản); `fetch keepalive` `/t/pv` mỗi lần đổi trang (kèm nguồn ở lần đầu, `pid` khi mở hồ sơ `?nguoi=`), `/t/hb` 30 giây/lần khi tab đang hiện. `m=1` khi có cookie `csrf` (đã đăng nhập).
+- API (`AnalyticsService`): **gom trong bộ nhớ**, cứ 60 giây (và khi tắt máy chủ, khi quản trị mở báo cáo) cộng dồn vào `analytics_daily` / `analytics_dims` (page, person, referrer, device; tối đa 2.000 khoá/ngày). Ghi lỗi → giữ số đếm, lần sau ghi tiếp.
+- Đang xem = mã khách có tín hiệu trong 90 giây (bộ nhớ). Khách duy nhất trong ngày: tập bản băm mã khách theo ngày trong bộ nhớ (khởi động lại giữa ngày có thể đếm thêm — KI-029).
+- Ngày thống kê theo giờ Việt Nam (`statDateVN`). Không lưu IP; không đếm bot (`isBotUserAgent`, gồm `facebookexternalhit`).
+- Web: thẻ **Thống kê** (quản trị) — đang xem (tự làm mới 30 giây), lượt xem theo ngày (cột, rê chuột xem số, có bảng số liệu), trang / người / nguồn / thiết bị xem nhiều; bộ đếm nhỏ cuối trang công khai (trang chủ, liên hệ).
+- Chưa dùng Redis (thiết kế cũ ở ADR-004/005): một bản API là đủ; cần nhiều bản API thì chuyển sang Redis (KI-028).
 
 ---
 
@@ -335,7 +344,11 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | --- | --- |
 | CLAN_MODE | `single` (mặc định — một dòng họ) / `multi` |
 | SEED_EMAIL, SEED_PASSWORD | Tài khoản cho dữ liệu mẫu (`seed`) |
-| PUBLIC_URL | Địa chỉ web công khai, dùng dựng link trong email (`pnpm demo` tự đặt theo link Quick Tunnel) |
+| PUBLIC_URL | Địa chỉ web công khai: link trong email (API) và **ảnh xem trước khi chia sẻ link** (web). `pnpm chay` tự đặt theo link Quick Tunnel rồi khởi động lại api + web |
+| DB_POOL_MAX | (API) số kết nối Postgres tối đa, mặc định 20 |
+| CACHE_MAX_MB, CACHE_TTL_SEC | (API) bộ nhớ đệm phả đồ / lịch giỗ / trang công khai: dung lượng (mặc định 64 MB, `0` = tắt) và thời hạn tối đa (600 giây — phòng dữ liệu bị sửa ngoài API) |
+| PG_MAX_CONNECTIONS, PG_SHARED_BUFFERS, PG_EFFECTIVE_CACHE_SIZE, PG_WORK_MEM | (compose.prod) cấu hình Postgres, mặc định cho VPS 2 GB: 100 / 256MB / 768MB / 8MB |
+| UV_THREADPOOL_SIZE | (Dockerfile API) 8 — băm mật khẩu, nén, đọc ảnh song song |
 | SMTP_URL, SMTP_FROM | Gửi email (vd. `smtps://ten%40gmail.com:matkhauungdung@smtp.gmail.com:465`); trống = chỉ ghi log |
 | TRUST_PROXY | Express "trust proxy", mặc định `loopback, linklocal, uniquelocal` (tin các bước chuyển tiếp nội bộ) |
 | CLIENT_IP_HEADER | Header IP thật do proxy tin cậy gắn, vd. `cf-connecting-ip` sau Cloudflare Tunnel |
@@ -379,7 +392,9 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | ADR-014 | 2026-11-02 | Lời mời bằng link: mã ngẫu nhiên 18 byte, DB chỉ lưu sha256; tra theo mã dùng role `coinguon_platform` (BYPASSRLS) vì người nhận chưa có ngữ cảnh dòng họ — chỉ khớp đúng `token_hash`, mọi ghi đều qua `withClan` | Không thể đặt `app.clan_id` trước khi biết lời mời thuộc dòng họ nào; FORCE RLS chặn cả hàm SECURITY DEFINER | Hàm SECURITY DEFINER + bỏ FORCE RLS; mã chứa clan_id |
 | ADR-013 | 2026-11-01 | Xưng hô mặc định miền Trung: ba/mạ, chị-em gái của cha là "o", chồng o/dì là "dượng" | Chủ dự án chọn; bảng tạm, sẽ cho dòng họ tự sửa (KI-013) | Bắc làm mặc định |
 | ADR-012 | 2026-11-01 | Điện thoại: PWA trước, rồi **Capacitor** đóng gói chính web app thành app iOS/Android, thêm tính năng gốc (thông báo đẩy ngày giỗ, chụp ảnh, xem offline) | Một mã nguồn, chi phí thấp; App Store yêu cầu app có tính năng gốc, không chỉ bọc web | React Native/Expo (viết lại giao diện), Flutter |
-| ADR-017 | 2026-11-02 | Website công khai: chỉ người đã mất + `privacy = public`; không mật khẩu xem chung; ảnh công khai không có bản gốc; trang công khai dựng phía trình duyệt (chưa SSR) | Chủ dự án chốt; bảo vệ người còn sống; làm nhanh, SEO để sau | Hiện cả tên người còn sống; mã xem chung |
+| ADR-017 | 2026-11-02 | Website công khai: chỉ người đã mất + `privacy = public`; không mật khẩu xem chung; ảnh công khai không có bản gốc; trang công khai dựng phía trình duyệt (chưa SSR); từ 0.14.0 phần đầu trang (tên, mô tả, ảnh xem trước Open Graph) dựng sẵn trên máy chủ | Chủ dự án chốt; bảo vệ người còn sống; làm nhanh, SEO để sau | Hiện cả tên người còn sống; mã xem chung |
+| ADR-018 | 2026-11-09 | **Chịu tải đông người xem**: bộ nhớ đệm trong tiến trình API (`ResponseCache`) cho phả đồ, lịch giỗ, mọi trang `/public/*` — khoá gồm "phiên bản" của dòng họ, tăng sau mỗi ghi thành công (interceptor `CacheInvalidator`), nhiều yêu cầu cùng lúc chỉ tính một lần, LRU theo dung lượng + hạn 10 phút; lưu sẵn JSON + ETag + bản nén br/gzip; `compression` cho các phản hồi khác; nới giới hạn theo IP (cả nhà thờ họ chung wifi/CGNAT); Caddy chuyển `/api/*` thẳng tới API; Postgres chỉnh cho VPS 2 GB; trang công khai **dựng sẵn** (ISR 5 phút + máy chủ web hỏi API 15 giây/lần, đổi thì dựng lại ngay) | Đo 2.000 người, 100 kết nối: phả đồ thành viên 38 → 401 lượt/giây (chờ 97,5% từ 5,6 s → 0,5 s), phả đồ công khai 84 → 2.747, trang chủ công khai 500 → 4.045, lịch giỗ 97 → 1.275; trang `/xem` 1.375 lượt/giây | Redis (thêm dịch vụ, chưa cần với một bản API); cache ở Cloudflare (dữ liệu thành viên riêng tư); SSR mỗi lần (chỉ ~240 lượt/giây) |
+| ADR-019 | 2026-11-09 | Thống kê truy cập **gom trong bộ nhớ API, ghi mỗi phút** vào `analytics_daily`/`analytics_dims`; đang xem tính trong bộ nhớ; mã khách trong `localStorage` | Một bản API; không thêm Redis (tiết kiệm RAM VPS); đông người xem cũng chỉ một lần ghi/phút | Redis HyperLogLog (ADR-004/005 — giữ làm hướng mở rộng); ghi DB mỗi lượt xem |
 | ADR-011 | 2026-11-01 | `CLAN_MODE=single`: chỉ tạo được dòng họ đầu tiên, `GET /instance` cho web biết dòng họ chính; vẫn giữ RLS đa dòng họ | Chủ dự án dùng riêng cho một dòng họ; giữ đường mở rộng | Bỏ hẳn `clan_id` / RLS |
 | ADR-010 | 2026-11-01 | API dùng **Kysely** (query builder có kiểu) thay Prisma Client; Prisma chỉ giữ schema + migration. NestJS 12 ESM | Đặt `set_config('app.clan_id')` trong cùng transaction cho RLS rõ ràng; ltree, CTE đệ quy, `update … from (values …)` viết thẳng SQL; không cần engine nhị phân của Prisma | Prisma Client + `$extends` cho RLS, Drizzle |
 | ADR-009 | 2026-11-01 | Ràng buộc phả hệ cả ở DB (trigger chặn vòng lặp, tự làm cha mẹ, nối chéo dòng họ) ngoài kiểm tra ở `genealogy-core` | Phòng thủ nhiều lớp; FK không xét RLS nên cần trigger chặn nối người khác dòng họ | Chỉ kiểm tra ở service |
@@ -389,6 +404,17 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.14.0] — 2026-11-09 — Đông người xem cùng lúc, thống kê truy cập, lời nhắn của khách, ảnh xem trước khi chia sẻ link
+### Thêm
+- Bộ nhớ đệm phả đồ / lịch giỗ / trang công khai trong API, ETag → 304, nén br/gzip (ADR-018). Biến `DB_POOL_MAX`, `CACHE_MAX_MB`, `CACHE_TTL_SEC`; Postgres chỉnh theo VPS 2 GB; Caddy chuyển `/api/*` thẳng tới API; ảnh nền hoa văn được trình duyệt giữ 1 ngày.
+- Thống kê truy cập (ADR-019): `/t/pv`, `/t/hb`, `/clans/:id/stats/live`, `/clans/:id/stats/daily`, `/public/stats`; trang **Thống kê** cho quản trị; bộ đếm cuối trang công khai.
+- Lời nhắn của khách: form ở trang Liên hệ công khai (ô bẫy chống máy gửi), `/public/messages`, email báo quản trị; mục "Lời nhắn của khách" trong Cài đặt (đánh dấu đã trả lời, xoá), số lời nhắn mới trên thẻ Cài đặt.
+- Ảnh xem trước khi gửi link lên Zalo/Facebook (Open Graph): tên dòng họ, câu giới thiệu, ảnh banner đầu tiên; tiêu đề tab theo tên dòng họ. Trang công khai dựng sẵn (ISR) và tự làm mới khi trang chủ công khai đổi (`instrumentation.ts`).
+### Sửa
+- Nới giới hạn theo IP cho cả họ dùng chung một mạng: xem trang công khai 600 → 3000/5 phút, đăng nhập 30 → 120/15 phút (vẫn 15 lần cho mỗi tài khoản), đăng ký 10 → 40/giờ, xin vào họ 10 → 40/giờ, link mời 60 → 300 (xem) và 20 → 100 (nhận).
+- Ảnh công khai: kiểm tra quyền bằng danh sách nhớ sẵn thay vì 2 truy vấn mỗi ảnh.
+- `pnpm chay` đặt `PUBLIC_URL` theo link Cloudflare cho cả web (ảnh xem trước) chứ không chỉ API.
 
 ## [0.13.1] — 2026-11-03
 ### Sửa
@@ -609,6 +635,10 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-024 | Image `cloudflare/cloudflared:latest` chưa ghim phiên bản | Thấp | Ghim tag cụ thể khi chạy lâu dài |
 | KI-025 | Sao lưu nằm trên cùng máy; chưa tự đẩy sang Google Drive | Trung bình | Thêm rclone vào service backup khi chạy thật |
 | KI-026 | Chế độ nhiều dòng họ: quản trị dòng họ B tạo được link đặt lại mật khẩu cho thành viên của B, kể cả khi người đó là quản trị dòng họ A → chiếm được quyền ở A. Chế độ một dòng họ (đang dùng) không bị | Cao khi bật `CLAN_MODE=multi` | Trước khi bật multi: chỉ cho tạo link với tài khoản chỉ thuộc dòng họ này, hoặc tài khoản do chính dòng họ tạo |
+| KI-028 | Bộ nhớ đệm, số đếm thống kê, giới hạn tần suất nằm trong bộ nhớ **một** tiến trình API. Chạy nhiều bản API (cân bằng tải) thì mỗi bản giữ cache riêng (dữ liệu cũ tới 10 phút ở bản khác) và đếm sai | Trung bình khi mở rộng | Một bản API đủ cho một dòng họ. Khi cần: Redis pub/sub báo xoá cache + Redis cho thống kê, giới hạn tần suất |
+| KI-029 | Khởi động lại API giữa ngày: khách quay lại trong ngày bị đếm thêm một "người xem"; số chưa ghi (≤ 1 phút) mất nếu API bị tắt đột ngột (tắt bình thường vẫn ghi) | Thấp | Chấp nhận; chuyển Redis nếu cần chính xác |
+| KI-030 | Form lời nhắn chỉ chống spam bằng giới hạn 10 lần/giờ/IP + ô bẫy; chưa bật Cloudflare Turnstile | Thấp | Bật Turnstile (schema đã có `turnstileToken`) khi bị spam |
+| KI-031 | Đổi ảnh banner / tên dòng họ: ảnh xem trước khi chia sẻ link cập nhật sau ~15 giây; Zalo/Facebook còn nhớ ảnh cũ của link đã chia sẻ (dùng công cụ "Sharing Debugger" của Facebook để làm mới) | Thấp | — |
 | KI-027 | Số điện thoại chưa được xác minh (OTP SMS): ai cũng đăng ký được bằng số của người khác (vẫn phải chờ quản trị duyệt) | Trung bình | Quản trị kiểm tra trước khi duyệt; thêm OTP SMS/Zalo khi có ngân sách |
 | KI-008 | Bố cục phả đồ hiện là dạng "khối căn giữa", chưa nén nhánh kiểu Reingold–Tilford (cây rộng hơn cần thiết) | Thấp | Tối ưu khi làm trình chỉnh sửa phả đồ nếu cây quá rộng |
 

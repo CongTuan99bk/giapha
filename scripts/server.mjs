@@ -279,10 +279,10 @@ async function start() {
     step("Lấy link chia sẻ từ Cloudflare");
     link = await waitForLink(mode);
     if (link && env.PUBLIC_URL !== link) {
-      // địa chỉ dùng trong email (link đặt lại mật khẩu)
+      // địa chỉ dùng trong email (link đặt lại mật khẩu) và ảnh xem trước khi gửi link lên Zalo/Facebook
       env.PUBLIC_URL = link;
       writeEnv(m.envFile, env, `Cấu hình server ${m.label}`);
-      docker([...composeArgs(mode), "up", "-d", "api"], { allowFail: true });
+      docker([...composeArgs(mode), "up", "-d", "--wait", "api", "web"], { allowFail: true });
     }
   }
 

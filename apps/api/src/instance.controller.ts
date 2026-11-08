@@ -48,7 +48,7 @@ export class InstanceController {
   }
 
   /** Người tự đăng ký xin vào dòng họ; quản trị duyệt ở Cài đặt → Yêu cầu tham gia */
-  @RateLimit("join-request", { limit: 10, windowSec: 3600 })
+  @RateLimit("join-request", { limit: 40, windowSec: 3600 })
   @Post("join-request")
   async requestToJoin(@CurrentUser() user: SessionUser, @Body() body: unknown) {
     const { message } = joinSchema.parse(body ?? {});

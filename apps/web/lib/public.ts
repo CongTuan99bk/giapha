@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
-import type { AnniversaryList, PersonDetail, PublicSite, TreeLayout } from "./types";
+import type { AnniversaryList, PersonDetail, PublicCounter, PublicSite, TreeLayout } from "./types";
 
 /** Trang công khai: dữ liệu không cần đăng nhập (/api/v1/public/…) */
 export const publicMediaUrl = (id: string, variant: "sm" | "md" | "lg") => `/api/v1/public/media/${id}/${variant}`;
@@ -28,3 +28,7 @@ export const usePublicPerson = (id: string | null) =>
 
 export const usePublicAnniversaries = (days = 365) =>
   useQuery({ queryKey: ["public", "anniversaries", days], queryFn: () => api<AnniversaryList>("GET", `/public/anniversaries?days=${days}`), staleTime: 10 * 60_000 });
+
+/** Bộ đếm "đang xem / hôm nay / tổng" — làm mới mỗi phút */
+export const usePublicCounter = () =>
+  useQuery({ queryKey: ["public", "stats"], queryFn: () => api<PublicCounter>("GET", "/public/stats"), refetchInterval: 60_000, retry: false });

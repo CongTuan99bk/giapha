@@ -51,7 +51,8 @@ export default defineConfig({
       url: "http://localhost:3000/dang-nhap",
       reuseExistingServer: false,
       timeout: 30_000,
-      env: { PORT: "3000", HOSTNAME: "localhost" },
+      // PUBLIC_URL: ảnh xem trước khi chia sẻ link có địa chỉ đầy đủ
+      env: { PORT: "3000", HOSTNAME: "localhost", PUBLIC_URL: "http://localhost:3000" },
     },
   ],
 });

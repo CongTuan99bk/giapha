@@ -1,17 +1,10 @@
-import { Controller, Get, Header, Query, Res } from "@nestjs/common";
-import type { Response } from "express";
+import { Controller, Get, Header, Query, Req, Res } from "@nestjs/common";
+import type { Request, Response } from "express";
 import { z } from "zod";
 import { CurrentMembership, type Membership, ROLE_RANK } from "../common/context.js";
+import { ResponseCache, sendCached } from "../common/response-cache.js";
 import { Database, type Tx } from "../db/database.js";
-import {
-  type AnniversarySource,
-  deathLunarYearOf,
-  isoDate,
-  parseIsoDate,
-  todayInVietnam,
-  toIcs,
-  upcomingAnniversaries,
-} from "./upcoming.js";
+import { type AnniversarySource, deathLunarYearOf, isoDate, parseIsoDate, todayInVietnam, toIcs, upcomingAnniversaries } from "./upcoming.js";
 
 const query = z.object({
   from: z
@@ -65,28 +58,39 @@ export async function loadAnniversarySources(trx: Tx, clanId: string, mode: "adm
 /** Lịch giỗ (FR-EVENT-01): tính từ ngày mất âm lịch của từng người, không cần nhập riêng. */
 @Controller("clans/:clanId")
 export class AnniversariesController {
-  constructor(private readonly db: Database) {}
+  constructor(
+    private readonly db: Database,
+    private readonly cache: ResponseCache,
+  ) {}
 
   private load(m: Membership) {
     // Người "ẩn thông tin" chỉ quản trị thấy (giống phả đồ)
     const mode = ROLE_RANK[m.role] >= ROLE_RANK.admin ? "admin" : "member";
-    return this.db.withClan({ clanId: m.clanId, userId: m.userId }, (trx) => loadAnniversarySources(trx, m.clanId, mode));
+    return this.cache.memo(
+      m.clanId,
+      `anniversary-sources:${mode}`,
+      () => this.db.withClan({ clanId: m.clanId, userId: m.userId }, (trx) => loadAnniversarySources(trx, m.clanId, mode)),
+      { sizeOf: (r) => r.sources.length * 400 },
+    );
   }
 
   /** Các ngày giỗ trong `days` ngày kể từ `from` (mặc định hôm nay theo giờ Việt Nam) */
   @Get("anniversaries")
-  async list(@CurrentMembership() m: Membership, @Query() raw: unknown) {
+  async list(@CurrentMembership() m: Membership, @Query() raw: unknown, @Req() req: Request, @Res() res: Response) {
     const q = query.parse(raw);
     const from = q.from ? parseIsoDate(q.from) : todayInVietnam();
-    const { clan, sources, missing } = await this.load(m);
-    const items = upcomingAnniversaries(sources, { from, days: q.days, day30Rule: clan.day30_rule });
-    return {
-      from: isoDate(from),
-      days: q.days,
-      items,
-      /** Người trong họ đã mất nhưng chưa có ngày mất đủ ngày/tháng → chưa tính được giỗ */
-      missingDeathDay: missing,
-    };
+    const mode = ROLE_RANK[m.role] >= ROLE_RANK.admin ? "admin" : "member";
+    const body = await this.cache.json(m.clanId, `anniversaries:${mode}:${isoDate(from)}:${q.days}`, async () => {
+      const { clan, sources, missing } = await this.load(m);
+      return {
+        from: isoDate(from),
+        days: q.days,
+        items: upcomingAnniversaries(sources, { from, days: q.days, day30Rule: clan.day30_rule }),
+        /** Người trong họ đã mất nhưng chưa có ngày mất đủ ngày/tháng → chưa tính được giỗ */
+        missingDeathDay: missing,
+      };
+    });
+    await sendCached(req, res, body, "private, no-cache");
   }
 
   /** Tải lịch giỗ dạng .ics để thêm vào lịch điện thoại (Google Calendar, lịch iPhone) */

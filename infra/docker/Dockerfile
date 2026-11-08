@@ -26,7 +26,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm deploy --filter @coinguon
 
 # ── API (NestJS) — cũng dùng để chạy migration và dữ liệu mẫu ──
 FROM node:22-bookworm-slim AS api
-ENV NODE_ENV=production PORT=4000 MEDIA_DIR=/data/media
+# UV_THREADPOOL_SIZE: băm mật khẩu (argon2), nén, đọc ảnh chạy song song khi nhiều người đăng nhập cùng lúc
+ENV NODE_ENV=production PORT=4000 MEDIA_DIR=/data/media UV_THREADPOOL_SIZE=8
 WORKDIR /app
 COPY --from=build --chown=node:node /out/api ./
 # Quyền ghi volume ảnh do service media-init trong compose.prod.yml đảm bảo

@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // Ảnh nền hoa văn: ít khi đổi → trình duyệt giữ 1 ngày, sau đó vẫn dùng bản cũ trong lúc tải bản mới
+      { source: "/hoa-van/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }] },
       // service worker luôn lấy bản mới để cập nhật kịp
       { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }] },
       {
