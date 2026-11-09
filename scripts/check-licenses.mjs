@@ -16,6 +16,10 @@ const EXCEPTIONS = {
   "@img/sharp-libvips-linuxmusl-arm64": ["LGPL-3.0-or-later", "Như trên (máy ARM, Alpine)"],
   "@img/sharp-libvips-darwin-arm64": ["LGPL-3.0-or-later", "Như trên (máy Mac của lập trình viên)"],
   "@img/sharp-libvips-darwin-x64": ["LGPL-3.0-or-later", "Như trên (máy Mac của lập trình viên)"],
+  // ExcelJS (đọc/ghi file Excel nhập – xuất gia phả) kéo theo:
+  jszip: ["(MIT OR GPL-3.0-or-later)", "Hai giấy phép cho chọn — dùng theo MIT"],
+  pako: ["(MIT AND Zlib)", "Cả MIT và Zlib đều là giấy phép tự do, cho dùng thương mại"],
+  chainsaw: ["MIT/X11", "MIT/X11 chính là giấy phép MIT (cách ghi cũ)"],
 };
 
 const out = execFileSync("pnpm", ["licenses", "list", "--prod", "--json"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });

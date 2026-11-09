@@ -1,6 +1,9 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { mkdtemp, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { expect, test, type Page } from "@playwright/test";
+import ExcelJS from "exceljs";
 import { node, OWNER } from "./data";
 
 test.describe.configure({ mode: "serial" });
@@ -573,4 +576,61 @@ test("thư viện ảnh: tạo album, tải nhiều ảnh, đặt bìa, công kh
   // ảnh lẻ (chân dung người còn sống…) không có trên trang công khai
   await expect(g.getByText("Ảnh lẻ")).toHaveCount(0);
   await g.close();
+});
+
+test("nhập – xuất: in phả đồ PDF, xuất danh sách Excel, thêm dòng rồi nhập lại, hoàn tác", async ({ browser }) => {
+  // thư mục không dấu: Playwright không đưa được file từ đường dẫn có dấu tiếng Việt vào ô chọn file
+  const dir = await mkdtemp(join(tmpdir(), "coinguon-e2e-"));
+  const o = await browser.newPage();
+  await loginOwner(o);
+  await o.getByRole("link", { name: "Phả đồ", exact: true }).click();
+  await o.locator(node("Lê Văn Cả")).click();
+  await o.waitForURL(/nguoi=/);
+  const rootId = new URL(o.url()).searchParams.get("nguoi")!;
+  await o.getByRole("link", { name: "In / Xuất" }).click();
+  await expect(o.getByRole("heading", { name: "Nhập – xuất" })).toBeVisible();
+  // bắt đầu từ người đang chọn trên phả đồ
+  await expect(o.getByText("Lê Văn Cả", { exact: true })).toBeVisible();
+  await expect(o.getByText(/\d+ người, \d+ đời → 1 trang A3/)).toBeVisible();
+  await o.getByLabel("Khổ giấy").selectOption("A4");
+  await expect(o.getByText(/→ 1 trang A4/)).toBeVisible();
+  const [pdf] = await Promise.all([o.waitForEvent("download"), o.getByRole("link", { name: "Tải PDF để in" }).click()]);
+  expect(pdf.suggestedFilename()).toBe("pha-do-ho-le-van-thon-thu.pdf");
+  expect((await readFile((await pdf.path())!)).subarray(0, 5).toString()).toBe("%PDF-");
+
+  // xuất danh sách → thêm một người con của thuỷ tổ → nhập lại
+  const [list] = await Promise.all([o.waitForEvent("download"), o.getByRole("link", { name: "Xuất danh sách Excel" }).click()]);
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load((await readFile((await list.path())!)) as unknown as ArrayBuffer);
+  const ws = wb.getWorksheet("Danh sách")!;
+  ws.addRow(["N1", "Lê Văn Nhập", "Nam", rootId, "", "", "", "", "", "khoảng 1990"]);
+  ws.addRow(["N2", "Lê Văn Lạc", "Nam", "KHONG-CO"]);
+  const bad = join(dir, "loi.xlsx");
+  await wb.xlsx.writeFile(bad);
+  await o.getByLabel("Chọn file Excel để nhập").setInputFiles(bad);
+  await expect(o.getByRole("heading", { name: /1 lỗi trong “loi.xlsx” — chưa nhập gì/ })).toBeVisible();
+  await expect(o.getByRole("cell", { name: "Mã cha “KHONG-CO” không có trong file (và không phải mã người đã có)" })).toBeVisible();
+  const [errFile] = await Promise.all([o.waitForEvent("download"), o.getByRole("link", { name: "Tải file đánh dấu lỗi" }).click()]);
+  expect(errFile.suggestedFilename()).toBe("gia-pha-danh-dau-loi.xlsx");
+
+  ws.spliceRows(ws.rowCount, 1);
+  const good = join(dir, "them-con.xlsx");
+  await wb.xlsx.writeFile(good);
+  await o.getByLabel("Chọn file Excel để nhập").setInputFiles(good);
+  await expect(o.getByRole("heading", { name: "File “them-con.xlsx” hợp lệ" })).toBeVisible();
+  await expect(o.getByText(/dòng là người đã có trong phả — bỏ qua, không sửa/)).toBeVisible();
+  await o.getByRole("button", { name: "Xác nhận nhập 1 người" }).click();
+  await expect(o.getByRole("status")).toContainText("Đã nhập 1 người.");
+  await o.getByRole("link", { name: "Mở phả đồ" }).click();
+  await expect(o.locator(node("Lê Văn Nhập"))).toBeVisible();
+
+  // hoàn tác trong 24 giờ
+  await o.goto(o.url().replace(/\/pha-do.*$/, "/nhap-xuat"));
+  o.once("dialog", (d) => void d.accept());
+  await o.getByRole("button", { name: "Hoàn tác lần nhập này" }).click();
+  await expect(o.getByText(/Đã hoàn tác/)).toBeVisible();
+  await o.getByRole("link", { name: "Phả đồ", exact: true }).click();
+  await expect(o.locator(node("Lê Văn Cả"))).toBeVisible();
+  await expect(o.locator(node("Lê Văn Nhập"))).toHaveCount(0);
+  await o.close();
 });

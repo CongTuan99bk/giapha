@@ -1,6 +1,6 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.10
+version: 1.11
 updated: 2026-11-09
 audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
@@ -230,15 +230,29 @@ Người mới hiện ngay trên cây và được chọn sẵn; số đời đ�
 
 ## 14. Nhập gia phả từ file Excel
 
-Dành cho dòng họ đã có danh sách trên Excel. Thường do quản trị thực hiện.
+Dành cho dòng họ đã có danh sách trên Excel. Chỉ **quản trị** làm được.
 
-1. Vào **Quản trị → Nhập – xuất → Nhập từ Excel**.
-2. Bấm **Tải file mẫu**, điền theo mẫu: mỗi người một dòng, có **Mã**, **Họ tên**, **Mã cha**, **Mã mẹ**, **Mã vợ/chồng**, **Thứ tự con**… (xem trang hướng dẫn trong file mẫu).
-3. Tải file đã điền lên → hệ thống kiểm tra.
-4. Nếu có lỗi, bảng lỗi hiện theo từng dòng (ví dụ *"Dòng 45: Mã cha 'N12' không tồn tại"*). Bấm **Tải file đánh dấu lỗi**, sửa rồi tải lại.
-5. Không lỗi → xem trước số người, số đời → bấm **Xác nhận nhập**.
+1. Vào **Cài đặt → Nhập – xuất** (hoặc bấm **In / Xuất** trên phả đồ), kéo xuống mục **Nhập từ Excel**.
+2. Bấm **Tải file mẫu**. File có ba trang: **Danh sách** (điền vào đây), **Ví dụ** (một nhà ba đời đã điền sẵn), **Hướng dẫn**.
+3. Điền mỗi người một dòng:
+   - **Mã**: tự đặt, mỗi người một mã khác nhau (1, 2, 3… hoặc A1, B12…).
+   - **Họ và tên**.
+   - **Mã cha**, **Mã mẹ**: mã của cha, mẹ ở dòng khác. Cha có nhiều vợ thì phải ghi **Mã mẹ** để biết con của bà nào.
+   - **Mã vợ/chồng**: ghi ở một trong hai người là đủ. Nhiều vợ ghi theo thứ tự vợ cả trước, cách nhau dấu chấm phẩy (`5; 6`).
+   - **Thứ tự con**: 1 = con trưởng, 2 = con thứ… Để trống thì theo thứ tự dòng.
+   - **Ngày sinh**, **Ngày mất**: ghi `1950`, `3/1950`, `12/3/1950`, `khoảng 1950`, hoặc `ngày 12 tháng 3 năm 1950`. Ngày âm lịch thêm chữ **âm lịch** (`12/3/1920 âm lịch`), tháng nhuận thêm **nhuận**.
+   - Chỉ biết **ngày giỗ**, không rõ năm mất: ghi vào cột **Ngày giỗ (âm lịch)**, ví dụ `12/3`.
+   - Đã mất mà không rõ ngày: ghi `x` ở cột **Đã mất**.
+   - Các cột khác (tên khác, quê quán, nghề nghiệp, nơi an táng, tiểu sử) không bắt buộc.
+4. Bấm **Chọn file Excel để nhập** và chọn file đã điền. Hệ thống **chỉ kiểm tra**, chưa ghi gì vào phả.
+5. Nếu có lỗi, bảng lỗi hiện theo từng dòng (ví dụ *Dòng 45 · Mã cha · Mã cha “N12” không có trong file*). Bấm **Tải file đánh dấu lỗi**: ô sai được tô đỏ, cuối mỗi dòng ghi cách sửa. Sửa xong thì tải lên lại.
+6. Không có lỗi: xem lại số người mới, từ đời mấy đến đời mấy, thuỷ tổ là ai → bấm **Xác nhận nhập … người**.
 
-> Lỡ nhập sai? Trong 24 giờ, vào **Nhập – xuất → Lịch sử nhập** và bấm **Hoàn tác lần nhập này**.
+**Thêm một nhánh vào phả đã có:** bấm **Xuất danh sách Excel** (mục 16), thêm dòng người mới vào cuối file đó. Ở cột **Mã cha** của người mới, chép **Mã** của người cha đã có trong file (chuỗi dài như `5c2f5734-…`). Nhập lại file: dòng của người đã có được bỏ qua, **không bị sửa**.
+
+> Lỡ nhập sai? Trong 24 giờ, xuống **Lịch sử nhập** (cuối trang Nhập – xuất), bấm **Hoàn tác lần nhập này**. Nếu sau lần nhập đó đã có người được thêm nối vào những người vừa nhập, hãy xoá những người thêm sau trước rồi mới hoàn tác được.
+
+> Phả mới tạo, chưa có ai: trang phả đồ có liên kết **Nhập cả phả từ file Excel** ngay dưới ô nhập thuỷ tổ.
 
 ## 15. Bài viết, sự kiện, thư viện, bản đồ
 
@@ -276,13 +290,24 @@ Bấm **Xong** để thoát chế độ chọn.
 
 **Sửa hoặc xoá album:** trong album bấm **Sửa album** để đổi tên, mô tả, ai được xem. **Xoá album này…** cho chọn **giữ ảnh** (chuyển về *Ảnh lẻ*) hoặc **xoá luôn ảnh** (không lấy lại được).
 
-## 16. Xuất phả đồ để in hoặc chia sẻ
+## 16. In phả đồ, xuất danh sách
 
-1. Mở **Phả đồ**, chọn phần muốn xuất (cả cây hoặc bấm vào một người → **Xuất nhánh này**).
-2. Bấm **Xuất** → chọn định dạng: **PDF**, **Ảnh PNG/JPG**, **SVG** (để chỉnh sửa, in khổ lớn), hoặc **Excel** (danh sách).
-3. Chờ hệ thống tạo file (cây lớn có thể mất vài phút) → bấm **Tải về**.
+Trên **Phả đồ**, bấm nút **In / Xuất** ở góc trên (nếu đang chọn một người, bản in bắt đầu từ người đó).
 
-> Cây rất nhiều đời: nên xuất từng nhánh, hoặc xuất SVG/PDF và nhờ nhà in kiểm tra trước khi in khổ lớn.
+**In phả đồ (mọi thành viên):**
+1. **Bắt đầu từ**: để trống là in từ thuỷ tổ; gõ tên để in một nhánh (ví dụ trưởng một chi).
+2. **Số đời**: in tất cả, hoặc chỉ vài đời.
+3. **Khổ giấy**: A4 đến A0, hoặc **Giấy cuộn (in bạt)** cho tiệm in khổ lớn.
+4. **Cách in**:
+   - **Tự động**: vừa một trang nếu chữ còn đọc được, không thì chia nhiều trang.
+   - **Gọn một trang**: thu nhỏ cả cây vào một tờ.
+   - **Chia nhiều trang để ghép**: chữ to dễ đọc. Mỗi trang ghi số hàng, số cột để dán cạnh nhau, và lặp lại cột *Đời* ở mép trái.
+5. Ô màu be cho biết trước **bao nhiêu trang, khổ bao nhiêu cm, chữ tên cao mấy mm**. Chữ dưới 2 mm hoặc quá 30 trang thì nên in từng nhánh.
+6. Bấm **Tải PDF để in** (mở bằng điện thoại, máy tính hoặc gửi tiệm in), hoặc **Tải SVG (hình vector)**: phóng to bao nhiêu cũng không vỡ, chỉnh được bằng phần mềm đồ hoạ.
+
+Bản in giống phả đồ trên web (vạch đỏ bên trái: nam, xanh rêu: nữ; viền đứt: dâu, rể; nét đứt dài: con nuôi; nét chấm: con riêng), nền trắng cho đỡ tốn mực. Bỏ chọn **Kèm ảnh chân dung** nếu muốn bản in gọn.
+
+**Xuất danh sách Excel (biên tập viên trở lên):** mọi người trong phả, mỗi người một dòng, đúng các cột của file mẫu nhập, thêm cột *Đời* để xem. Dùng để lưu trữ, in danh sách, hoặc thêm một nhánh rồi nhập lại (mục 14). Người “ẩn thông tin” chỉ quản trị thấy đủ.
 
 ---
 

@@ -10,3 +10,4 @@ export { KINSHIP_TERMS } from "./kinship/terms.js";
 export type { KinshipTerms, KinshipVariant } from "./kinship/terms.js";
 export { layoutTree } from "./layout.js";
 export type { LayoutEdge, LayoutNode, LayoutOptions, TreeLayout } from "./layout.js";
+export { lifespan, wrapName } from "./display.js";

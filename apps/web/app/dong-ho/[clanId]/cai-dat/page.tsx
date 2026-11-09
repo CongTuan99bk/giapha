@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { ContactsManager } from "@/components/contacts-manager";
@@ -38,6 +39,12 @@ export default function SettingsPage() {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-3xl px-4 pb-20 pt-8">
         <h1 className="font-serif text-3xl">Cài đặt dòng họ</h1>
+        <p className="mt-2 text-reu">
+          Nhập cả phả từ file Excel, in phả đồ, xuất danh sách:{" "}
+          <Link href={`/dong-ho/${clanId}/nhap-xuat`} className="font-medium text-son underline-offset-4 hover:underline">
+            Nhập – xuất
+          </Link>
+        </p>
         <JoinRequestsSection clan={clan.data} />
         <MessagesInbox clanId={clanId} />
         <Section id="them-nguoi" title="Thêm người vào dòng họ">

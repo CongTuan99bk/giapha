@@ -3,6 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type {
+  ImportHistoryItem,
+  TreeExportInfo,
   Album,
   AlbumDetail,
   AlbumList,
@@ -430,3 +432,34 @@ export function useDeletePhotos(clanId: string) {
 }
 
 export const invalidateAlbums = (qc: ReturnType<typeof useQueryClient>, clanId: string) => qc.invalidateQueries({ queryKey: albumsKey(clanId) });
+
+/* ——— Nhập – xuất ——— */
+
+const importsKey = (clanId: string) => ["clan", clanId, "imports"] as const;
+
+export const useImportHistory = (clanId: string, enabled: boolean) =>
+  useQuery({ queryKey: importsKey(clanId), queryFn: () => api<ImportHistoryItem[]>("GET", `/clans/${clanId}/imports`), enabled });
+
+/** Xác nhận / hoàn tác nhập: phả đồ, danh sách, lịch giỗ… đều đổi → làm mới toàn bộ dữ liệu dòng họ */
+export function useCommitImport(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<{ id: string; created: number }>("POST", `/clans/${clanId}/imports/${id}/commit`),
+    onSettled: () => qc.invalidateQueries({ queryKey: ["clan", clanId] }),
+  });
+}
+
+export function useRevertImport(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api<void>("POST", `/clans/${clanId}/imports/${id}/revert`),
+    onSettled: () => qc.invalidateQueries({ queryKey: ["clan", clanId] }),
+  });
+}
+
+export const useTreeExportInfo = (clanId: string, query: string) =>
+  useQuery({
+    queryKey: ["clan", clanId, "export-info", query],
+    queryFn: () => api<TreeExportInfo>("GET", `/clans/${clanId}/export/tree-info?${query}`),
+    placeholderData: (prev) => prev,
+  });

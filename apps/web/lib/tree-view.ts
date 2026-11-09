@@ -11,41 +11,8 @@ export const MIN_ZOOM = 0.15;
 export const MAX_ZOOM = 2.5;
 export const clampZoom = (k: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, k));
 
-/**
- * Tách họ tên thành tối đa 2 dòng vừa ô (theo số ký tự ước lượng).
- * Tên quá dài: giữ phần cuối (tên gọi) ở dòng 2 và rút gọn dòng 1 bằng "…".
- */
-export function wrapName(name: string, maxChars = 18): [string] | [string, string] {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-  if (words.join(" ").length <= maxChars) return [words.join(" ")];
-  const lines: string[] = [];
-  let current = "";
-  for (const w of words) {
-    const next = current ? `${current} ${w}` : w;
-    if (next.length <= maxChars || !current) current = next;
-    else {
-      lines.push(current);
-      current = w;
-    }
-  }
-  lines.push(current);
-  if (lines.length === 1) return [cut(lines[0]!, maxChars)];
-  if (lines.length === 2) return [cut(lines[0]!, maxChars), cut(lines[1]!, maxChars)];
-  // Hơn 2 dòng: dòng 2 là các từ cuối vừa ô, dòng 1 là phần đầu rút gọn
-  let tail = words[words.length - 1]!;
-  for (let i = words.length - 2; i > 0; i--) {
-    const t = `${words[i]} ${tail}`;
-    if (t.length > maxChars) break;
-    tail = t;
-  }
-  const head = name.slice(0, name.length - tail.length).trim();
-  return [cut(head, maxChars, true), cut(tail, maxChars)];
-}
-
-function cut(s: string, max: number, forceEllipsis = false): string {
-  if (s.length <= max && !forceEllipsis) return s;
-  return s.length < max ? `${s}…` : `${s.slice(0, max - 1).trimEnd()}…`;
-}
+// dùng chung với bản xuất PDF/SVG phía máy chủ
+export { wrapName } from "@coinguon/genealogy-core";
 
 /** Khung nhìn vừa cả cây trong vùng w×h (có lề), không phóng to quá 100%. */
 export function fitView(treeW: number, treeH: number, w: number, h: number, pad = 48): View {

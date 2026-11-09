@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useState } from "react";
 import { FormError } from "@/components/field";
@@ -47,6 +48,13 @@ function TreeScreen() {
         onSelect={(id) => select(id, window.matchMedia("(max-width: 767px)").matches)}
         focus={focus}
       />
+      {/* In / xuất: mở trang Nhập – xuất, bắt đầu từ người đang chọn */}
+      <Link
+        href={`/dong-ho/${clanId}/nhap-xuat${selectedId ? `?nguoi=${selectedId}` : ""}`}
+        className="absolute left-18 top-3 rounded-lg border border-do-dam bg-the/95 px-3 py-2 text-sm font-medium text-then shadow-[0_2px_8px_rgb(60_40_20/0.12)] hover:bg-hoang"
+      >
+        In / Xuất
+      </Link>
       {selectedId && (
         <PersonPanel clan={clan.data} personId={selectedId} canEdit={canEdit} onSelect={(id) => select(id, true)} onClose={() => select(null)} />
       )}
@@ -73,6 +81,13 @@ function FirstPerson({ clanId, surname }: { clanId: string; surname: string }) {
             onSubmit={(person) => add.mutateAsync({ kind: "first", person })}
           />
         </div>
+        <p className="mt-10 border-t border-ngoc-200 pt-6 text-reu">
+          Đã có danh sách cả họ trên Excel?{" "}
+          <Link href={`/dong-ho/${clanId}/nhap-xuat#nhap`} className="font-medium text-son underline-offset-4 hover:underline">
+            Nhập cả phả từ file Excel
+          </Link>{" "}
+          (quản trị).
+        </p>
       </div>
     </div>
   );

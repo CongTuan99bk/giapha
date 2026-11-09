@@ -2,15 +2,7 @@ import { canChiOfYear, lunarMonthName } from "@coinguon/lunar-vn";
 import type { FlexibleDate, Gender, Person } from "./types";
 
 /** "1920 – 1990", "1920 –" (còn sống: "s. 1990"), "?" khi không rõ. */
-export function lifespan(p: { birthYear: number | null; deathYear?: number | null; isLiving: boolean }): string {
-  const b = p.birthYear ?? null;
-  const d = p.deathYear ?? null;
-  if (p.isLiving) return b ? `sinh ${b}` : "";
-  if (b && d) return `${b} – ${d}`;
-  if (b) return `${b} – ?`;
-  if (d) return `? – ${d}`;
-  return "đã mất";
-}
+export { lifespan } from "@coinguon/genealogy-core";
 
 /** Ngày linh hoạt thành chữ: "12/3/1950", "tháng 3/1950", "khoảng 1950", âm lịch thêm "(âm lịch)". */
 export function formatFlexibleDate(d: FlexibleDate | null | undefined): string {

@@ -1,5 +1,5 @@
 import { ApiError, readCookie } from "./api";
-import type { MediaItem } from "./types";
+import type { ImportCheck, MediaItem } from "./types";
 
 export const MAX_UPLOAD_MB = 15;
 const ACCEPTED = /^image\/(jpeg|png|webp|avif|tiff|gif)$/;
@@ -40,3 +40,24 @@ export async function uploadImage(clanId: string, file: File, caption?: string, 
 /** Đường dẫn ảnh theo cỡ (API kiểm tra quyền xem bằng cookie phiên) */
 export const mediaUrl = (clanId: string, mediaId: string, variant: "sm" | "md" | "lg" | "orig") =>
   `/api/v1/clans/${clanId}/media/${mediaId}/${variant}`;
+
+/** Tải file Excel lên để kiểm tra (chưa ghi gì vào phả) */
+export async function uploadImportFile(clanId: string, file: File): Promise<ImportCheck> {
+  if (!/\.xlsx$/i.test(file.name)) {
+    throw new ApiError(422, "NOT_XLSX", `“${file.name}” không phải file Excel .xlsx. Trong Excel chọn Lưu thành → Sổ làm việc Excel (.xlsx).`);
+  }
+  const form = new FormData();
+  form.append("file", file);
+  const headers: Record<string, string> = { Accept: "application/json" };
+  const csrf = readCookie("csrf");
+  if (csrf) headers["X-CSRF-Token"] = csrf;
+  let res: Response;
+  try {
+    res = await fetch(`/api/v1/clans/${clanId}/imports`, { method: "POST", body: form, headers, credentials: "same-origin" });
+  } catch {
+    throw new ApiError(0, "NETWORK", "Mất kết nối khi tải file. Kiểm tra mạng rồi thử lại.");
+  }
+  const data = (await res.json().catch(() => null)) as (ImportCheck & { code?: string; message?: string }) | null;
+  if (!res.ok) throw new ApiError(res.status, data?.code ?? `HTTP_${res.status}`, data?.message ?? "Không kiểm tra được file.");
+  return data as ImportCheck;
+}

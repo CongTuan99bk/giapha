@@ -365,3 +365,64 @@ export interface AlbumDetail {
   album: Omit<Album, "count" | "cover" | "lastAddedAt"> | null;
   photos: Photo[];
 }
+
+/* ——— Nhập – xuất ——— */
+
+export type ImportColumn =
+  | "ma" | "hoTen" | "gioiTinh" | "maCha" | "maMe" | "quanHe" | "thuTu" | "maVoChong" | "tenKhac"
+  | "ngaySinh" | "daMat" | "ngayMat" | "ngayGio" | "queQuan" | "ngheNghiep" | "noiAnTang" | "tieuSu";
+
+export interface ImportIssue {
+  row: number;
+  column: ImportColumn | null;
+  message: string;
+}
+
+export interface ImportSummary {
+  newPeople: number;
+  skippedExisting: number;
+  newUnions: number;
+  links: number;
+  deceased: number;
+  generations: [number, number] | null;
+  rootName: string | null;
+}
+
+export interface ImportCheck {
+  id: string;
+  ok: boolean;
+  fileName: string;
+  summary: ImportSummary | null;
+  errorCount: number;
+  errors: ImportIssue[];
+  warnings: ImportIssue[];
+}
+
+export interface ImportHistoryItem {
+  id: string;
+  status: "checked" | "failed" | "done" | "reverted";
+  fileName: string;
+  summary: ImportSummary | null;
+  errorCount: number;
+  createdAt: string;
+  committedAt: string | null;
+  revertedAt: string | null;
+  by: string | null;
+  canRevert: boolean;
+  revertUntil: string | null;
+}
+
+export type Paper = "A4" | "A3" | "A2" | "A1" | "A0" | "cuon";
+export type PdfLayout = "tu-dong" | "mot-trang" | "nhieu-trang";
+
+export interface TreeExportInfo {
+  people: number;
+  generations: number;
+  pages: number;
+  cols: number;
+  rows: number;
+  pageWidthCm: number;
+  pageHeightCm: number;
+  nameHeightMm: number;
+  readable: boolean;
+}

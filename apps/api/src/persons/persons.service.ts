@@ -66,6 +66,33 @@ interface Actor {
 export class PersonsService {
   constructor(private readonly graph: GraphService) {}
 
+  /** Giá trị một dòng persons từ dữ liệu nhập (dùng chung cho thêm một người và nhập hàng loạt từ Excel) */
+  personValues(clanId: string, input: PersonCreateInput, id: string = randomUUID()) {
+    return {
+      id,
+      clan_id: clanId,
+      full_name: input.fullName,
+      other_names: JSON.stringify(input.otherNames ?? []),
+      gender: input.gender,
+      is_living: input.isLiving,
+      birth_date: json(input.birthDate),
+      death_date: json(input.deathDate),
+      death_anniv_lunar: json(deathAnniversaryOf(input.deathDate)),
+      biography: json(input.biography?.text ? input.biography : null),
+      privacy: input.privacy ?? defaultPrivacy(input.isLiving),
+      branch_id: input.branchId ?? null,
+      updated_at: new Date(),
+    };
+  }
+
+  /** Quê quán, nghề nghiệp, nơi an táng của người mới (dòng person_facts) */
+  factRows(clanId: string, personId: string, facts: PersonFacts | undefined) {
+    return PERSON_FACT_TYPES.flatMap((type) => {
+      const value = facts?.[type]?.trim();
+      return value ? [{ id: randomUUID(), clan_id: clanId, person_id: personId, type, value }] : [];
+    });
+  }
+
   async insertPerson(trx: Tx, clanId: string, input: PersonCreateInput): Promise<PersonRow> {
     const row = await trx
       .insertInto("persons")

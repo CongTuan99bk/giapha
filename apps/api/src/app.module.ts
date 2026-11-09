@@ -3,6 +3,8 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { AlbumsController } from "./albums/albums.controller.js";
 import { AlbumsService } from "./albums/albums.service.js";
 import { AnalyticsService } from "./analytics/analytics.service.js";
+import { ImportExportController } from "./import-export/import-export.controller.js";
+import { ImportExportService } from "./import-export/import-export.service.js";
 import { PublicStatsController, StatsController, TrackController } from "./analytics/analytics.controller.js";
 import { AnniversariesController } from "./anniversaries/anniversaries.controller.js";
 import { ContactsController } from "./contacts/contacts.controller.js";
@@ -32,6 +34,7 @@ import { SiteService } from "./site/site.service.js";
 import { PersonsController } from "./persons/persons.controller.js";
 import { PersonsService } from "./persons/persons.service.js";
 import { GraphService } from "./tree/graph.service.js";
+import { TreeBuilder } from "./tree/tree-builder.service.js";
 import { TreeController } from "./tree/tree.controller.js";
 
 /**
@@ -57,6 +60,7 @@ export class AppModule {
         ContactsController,
         PublicController,
         AlbumsController,
+        ImportExportController,
         PublicStatsController,
         PublicMessagesController,
         MessagesController,
@@ -73,9 +77,11 @@ export class AppModule {
         ResponseCache,
         MainClanService,
         AlbumsService,
+        ImportExportService,
         AnalyticsService,
         ClansService,
         GraphService,
+        TreeBuilder,
         PersonsService,
         MembersService,
         MediaStorage,

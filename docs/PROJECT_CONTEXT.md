@@ -5,10 +5,10 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.15.0 |
+| Phiên bản file | 0.16.0 |
 | Cập nhật lần cuối | 2026-11-09 |
 | Người cập nhật | TuanLC, Claude |
-| Giai đoạn hiện tại | **MVP phần 2: website công khai, thống kê truy cập, lời nhắn của khách, thư viện ảnh theo album xong; chịu tải đông người xem (bộ nhớ đệm, nén). Tiếp theo: nhập Excel / xuất PDF** |
+| Giai đoạn hiện tại | **MVP phần 2: website công khai, thống kê truy cập, lời nhắn của khách, thư viện ảnh theo album, nhập phả từ Excel, in phả đồ PDF/SVG xong; chịu tải đông người xem (bộ nhớ đệm, nén). Tiếp theo: ứng dụng iOS/Android** |
 | Mã nguồn | https://github.com/CongTuan99bk/giapha (nhánh `main`, CI xanh) |
 | Tài liệu đặc tả đầy đủ | "Tài liệu dự án: Hệ thống Gia Phả Cội Nguồn" v1.0 — https://claude.ai/artifact/1Wy2PqEVYSLqycMLH8LMzG |
 | Bản thảo kỹ thuật | https://claude.ai/artifact/T24kXNyJ9UkUPdRwMzBkFd |
@@ -52,7 +52,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Sổ tay chủ sở hữu & Hướng dẫn sử dụng v1.0 | Xong (2026-11-01) | Viết theo thiết kế; đối chiếu lại tên nút, thêm ảnh chụp khi có giao diện |
 | Giai đoạn 0 — Nền móng (tuần 1–2) | **Xong (2026-11-01)** | Monorepo, CI, schema + RLS, genealogy-core, lunar-vn, schemas — 126 test xanh |
 | MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Xong phần chính (2026-11-02)** | Đăng nhập email/số điện thoại, tạo dòng họ, phả đồ, thêm/sửa/xoá người, danh sách, xưng hô, mời/duyệt thành viên, vai trò, ảnh, trang chủ, lịch giỗ, PWA, demo Docker — 118 test API + 24 test trình duyệt. Nhập phả đầy đủ xong 0.11.0 |
-| MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | **Đang làm** | Xong: website công khai + ban liên lạc (0.12), thống kê truy cập, lời nhắn của khách, ảnh xem trước khi chia sẻ link, tối ưu đông người dùng (0.14), thư viện ảnh theo album (0.15) — 144 test API + 26 test trình duyệt. Còn: sự kiện họp họ, xuất PDF/Excel |
+| MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | **Đang làm** | Xong: website công khai + ban liên lạc (0.12), thống kê truy cập, lời nhắn của khách, ảnh xem trước khi chia sẻ link, tối ưu đông người dùng (0.14), thư viện ảnh theo album (0.15), nhập Excel + in PDF/SVG + xuất danh sách (0.16) — 170 test API + 27 test trình duyệt. Còn: sự kiện họp họ |
 | Phase 2 (tuần 15–24), Phase 3 (tuần 25–32) | Chưa bắt đầu | |
 
 ### 2.2. Việc đang làm
@@ -62,7 +62,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 1. ~~Lịch giỗ~~ — xong 0.10.0 (còn: nhắc qua email khi có SMTP, sự kiện họp họ/chạp mả).
 2. ~~Hoàn thiện nhập phả~~ — xong 0.11.0 (còn: tiểu sử định dạng chữ đậm/nghiêng, ảnh trong tiểu sử; nhánh/chi).
 3. ~~Website công khai + thông tin liên hệ~~ — xong 0.12.0; ~~thống kê truy cập, form gửi lời nhắn, ảnh xem trước khi chia sẻ link, chịu tải đông người~~ — xong 0.14.0. Còn: nội dung trang công khai cho máy tìm kiếm (Google) vẫn dựng phía trình duyệt; Turnstile cho form lời nhắn khi bị spam.
-3b. ~~Thư viện ảnh theo album~~ — xong 0.15.0 (còn: video, tài liệu PDF, gắn người vào ảnh, thành viên thường tự đóng góp ảnh). Tiếp: nhập Excel / xuất PDF.
+3b. ~~Thư viện ảnh theo album~~ — xong 0.15.0 (còn: video, tài liệu PDF, gắn người vào ảnh, thành viên thường tự đóng góp ảnh). ~~Nhập Excel / xuất PDF~~ — xong 0.16.0 (còn: xuất ảnh PNG, GEDCOM, sao lưu tải về).
 4. Ứng dụng iOS/Android (Capacitor bọc PWA).
 4. Sửa bảng xưng hô riêng của dòng họ (KI-013); "Tôi gọi người này là gì?" từ người đã gắn "Đây là tôi".
 5. (Tuỳ chọn) chuyển kho GitHub về riêng tư. Chốt các câu hỏi còn lại ở mục 3.2.
@@ -109,7 +109,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Schema / DB | Prisma (schema + migration) / PostgreSQL 16 (ltree, pg_trgm, unaccent, RLS) |
 | Cache, hàng đợi, bộ đếm | Redis + BullMQ |
 | File | Cloudflare R2 (S3-compatible), upload trực tiếp bằng presigned URL |
-| Xuất file | ExcelJS; Playwright/Chromium cho PDF/PNG |
+| Xuất file | ExcelJS (nhập/xuất Excel); PDFKit + fontkit vẽ phả đồ PDF/SVG ngay trong API (ADR-020) — không cần Chromium |
 | Reverse proxy | Caddy (SSL tự động, on-demand TLS cho tên miền riêng) |
 | Test | Vitest, Supertest, Testcontainers, Playwright, k6 |
 | Vận hành | Docker, GitHub Actions, Sentry, Uptime Kuma |
@@ -206,7 +206,7 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | persons, unions, tree | CRUD người/quan hệ, cây có cache, mã xem | FR-TREE, FR-PERSON | **API xong**: CRUD, thêm con/vợ chồng/cha mẹ, sắp thứ tự con, tìm không dấu, `GET /tree` có bố cục; cache cây & mã xem chưa |
 | kinship | Tra xưng hô | FR-KIN | **API xong** (`GET /kinship`, hai chiều); bảng chưa duyệt (KI-001) |
 | events | Sự kiện, lịch giỗ, nhắc | FR-EVENT | Logic lõi xong (`lunar-vn`); API, job chưa làm |
-| import-export | Excel, PDF/ảnh, sao lưu, GEDCOM (P2) | FR-IO | Chưa làm |
+| import-export | Nhập Excel (kiểm tra → xác nhận → hoàn tác 24 h), xuất danh sách Excel, in phả đồ PDF/SVG | FR-IO | Xong 0.16.0 (còn: PNG, sao lưu tải về, GEDCOM P2) |
 | media, albums | Thư viện ảnh theo album | FR-MEDIA | Xong 0.15.0 (chỉ ảnh) |
 | posts, places | Bài viết, bản đồ | FR-CONTENT, FR-GRAVE | Chưa làm |
 | site-settings, contacts, domains | Website, liên hệ ban quản lý, tên miền | FR-SITE | Chưa làm |
@@ -272,6 +272,13 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | `DELETE /clans/:clanId/albums/:id?xoaAnh=1` | editor | mặc định giữ ảnh (về ảnh lẻ); `xoaAnh=1` xoá luôn ảnh (file xoá sau khi commit) |
 | `POST /clans/:clanId/media/move` | editor | `{mediaIds[1..500], albumId \| null}` → `{moved}`; ảnh bìa bị chuyển đi thì album tự lấy ảnh đầu |
 | `POST /clans/:clanId/media` (trường `albumId`) | editor | tải thẳng vào album |
+| `GET /clans/:clanId/import/template.xlsx` | member | file mẫu: trang Danh sách (trống), Ví dụ, Hướng dẫn |
+| `POST /clans/:clanId/imports` (multipart `file`, ≤10 MB, ≤5.000 dòng) | admin | **chỉ kiểm tra**, lưu kết quả: `{id, ok, fileName, summary{newPeople, skippedExisting, newUnions, links, deceased, generations[min,max], rootName}, errorCount, errors[{row, column, message}], warnings}` (tối đa 200 lỗi hiện ra); 30 lần/giờ |
+| `GET /clans/:clanId/imports` · `GET …/imports/:id` · `GET …/imports/:id/errors.xlsx` | admin | lịch sử 30 lần gần nhất (`status` checked/failed/done/reverted, `canRevert`, `revertUntil`); file đánh dấu lỗi (ô sai tô đỏ + ghi chú, cột "Lỗi cần sửa") |
+| `POST …/imports/:id/commit` | admin | khoá dòng (bấm 2 lần không nhập trùng); **kiểm tra lại với dữ liệu hiện tại** → 409 `IMPORT_STALE` nếu phả đã đổi; ghi theo lô 500 dòng; 409 `IMPORT_ALREADY_DONE`, `IMPORT_HAS_ERRORS`, `IMPORT_EXPIRED` (>24 h) |
+| `POST …/imports/:id/revert` | admin | trong 24 h; 409 `IMPORT_REVERT_BLOCKED` nếu đã có người nối thêm vào người vừa nhập |
+| `GET /clans/:clanId/export/persons.xlsx` | editor | danh sách đúng mẫu nhập (Mã = id), người "ẩn" chỉ admin thấy đủ |
+| `GET /clans/:clanId/export/tree.pdf` · `tree.svg` · `tree-info` | member | `rootId?, depth?, paper=A4…A0\|cuon, layout=tu-dong\|mot-trang\|nhieu-trang, anh=0\|1`; `tree-info` → `{people, generations, pages, cols, rows, pageWidthCm, pageHeightCm, nameHeightMm, readable}`; 30 lần/10 phút |
 | `GET /public/albums` · `GET /public/albums/:id` | công khai | chỉ album `public` có ảnh; ảnh chỉ cỡ sm/md/lg (không ảnh gốc); ảnh trong album công khai được phép qua `/public/media` |
 | `POST /public/messages` | công khai | lời nhắn `{name, replyTo (số điện thoại hoặc email), message 5–4000, website? (ô bẫy — có chữ thì bỏ qua, vẫn 204)}` → 204, email báo quản trị (nếu có SMTP); 10 lần/giờ/IP |
 | `GET /clans/:clanId/messages?status=open\|all` · `PATCH …/:id {handled}` · `DELETE …/:id` | admin | `{items[{id, name, replyTo, message, createdAt, handledAt}], open}` (200 mới nhất) |
@@ -403,6 +410,8 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | ADR-017 | 2026-11-02 | Website công khai: chỉ người đã mất + `privacy = public`; không mật khẩu xem chung; ảnh công khai không có bản gốc; trang công khai dựng phía trình duyệt (chưa SSR); từ 0.14.0 phần đầu trang (tên, mô tả, ảnh xem trước Open Graph) dựng sẵn trên máy chủ | Chủ dự án chốt; bảo vệ người còn sống; làm nhanh, SEO để sau | Hiện cả tên người còn sống; mã xem chung |
 | ADR-018 | 2026-11-09 | **Chịu tải đông người xem**: bộ nhớ đệm trong tiến trình API (`ResponseCache`) cho phả đồ, lịch giỗ, mọi trang `/public/*` — khoá gồm "phiên bản" của dòng họ, tăng sau mỗi ghi thành công (interceptor `CacheInvalidator`), nhiều yêu cầu cùng lúc chỉ tính một lần, LRU theo dung lượng + hạn 10 phút; lưu sẵn JSON + ETag + bản nén br/gzip; `compression` cho các phản hồi khác; nới giới hạn theo IP (cả nhà thờ họ chung wifi/CGNAT); Caddy chuyển `/api/*` thẳng tới API; Postgres chỉnh cho VPS 2 GB; trang công khai **dựng sẵn** (ISR 5 phút + máy chủ web hỏi API 15 giây/lần, đổi thì dựng lại ngay) | Đo 2.000 người, 100 kết nối: phả đồ thành viên 38 → 401 lượt/giây (chờ 97,5% từ 5,6 s → 0,5 s), phả đồ công khai 84 → 2.747, trang chủ công khai 500 → 4.045, lịch giỗ 97 → 1.275; trang `/xem` 1.375 lượt/giây | Redis (thêm dịch vụ, chưa cần với một bản API); cache ở Cloudflare (dữ liệu thành viên riêng tư); SSR mỗi lần (chỉ ~240 lượt/giây) |
 | ADR-019 | 2026-11-09 | Thống kê truy cập **gom trong bộ nhớ API, ghi mỗi phút** vào `analytics_daily`/`analytics_dims`; đang xem tính trong bộ nhớ; mã khách trong `localStorage` | Một bản API; không thêm Redis (tiết kiệm RAM VPS); đông người xem cũng chỉ một lần ghi/phút | Redis HyperLogLog (ADR-004/005 — giữ làm hướng mở rộng); ghi DB mỗi lượt xem |
+| ADR-020 | 2026-11-09 | **Vẽ phả đồ PDF/SVG ngay trong API** bằng PDFKit + fontkit từ cùng bố cục `layoutTree` (một "cảnh" hình đơn giản, hai bộ vẽ); phông Be Vietnam Pro + Alegreya bản TTF đầy đủ trong `apps/api/assets/fonts` (Alegreya tĩnh tạo từ bản biến thiên bằng fontTools); xuất **đồng bộ** (không hàng đợi, bảng `exports` chưa dùng); nhiều trang: lặp lại lề "Đời n", nhãn hàng/cột để ghép | 2.000 người: PDF < 1 s, SVG 0,3 s; không cần Chromium trong image (~300 MB) | Playwright/Chromium in HTML (nặng, chậm); vẽ phía trình duyệt (khó in khổ lớn, phông) |
+| ADR-021 | 2026-11-09 | **Nhập Excel hai bước**: kiểm tra (lưu dòng thô + lỗi vào `imports`) → xác nhận (lập lại kế hoạch với dữ liệu hiện tại rồi ghi) → hoàn tác 24 h (xoá cứng quan hệ, xoá mềm người). Nối vào phả cũ bằng Mã = id người đã có (lấy từ file xuất); dòng người đã có bị bỏ qua, không cập nhật. Thuỷ tổ = người không cha mẹ, có con, nam, dòng trên. `partner_a` = người có cha mẹ trong họ | Người lớn tuổi quen Excel; thấy lỗi theo dòng trước khi ghi; an toàn khi lỡ tay | Sửa người đã có qua Excel (dễ ghi đè nhầm); nhập ngay không xem trước |
 | ADR-011 | 2026-11-01 | `CLAN_MODE=single`: chỉ tạo được dòng họ đầu tiên, `GET /instance` cho web biết dòng họ chính; vẫn giữ RLS đa dòng họ | Chủ dự án dùng riêng cho một dòng họ; giữ đường mở rộng | Bỏ hẳn `clan_id` / RLS |
 | ADR-010 | 2026-11-01 | API dùng **Kysely** (query builder có kiểu) thay Prisma Client; Prisma chỉ giữ schema + migration. NestJS 12 ESM | Đặt `set_config('app.clan_id')` trong cùng transaction cho RLS rõ ràng; ltree, CTE đệ quy, `update … from (values …)` viết thẳng SQL; không cần engine nhị phân của Prisma | Prisma Client + `$extends` cho RLS, Drizzle |
 | ADR-009 | 2026-11-01 | Ràng buộc phả hệ cả ở DB (trigger chặn vòng lặp, tự làm cha mẹ, nối chéo dòng họ) ngoài kiểm tra ở `genealogy-core` | Phòng thủ nhiều lớp; FK không xét RLS nên cần trigger chặn nối người khác dòng họ | Chỉ kiểm tra ở service |
@@ -412,6 +421,15 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.16.0] — 2026-11-09 — Nhập phả từ Excel, in phả đồ PDF/SVG, xuất danh sách
+### Thêm
+- Nhập từ Excel (ADR-021): file mẫu (Danh sách / Ví dụ / Hướng dẫn), đọc ngày kiểu Việt Nam (1950, 3/1950, 12/3/1950, khoảng 1950, "ngày 5 tháng 4 năm 1941", âm lịch, nhuận), ngày giỗ không năm; kiểm tra theo dòng (thiếu/trùng mã, mã không có, cha là nữ, vòng lặp tổ tiên, cha nhiều vợ thiếu Mã mẹ, người chưa nối vào cây); file đánh dấu lỗi; xem trước số người, số đời, thuỷ tổ; xác nhận ghi theo lô (2.004 người: kiểm tra 0,4 s, ghi 3,5 s); hoàn tác 24 giờ; lịch sử nhập. Nối nhánh mới vào phả cũ bằng file xuất.
+- In phả đồ (ADR-020): PDF khổ A4–A0 hoặc giấy cuộn, một trang hoặc chia trang ghép (lặp lề Đời, nhãn hàng/cột), kèm ảnh chân dung; SVG nhúng phông; báo trước số trang và cỡ chữ khi in. Xuất danh sách Excel đúng mẫu nhập.
+- Web: trang **Nhập – xuất** (`/dong-ho/:id/nhap-xuat`), nút **In / Xuất** trên phả đồ (bắt đầu từ người đang chọn), liên kết trong Cài đặt và ở màn hình phả đồ trống.
+- `wrapName`, `lifespan` chuyển vào `@coinguon/genealogy-core` (web và bản in dùng chung). `TreeBuilder` tách khỏi `TreeController`. `PersonsService.personValues/factRows` dùng chung cho thêm một người và nhập hàng loạt.
+- Thư viện: `exceljs` 4.4 (ép `uuid` ^11.1.1 và `unzipper` ^0.12.3 qua `pnpm-workspace.yaml` — bỏ lỗ hổng mức trung bình và gói không ghi giấy phép), `pdfkit` 0.20, `fontkit` 2; ngoại lệ giấy phép có lý do: jszip (chọn MIT), pako (MIT + Zlib), chainsaw (MIT/X11).
+- Test: 17 test lập kế hoạch nhập + đọc ngày, 9 test API nhập – xuất, 1 test trình duyệt (in PDF → xuất danh sách → thêm dòng → file lỗi → nhập → hoàn tác).
 
 ## [0.15.0] — 2026-11-09 — Thư viện ảnh theo album
 ### Thêm
@@ -652,6 +670,10 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-028 | Bộ nhớ đệm, số đếm thống kê, giới hạn tần suất nằm trong bộ nhớ **một** tiến trình API. Chạy nhiều bản API (cân bằng tải) thì mỗi bản giữ cache riêng (dữ liệu cũ tới 10 phút ở bản khác) và đếm sai | Trung bình khi mở rộng | Một bản API đủ cho một dòng họ. Khi cần: Redis pub/sub báo xoá cache + Redis cho thống kê, giới hạn tần suất |
 | KI-029 | Khởi động lại API giữa ngày: khách quay lại trong ngày bị đếm thêm một "người xem"; số chưa ghi (≤ 1 phút) mất nếu API bị tắt đột ngột (tắt bình thường vẫn ghi) | Thấp | Chấp nhận; chuyển Redis nếu cần chính xác |
 | KI-030 | Form lời nhắn chỉ chống spam bằng giới hạn 10 lần/giờ/IP + ô bẫy; chưa bật Cloudflare Turnstile | Thấp | Bật Turnstile (schema đã có `turnstileToken`) khi bị spam |
+| KI-032 | Nhập Excel chỉ **thêm người mới**; dòng người đã có bị bỏ qua (không sửa được hàng loạt qua Excel). Không nhập được tổ tiên phía trên thuỷ tổ hiện có (dùng "Thêm cha/mẹ" trên phả đồ) | Thấp | Thêm chế độ cập nhật có xem trước thay đổi khi cần |
+| KI-033 | Ngày giỗ ghi riêng (không rõ năm mất) chỉ nhập được qua Excel; form sửa người chưa có ô này, và sửa ngày mất trên form sẽ tính lại (ghi đè) ngày giỗ | Trung bình | Thêm ô "Ngày giỗ (âm lịch)" vào form người |
+| KI-034 | Cây rất rộng (cả nghìn người cùng đời) in một trang thì chữ li ti, chia trang thì hàng trăm trang — trang Nhập – xuất báo trước và khuyên in từng nhánh. Chưa có xuất ảnh PNG | Thấp | In từng chi; thêm PNG khi cần |
+| KI-035 | Kiểm thử trình duyệt: Playwright không đưa được file từ đường dẫn có dấu tiếng Việt vào ô chọn file — file thử ghi vào thư mục tạm không dấu | Thấp | — |
 | KI-031 | Đổi ảnh banner / tên dòng họ: ảnh xem trước khi chia sẻ link cập nhật sau ~15 giây; Zalo/Facebook còn nhớ ảnh cũ của link đã chia sẻ (dùng công cụ "Sharing Debugger" của Facebook để làm mới) | Thấp | — |
 | KI-027 | Số điện thoại chưa được xác minh (OTP SMS): ai cũng đăng ký được bằng số của người khác (vẫn phải chờ quản trị duyệt) | Trung bình | Quản trị kiểm tra trước khi duyệt; thêm OTP SMS/Zalo khi có ngân sách |
 | KI-008 | Bố cục phả đồ hiện là dạng "khối căn giữa", chưa nén nhánh kiểu Reingold–Tilford (cây rộng hơn cần thiết) | Thấp | Tối ưu khi làm trình chỉnh sửa phả đồ nếu cây quá rộng |
