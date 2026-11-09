@@ -25,6 +25,19 @@ export const personFactsSchema = z
   .strict();
 export type PersonFacts = z.infer<typeof personFactsSchema>;
 
+/**
+ * Ngày giỗ âm lịch ghi riêng (ngày/tháng, không năm) — khi không rõ ngày mất đủ ngày tháng.
+ * Có ngày mất đủ ngày tháng thì ngày giỗ luôn tự tính từ ngày mất, giá trị này bị bỏ qua.
+ */
+export const lunarAnniversarySchema = z
+  .object({
+    day: z.number().int().min(1, { message: "Ngày âm lịch từ 1 đến 30" }).max(30, { message: "Ngày âm lịch từ 1 đến 30" }),
+    month: z.number().int().min(1, { message: "Tháng từ 1 đến 12" }).max(12, { message: "Tháng từ 1 đến 12" }),
+    isLeapMonth: z.boolean().default(false),
+  })
+  .strict();
+export type LunarAnniversary = z.infer<typeof lunarAnniversarySchema>;
+
 /** Các trường hồ sơ, không có giá trị mặc định (dùng chung cho tạo mới và sửa). */
 const personBaseSchema = z.object({
   fullName: z.string().trim().min(1, { message: "Cần nhập họ tên" }).max(200),
@@ -33,6 +46,7 @@ const personBaseSchema = z.object({
   isLiving: z.boolean(),
   birthDate: flexibleDateSchema.nullable(),
   deathDate: flexibleDateSchema.nullable(),
+  deathAnniversaryLunar: lunarAnniversarySchema.nullable(),
   privacy: privacySchema,
   branchId: idSchema.nullable(),
   biography: biographySchema.nullable(),
@@ -46,6 +60,7 @@ export const personCreateSchema = personBaseSchema
     isLiving: z.boolean().default(true),
     birthDate: flexibleDateSchema.nullable().optional(),
     deathDate: flexibleDateSchema.nullable().optional(),
+    deathAnniversaryLunar: lunarAnniversarySchema.nullable().optional(),
     /** Bỏ trống → hệ thống áp mặc định theo BR-PRIV-01 */
     privacy: privacySchema.optional(),
     branchId: idSchema.nullable().optional(),
@@ -55,6 +70,10 @@ export const personCreateSchema = personBaseSchema
   .refine((p) => !(p.isLiving && p.deathDate), {
     message: "Người còn sống không có ngày mất",
     path: ["deathDate"],
+  })
+  .refine((p) => !(p.isLiving && p.deathAnniversaryLunar), {
+    message: "Người còn sống không có ngày giỗ",
+    path: ["deathAnniversaryLunar"],
   });
 export type PersonCreateInput = z.infer<typeof personCreateSchema>;
 

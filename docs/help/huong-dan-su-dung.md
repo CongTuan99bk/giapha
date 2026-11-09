@@ -1,6 +1,6 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.11
+version: 1.12
 updated: 2026-11-09
 audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
@@ -92,7 +92,7 @@ Nếu bạn đã đăng nhập và liên kết tài khoản với chính mình t
 ## 5. Lịch giỗ và nhận nhắc
 
 1. Bấm thẻ **Lịch giỗ**: các ngày giỗ trong 12 tháng tới, chia theo tháng. Mỗi dòng có tờ lịch nhỏ ghi ngày dương, thứ, ngày âm; tên người (bấm để mở trên phả đồ); **giỗ đầu**, **giỗ hết** hoặc **giỗ lần thứ mấy**; và **còn bao nhiêu ngày**.
-2. Ngày giỗ được tính tự động từ ngày mất đã ghi trong phả — ghi âm lịch hay dương lịch đều được, miễn đủ **ngày và tháng**. Ngày mất ghi dương lịch được đổi sang âm lịch để tính giỗ.
+2. Ngày giỗ được tính tự động từ ngày mất đã ghi trong phả — ghi âm lịch hay dương lịch đều được, miễn đủ **ngày và tháng**. Ngày mất ghi dương lịch được đổi sang âm lịch để tính giỗ. Không rõ ngày mất nhưng gia đình vẫn cúng giỗ: ghi vào ô **Ngày giỗ (âm lịch)** khi sửa người đó (mục 13).
 3. **Trang chủ** của dòng họ có khung **Giỗ sắp tới** (60 ngày tới).
 4. **Nhắc trên điện thoại:** ở thẻ Lịch giỗ bấm **Thêm vào lịch điện thoại** → mở file vừa tải (iPhone: chạm vào file → **Thêm tất cả**; Android: mở bằng Google Lịch). Lịch có các ngày giỗ hai năm tới, nhắc trước 3 ngày. Đầu mỗi năm nên tải lại để cập nhật người mới ghi.
 5. Cuối trang báo có bao nhiêu người đã mất nhưng **chưa ghi đủ ngày, tháng mất** — những người này chưa có trong lịch.
@@ -203,7 +203,9 @@ Người mới hiện ngay trên cây và được chọn sẵn; số đời đ�
    - **Quê quán, nơi sinh**; **Nghề nghiệp, chức tước, học vị**; **Nơi an táng (mộ phần)** (chỉ với người đã mất);
    - **Tiểu sử**: công đức, sự nghiệp, kỷ niệm. Xuống dòng bao nhiêu thì hiện đúng bấy nhiêu.
    Bảng thông tin hiện đủ các mục này, cùng **thứ bậc** trong nhà (ví dụ *Trưởng nam, trong 3 người con*).
-3. **Nhập ngày tháng:** gõ ngày, tháng, năm; chọn **Dương lịch** hoặc **Âm lịch** (âm lịch có ô **Tháng nhuận**). Chỉ biết năm thì để trống ngày, tháng; không chắc năm thì tích **Chỉ biết khoảng năm**. Nhập đủ ngày và tháng mất thì hệ thống **tự tính ngày giỗ âm lịch** (kể cả khi bạn nhập ngày mất theo dương lịch).
+3. **Nhập ngày tháng:** gõ ngày, tháng, năm; chọn **Dương lịch** hoặc **Âm lịch** (âm lịch có ô **Tháng nhuận**). Chỉ biết năm thì để trống ngày, tháng; không chắc năm thì tích **Chỉ biết khoảng năm**. Nhập đủ ngày và tháng mất thì hệ thống **tự tính ngày giỗ âm lịch** (kể cả khi bạn nhập ngày mất theo dương lịch) và hiện ngay dưới ô ngày mất, ví dụ *Ngày giỗ: mùng 1 tháng Giêng (âm lịch) — tự tính từ ngày mất*.
+   - **Không rõ ngày mất, chỉ biết ngày giỗ** (phả cũ thường ghi vậy): để trống ngày mất (hoặc chỉ ghi năm), rồi điền ô **Ngày giỗ (âm lịch)**: ngày và tháng âm lịch, tích **Tháng nhuận** nếu giỗ vào tháng nhuận. Ví dụ giỗ ngày 12 tháng 3 âm lịch: ghi 12 và 3. Ô này chỉ hiện với người đã mất.
+   - Sau này biết đủ ngày mất thì nhập ngày mất — ngày giỗ chuyển sang tự tính theo ngày mất.
 4. **Ai được xem thông tin:**
    - **Mọi người** — cả khách xem website công khai.
    - **Chỉ thành viên dòng họ** — mặc định cho người còn sống.

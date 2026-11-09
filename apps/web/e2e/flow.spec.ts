@@ -634,3 +634,42 @@ test("nhập – xuất: in phả đồ PDF, xuất danh sách Excel, thêm dòn
   await expect(o.locator(node("Lê Văn Nhập"))).toHaveCount(0);
   await o.close();
 });
+
+test("ngày giỗ âm lịch ghi riêng khi không rõ ngày mất; có ngày mất thì tự tính", async ({ browser }) => {
+  const p = await browser.newPage();
+  await loginOwner(p);
+  await p.getByRole("link", { name: "Phả đồ", exact: true }).click();
+  const pnl = () => p.getByRole("complementary", { name: "Thông tin người được chọn" });
+  await p.locator(node("Lê Văn Cả")).click();
+
+  // có ngày mất đủ ngày tháng → ngày giỗ tự tính, không có ô ghi riêng
+  await pnl().getByRole("button", { name: "Sửa thông tin" }).click();
+  await expect(pnl().getByText("mùng 1 tháng Giêng (âm lịch)")).toBeVisible();
+  await expect(pnl().getByText("— tự tính từ ngày mất.")).toBeVisible();
+  await expect(pnl().getByLabel("Ngày giỗ — ngày âm lịch")).toHaveCount(0);
+  await pnl().getByRole("button", { name: "Huỷ" }).click();
+
+  // con đã mất, phả chỉ ghi ngày giỗ
+  await pnl().getByRole("button", { name: "Thêm con với Hai" }).click();
+  await pnl().getByLabel("Họ và tên").fill("Lê Văn Giỗ");
+  await pnl().getByText("Đã mất", { exact: true }).click();
+  await pnl().getByLabel("Ngày giỗ — ngày âm lịch").fill("12");
+  await pnl().getByRole("button", { name: "Thêm con", exact: true }).click();
+  await expect(pnl().getByText("Cần nhập cả ngày và tháng âm lịch")).toBeVisible();
+  await pnl().getByLabel("Ngày giỗ — tháng âm lịch").fill("3");
+  await pnl().getByRole("button", { name: "Thêm con", exact: true }).click();
+  await expect(pnl().getByRole("heading", { name: "Lê Văn Giỗ" })).toBeVisible();
+  await expect(pnl().getByText("ngày 12 tháng 3 (âm lịch)")).toBeVisible();
+
+  // sửa lại: ô ngày giỗ điền sẵn, đổi sang tháng nhuận
+  await pnl().getByRole("button", { name: "Sửa thông tin" }).click();
+  await expect(pnl().getByLabel("Ngày giỗ — ngày âm lịch")).toHaveValue("12");
+  await expect(pnl().getByLabel("Ngày giỗ — tháng âm lịch")).toHaveValue("3");
+  await pnl().getByLabel("Tháng nhuận").check();
+  await pnl().getByRole("button", { name: "Lưu thay đổi" }).click();
+  await expect(pnl().getByText("ngày 12 tháng 3 nhuận (âm lịch)")).toBeVisible();
+
+  await p.getByRole("link", { name: "Lịch giỗ" }).click();
+  await expect(p.getByRole("link", { name: "Lê Văn Giỗ" })).toBeVisible();
+  await p.close();
+});

@@ -2,8 +2,8 @@
 
 import { useId, useState, type FormEvent } from "react";
 import { fieldErrors } from "@/lib/api";
-import { fromDateFields, toDateFields, type DateFields } from "@/lib/format";
-import type { FactType, Gender, OtherNameType, PersonInput, Privacy } from "@/lib/types";
+import { anniversaryFromDeath, anniversaryText, fromDateFields, toDateFields, type DateFields } from "@/lib/format";
+import type { FactType, Gender, LunarAnniversary, OtherNameType, PersonInput, Privacy } from "@/lib/types";
 import { FormError } from "./field";
 
 export interface PersonFormValues {
@@ -12,6 +12,7 @@ export interface PersonFormValues {
   isLiving: boolean;
   birthDate: PersonInput["birthDate"];
   deathDate: PersonInput["deathDate"];
+  deathAnniversaryLunar?: LunarAnniversary | null;
   privacy?: Privacy | undefined;
   otherNames?: Array<{ type: string; value: string }>;
   facts?: Partial<Record<FactType, string>>;
@@ -58,6 +59,15 @@ export function PersonForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
   const [isLiving, setIsLiving] = useState(initial?.isLiving ?? true);
   const [birth, setBirth] = useState<DateFields>(toDateFields(initial?.birthDate));
   const [death, setDeath] = useState<DateFields>(toDateFields(initial?.deathDate));
+  // ngày giỗ ghi riêng: chỉ điền sẵn khi giá trị cũ không phải tự tính từ ngày mất
+  const manualInitial = anniversaryFromDeath(initial?.deathDate) ? null : (initial?.deathAnniversaryLunar ?? null);
+  const [gio, setGio] = useState({
+    day: manualInitial ? String(manualInitial.day) : "",
+    month: manualInitial ? String(manualInitial.month) : "",
+    isLeapMonth: manualInitial?.isLeapMonth ?? false,
+  });
+  const deathParsed = fromDateFields(death);
+  const derivedGio = typeof deathParsed === "string" ? null : anniversaryFromDeath(deathParsed);
   const [privacy, setPrivacy] = useState<Privacy | "">(initial?.privacy ?? "");
   const [names, setNames] = useState(namesFrom(initial?.otherNames));
   const [facts, setFacts] = useState<Record<FactType, string>>({
@@ -79,6 +89,15 @@ export function PersonForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
     if (typeof birthDate === "string") next.birthDate = birthDate;
     const deathDate = isLiving ? null : fromDateFields(death);
     if (typeof deathDate === "string") next.deathDate = deathDate;
+    let anniversary: LunarAnniversary | null = null;
+    if (!isLiving && !derivedGio && (gio.day.trim() || gio.month.trim())) {
+      const d = Number(gio.day.trim());
+      const m = Number(gio.month.trim());
+      if (!gio.day.trim() || !gio.month.trim()) next.deathAnniversaryLunar = "Cần nhập cả ngày và tháng âm lịch";
+      else if (!Number.isInteger(d) || d < 1 || d > 30) next.deathAnniversaryLunar = "Ngày âm lịch từ 1 đến 30";
+      else if (!Number.isInteger(m) || m < 1 || m > 12) next.deathAnniversaryLunar = "Tháng từ 1 đến 12";
+      else anniversary = { day: d, month: m, isLeapMonth: gio.isLeapMonth };
+    }
     setErrors(next);
     setFormError(null);
     if (Object.keys(next).length > 0) return;
@@ -91,6 +110,7 @@ export function PersonForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
         isLiving,
         birthDate: birthDate as PersonInput["birthDate"],
         deathDate: deathDate as PersonInput["deathDate"],
+        deathAnniversaryLunar: anniversary,
         ...(privacy ? { privacy } : {}),
         otherNames: OTHER_NAME_FIELDS.filter((f) => names[f.type].trim()).map((f) => ({ type: f.type, value: names[f.type].trim() })),
         facts: {
@@ -166,6 +186,17 @@ export function PersonForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
           hint="Nhập đủ ngày và tháng để hệ thống tự tính ngày giỗ âm lịch."
         />
       )}
+
+      {!isLiving &&
+        (derivedGio ? (
+          <p className="rounded-md border border-ngoc-200 bg-giay px-3 py-2 text-sm">
+            <span className="text-reu">Ngày giỗ: </span>
+            <span className="font-medium">{anniversaryText(derivedGio)}</span>
+            <span className="text-reu"> — tự tính từ ngày mất.</span>
+          </p>
+        ) : (
+          <AnniversaryGroup value={gio} onChange={setGio} error={errors.deathAnniversaryLunar} />
+        ))}
 
       <details className="group rounded-md border border-ngoc-200 bg-ngoc-50/60 px-4 py-3" open={hasMore || undefined}>
         <summary className="cursor-pointer font-medium text-son">Thông tin thêm: tên huý, quê quán, tiểu sử…</summary>
@@ -263,6 +294,43 @@ function TextField({
       </label>
       <input id={id} className="o-nhap" value={value} maxLength={maxLength} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
     </div>
+  );
+}
+
+/** Ngày giỗ âm lịch ghi riêng (ngày, tháng, tháng nhuận) — khi không rõ ngày mất đủ ngày tháng */
+function AnniversaryGroup({
+  value,
+  onChange,
+  error,
+}: {
+  value: { day: string; month: string; isLeapMonth: boolean };
+  onChange: (v: { day: string; month: string; isLeapMonth: boolean }) => void;
+  error?: string | undefined;
+}) {
+  const uid = useId();
+  const set = (patch: Partial<typeof value>) => onChange({ ...value, ...patch });
+  const num = "o-nhap text-center tabular-nums";
+  return (
+    <fieldset aria-describedby={error ? `${uid}-loi` : `${uid}-goiy`}>
+      <legend className="nhan">Ngày giỗ (âm lịch)</legend>
+      <div className="grid grid-cols-[1fr_1fr_1.4fr] items-center gap-2">
+        <input aria-label="Ngày giỗ — ngày âm lịch" inputMode="numeric" placeholder="Ngày" className={num} value={value.day} onChange={(e) => set({ day: e.target.value })} />
+        <input aria-label="Ngày giỗ — tháng âm lịch" inputMode="numeric" placeholder="Tháng" className={num} value={value.month} onChange={(e) => set({ month: e.target.value })} />
+        <label className="inline-flex items-center gap-1.5 text-sm text-reu">
+          <input type="checkbox" checked={value.isLeapMonth} onChange={(e) => set({ isLeapMonth: e.target.checked })} />
+          Tháng nhuận
+        </label>
+      </div>
+      {error ? (
+        <p id={`${uid}-loi`} className="mt-1 text-sm text-loi">
+          {error}
+        </p>
+      ) : (
+        <p id={`${uid}-goiy`} className="mt-1 text-sm text-reu">
+          Khi không rõ ngày mất, nhưng gia đình vẫn cúng giỗ (phả cũ thường chỉ ghi ngày giỗ). Ví dụ giỗ ngày 12 tháng 3 âm lịch: ghi 12 và 3.
+        </p>
+      )}
+    </fieldset>
   );
 }
 

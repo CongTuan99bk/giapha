@@ -1,5 +1,5 @@
-import { canChiOfYear, lunarMonthName } from "@coinguon/lunar-vn";
-import type { FlexibleDate, Gender, Person } from "./types";
+import { canChiOfYear, lunarMonthName, solarToLunar } from "@coinguon/lunar-vn";
+import type { FlexibleDate, Gender, LunarAnniversary, Person } from "./types";
 
 /** "1920 – 1990", "1920 –" (còn sống: "s. 1990"), "?" khi không rõ. */
 export { lifespan } from "@coinguon/genealogy-core";
@@ -111,4 +111,21 @@ export function formatPhone(phone: string | null | undefined): string {
 /** Tên đăng nhập để hiển thị: số điện thoại (dễ nhận ra với người lớn tuổi) hoặc email. */
 export function loginLabel(u: { email: string | null; phone: string | null }): string {
   return [formatPhone(u.phone), u.email].filter(Boolean).join(" · ");
+}
+
+/** Ngày giỗ âm lịch suy từ ngày mất (giống máy chủ): chỉ khi ngày mất đủ ngày tháng; không thì null */
+export function anniversaryFromDeath(d: FlexibleDate | null | undefined): LunarAnniversary | null {
+  if (!d || d.precision !== "day" || !d.day || !d.month) return null;
+  if (d.calendar === "lunar") return { day: d.day, month: d.month, isLeapMonth: Boolean(d.isLeapMonth) };
+  try {
+    const l = solarToLunar({ day: d.day, month: d.month, year: d.year });
+    return { day: l.day, month: l.month, isLeapMonth: l.isLeapMonth };
+  } catch {
+    return null;
+  }
+}
+
+/** "mùng 1 tháng Giêng (âm lịch)", "ngày 12 tháng Ba nhuận (âm lịch)" */
+export function anniversaryText(a: LunarAnniversary): string {
+  return `${a.day <= 10 ? "mùng" : "ngày"} ${a.day} tháng ${lunarMonthName(a.month)}${a.isLeapMonth ? " nhuận" : ""} (âm lịch)`;
 }

@@ -3,6 +3,7 @@ import { solarToLunar } from "@coinguon/lunar-vn";
 import {
   defaultPrivacy,
   type FlexibleDate,
+  type LunarAnniversary,
   type ParentLinkInput,
   PERSON_FACT_TYPES,
   type PersonCreateInput,
@@ -18,6 +19,15 @@ import type { Persons } from "../db/generated.js";
 import { GraphService } from "../tree/graph.service.js";
 
 type PersonRow = Selectable<Persons>;
+
+/**
+ * Ngày giỗ lưu vào hồ sơ: có ngày mất đủ ngày tháng thì luôn tính từ ngày mất (BR-LUNAR-02, 05);
+ * không thì dùng ngày giỗ ghi riêng (phả cũ thường chỉ ghi ngày giỗ, không rõ năm mất). Người còn sống: không có.
+ */
+export function storedAnniversary(isLiving: boolean, death: FlexibleDate | null | undefined, manual: LunarAnniversary | null | undefined) {
+  if (isLiving) return null;
+  return deathAnniversaryOf(death) ?? (manual ? { day: manual.day, month: manual.month, isLeapMonth: Boolean(manual.isLeapMonth) } : null);
+}
 
 /** Ngày giỗ âm lịch suy từ ngày mất (BR-LUNAR-02, 05). Không đủ ngày/tháng → null. */
 export function deathAnniversaryOf(death: FlexibleDate | null | undefined) {
@@ -77,7 +87,7 @@ export class PersonsService {
       is_living: input.isLiving,
       birth_date: json(input.birthDate),
       death_date: json(input.deathDate),
-      death_anniv_lunar: json(deathAnniversaryOf(input.deathDate)),
+      death_anniv_lunar: json(storedAnniversary(input.isLiving, input.deathDate, input.deathAnniversaryLunar)),
       biography: json(input.biography?.text ? input.biography : null),
       privacy: input.privacy ?? defaultPrivacy(input.isLiving),
       branch_id: input.branchId ?? null,
@@ -96,21 +106,7 @@ export class PersonsService {
   async insertPerson(trx: Tx, clanId: string, input: PersonCreateInput): Promise<PersonRow> {
     const row = await trx
       .insertInto("persons")
-      .values({
-        id: randomUUID(),
-        clan_id: clanId,
-        full_name: input.fullName,
-        other_names: JSON.stringify(input.otherNames ?? []),
-        gender: input.gender,
-        is_living: input.isLiving,
-        birth_date: json(input.birthDate),
-        death_date: json(input.deathDate),
-        death_anniv_lunar: json(deathAnniversaryOf(input.deathDate)),
-        biography: json(input.biography?.text ? input.biography : null),
-        privacy: input.privacy ?? defaultPrivacy(input.isLiving),
-        branch_id: input.branchId ?? null,
-        updated_at: new Date(),
-      })
+      .values(this.personValues(clanId, input))
       .returningAll()
       .executeTakeFirstOrThrow();
     if (input.facts) await this.saveFacts(trx, clanId, row.id, input.facts);
@@ -178,6 +174,14 @@ export class PersonsService {
     const isLiving = input.isLiving ?? before.is_living;
     const deathDate = input.deathDate !== undefined ? input.deathDate : (before.death_date as FlexibleDate | null);
     if (isLiving && deathDate) throw unprocessable("LIVING_WITH_DEATH_DATE", "Người còn sống không có ngày mất");
+    if (isLiving && input.deathAnniversaryLunar) {
+      throw unprocessable("LIVING_WITH_ANNIVERSARY", "Người còn sống không có ngày giỗ", [{ path: "deathAnniversaryLunar", message: "Người còn sống không có ngày giỗ" }]);
+    }
+    // Ngày giỗ ghi riêng hiện có (không suy từ ngày mất cũ) được giữ khi chỉ sửa trường khác
+    const beforeAnniv = before.death_anniv_lunar as LunarAnniversary | null;
+    const beforeManual = deathAnniversaryOf(before.death_date as FlexibleDate | null) ? null : beforeAnniv;
+    const touchesAnniv = input.deathDate !== undefined || input.deathAnniversaryLunar !== undefined || input.isLiving !== undefined;
+    const anniversary = storedAnniversary(isLiving, deathDate, input.deathAnniversaryLunar !== undefined ? input.deathAnniversaryLunar : beforeManual);
 
     const updated = await trx
       .updateTable("persons")
@@ -187,10 +191,8 @@ export class PersonsService {
         ...(input.gender !== undefined && { gender: input.gender }),
         ...(input.isLiving !== undefined && { is_living: input.isLiving }),
         ...(input.birthDate !== undefined && { birth_date: json(input.birthDate) }),
-        ...(input.deathDate !== undefined && {
-          death_date: json(input.deathDate),
-          death_anniv_lunar: json(deathAnniversaryOf(input.deathDate)),
-        }),
+        ...(input.deathDate !== undefined && { death_date: json(input.deathDate) }),
+        ...(touchesAnniv && { death_anniv_lunar: json(anniversary) }),
         ...(input.privacy !== undefined && { privacy: input.privacy }),
         ...(input.branchId !== undefined && { branch_id: input.branchId }),
         ...(input.biography !== undefined && { biography: json(input.biography?.text ? input.biography : null) }),

@@ -5,7 +5,7 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.16.0 |
+| Phiên bản file | 0.16.1 |
 | Cập nhật lần cuối | 2026-11-09 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **MVP phần 2: website công khai, thống kê truy cập, lời nhắn của khách, thư viện ảnh theo album, nhập phả từ Excel, in phả đồ PDF/SVG xong; chịu tải đông người xem (bộ nhớ đệm, nén). Tiếp theo: ứng dụng iOS/Android** |
@@ -52,7 +52,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Sổ tay chủ sở hữu & Hướng dẫn sử dụng v1.0 | Xong (2026-11-01) | Viết theo thiết kế; đối chiếu lại tên nút, thêm ảnh chụp khi có giao diện |
 | Giai đoạn 0 — Nền móng (tuần 1–2) | **Xong (2026-11-01)** | Monorepo, CI, schema + RLS, genealogy-core, lunar-vn, schemas — 126 test xanh |
 | MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Xong phần chính (2026-11-02)** | Đăng nhập email/số điện thoại, tạo dòng họ, phả đồ, thêm/sửa/xoá người, danh sách, xưng hô, mời/duyệt thành viên, vai trò, ảnh, trang chủ, lịch giỗ, PWA, demo Docker — 118 test API + 24 test trình duyệt. Nhập phả đầy đủ xong 0.11.0 |
-| MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | **Đang làm** | Xong: website công khai + ban liên lạc (0.12), thống kê truy cập, lời nhắn của khách, ảnh xem trước khi chia sẻ link, tối ưu đông người dùng (0.14), thư viện ảnh theo album (0.15), nhập Excel + in PDF/SVG + xuất danh sách (0.16) — 170 test API + 27 test trình duyệt. Còn: sự kiện họp họ |
+| MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | **Đang làm** | Xong: website công khai + ban liên lạc (0.12), thống kê truy cập, lời nhắn của khách, ảnh xem trước khi chia sẻ link, tối ưu đông người dùng (0.14), thư viện ảnh theo album (0.15), nhập Excel + in PDF/SVG + xuất danh sách (0.16) — 177 test API + 28 test trình duyệt. Còn: sự kiện họp họ |
 | Phase 2 (tuần 15–24), Phase 3 (tuần 25–32) | Chưa bắt đầu | |
 
 ### 2.2. Việc đang làm
@@ -422,6 +422,13 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
 
+## [0.16.1] — 2026-11-09 — Ô "Ngày giỗ (âm lịch)" trong form người
+### Thêm
+- Trường `deathAnniversaryLunar {day 1–30, month 1–12, isLeapMonth}` trong tạo / sửa người (`lunarAnniversarySchema`). Quy tắc (`storedAnniversary`): người còn sống → không có giỗ (422 `deathAnniversaryLunar` nếu gửi); ngày mất đủ ngày tháng → giỗ **luôn** tự tính từ ngày mất, giá trị gửi lên bị bỏ qua; không thì dùng giá trị ghi riêng. Sửa trường khác giữ nguyên giỗ ghi riêng; đổi ngày mất từ đủ ngày → chỉ năm thì giỗ tự tính cũ bị xoá.
+- Form người (thêm / sửa, cả khi thêm vợ chồng, con, cha mẹ): người đã mất có ngày mất đủ ngày tháng → hiện "Ngày giỗ: … — tự tính từ ngày mất"; không thì hiện ô Ngày, Tháng âm lịch, Tháng nhuận (kiểm tra ngay trên form).
+- Nhập Excel dùng chung trường này (bỏ ghi đè riêng `death_anniv_lunar`).
+- Test: 6 test API, 1 test trình duyệt.
+
 ## [0.16.0] — 2026-11-09 — Nhập phả từ Excel, in phả đồ PDF/SVG, xuất danh sách
 ### Thêm
 - Nhập từ Excel (ADR-021): file mẫu (Danh sách / Ví dụ / Hướng dẫn), đọc ngày kiểu Việt Nam (1950, 3/1950, 12/3/1950, khoảng 1950, "ngày 5 tháng 4 năm 1941", âm lịch, nhuận), ngày giỗ không năm; kiểm tra theo dòng (thiếu/trùng mã, mã không có, cha là nữ, vòng lặp tổ tiên, cha nhiều vợ thiếu Mã mẹ, người chưa nối vào cây); file đánh dấu lỗi; xem trước số người, số đời, thuỷ tổ; xác nhận ghi theo lô (2.004 người: kiểm tra 0,4 s, ghi 3,5 s); hoàn tác 24 giờ; lịch sử nhập. Nối nhánh mới vào phả cũ bằng file xuất.
@@ -671,7 +678,7 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-029 | Khởi động lại API giữa ngày: khách quay lại trong ngày bị đếm thêm một "người xem"; số chưa ghi (≤ 1 phút) mất nếu API bị tắt đột ngột (tắt bình thường vẫn ghi) | Thấp | Chấp nhận; chuyển Redis nếu cần chính xác |
 | KI-030 | Form lời nhắn chỉ chống spam bằng giới hạn 10 lần/giờ/IP + ô bẫy; chưa bật Cloudflare Turnstile | Thấp | Bật Turnstile (schema đã có `turnstileToken`) khi bị spam |
 | KI-032 | Nhập Excel chỉ **thêm người mới**; dòng người đã có bị bỏ qua (không sửa được hàng loạt qua Excel). Không nhập được tổ tiên phía trên thuỷ tổ hiện có (dùng "Thêm cha/mẹ" trên phả đồ) | Thấp | Thêm chế độ cập nhật có xem trước thay đổi khi cần |
-| KI-033 | Ngày giỗ ghi riêng (không rõ năm mất) chỉ nhập được qua Excel; form sửa người chưa có ô này, và sửa ngày mất trên form sẽ tính lại (ghi đè) ngày giỗ | Trung bình | Thêm ô "Ngày giỗ (âm lịch)" vào form người |
+| KI-033 | ~~Ngày giỗ ghi riêng chỉ nhập được qua Excel~~ — xong 0.16.1: form người có ô "Ngày giỗ (âm lịch)" | — | — |
 | KI-034 | Cây rất rộng (cả nghìn người cùng đời) in một trang thì chữ li ti, chia trang thì hàng trăm trang — trang Nhập – xuất báo trước và khuyên in từng nhánh. Chưa có xuất ảnh PNG | Thấp | In từng chi; thêm PNG khi cần |
 | KI-035 | Kiểm thử trình duyệt: Playwright không đưa được file từ đường dẫn có dấu tiếng Việt vào ô chọn file — file thử ghi vào thư mục tạm không dấu | Thấp | — |
 | KI-031 | Đổi ảnh banner / tên dòng họ: ảnh xem trước khi chia sẻ link cập nhật sau ~15 giây; Zalo/Facebook còn nhớ ảnh cũ của link đã chia sẻ (dùng công cụ "Sharing Debugger" của Facebook để làm mới) | Thấp | — |

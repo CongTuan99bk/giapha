@@ -46,7 +46,7 @@ export interface Person extends PersonBrief {
   isLiving: boolean;
   birthDate: FlexibleDate | null;
   deathDate: FlexibleDate | null;
-  deathAnniversaryLunar: { day: number; month: number; isLeapMonth: boolean } | null;
+  deathAnniversaryLunar: LunarAnniversary | null;
   generation: number | null;
   inClan: boolean;
   lineagePath: string | null;
@@ -150,6 +150,8 @@ export interface PersonInput {
   isLiving: boolean;
   birthDate?: FlexibleDate | null;
   deathDate?: FlexibleDate | null;
+  /** Ngày giỗ âm lịch ghi riêng khi không rõ ngày mất đủ ngày tháng */
+  deathAnniversaryLunar?: LunarAnniversary | null;
   privacy?: Privacy;
   otherNames?: Array<{ type: OtherNameType; value: string }>;
   /** null = xoá trường đó */
@@ -425,4 +427,11 @@ export interface TreeExportInfo {
   pageHeightCm: number;
   nameHeightMm: number;
   readable: boolean;
+}
+
+/** Ngày giỗ âm lịch: ngày/tháng, không năm */
+export interface LunarAnniversary {
+  day: number;
+  month: number;
+  isLeapMonth: boolean;
 }

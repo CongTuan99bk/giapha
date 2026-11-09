@@ -174,6 +174,8 @@ export function planImport({ rows, existing, existingUnions, clanHasRoot, now = 
       isLiving,
       birthDate,
       deathDate,
+      // ngày giỗ ghi riêng chỉ dùng khi ngày mất không đủ ngày tháng (đủ thì tự tính)
+      deathAnniversaryLunar: anniversary && deathDate?.precision !== "day" ? anniversary : null,
       otherNames: splitCodes(cells.tenKhac).map((value) => ({ type: "khac" as const, value })),
       facts: {
         ...(cells.queQuan && { birthPlace: cells.queQuan }),

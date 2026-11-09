@@ -138,8 +138,7 @@ export class ImportExportService {
     const personRows = plan.persons.map((p) => {
       const id = randomUUID();
       idOf.set(p.code, id);
-      const values = this.persons.personValues(actor.clanId, p.input, id);
-      return p.anniversary ? { ...values, death_anniv_lunar: JSON.stringify(p.anniversary) } : values;
+      return this.persons.personValues(actor.clanId, p.input, id);
     });
     for (let i = 0; i < personRows.length; i += BATCH) await trx.insertInto("persons").values(personRows.slice(i, i + BATCH)).execute();
     const facts = plan.persons.flatMap((p) => this.persons.factRows(actor.clanId, idOf.get(p.code)!, p.input.facts));
