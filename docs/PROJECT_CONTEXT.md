@@ -5,10 +5,10 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.14.0 |
+| Phiên bản file | 0.15.0 |
 | Cập nhật lần cuối | 2026-11-09 |
 | Người cập nhật | TuanLC, Claude |
-| Giai đoạn hiện tại | **MVP phần 2: website công khai, thống kê truy cập, lời nhắn của khách xong; chịu tải đông người xem (bộ nhớ đệm, nén). Tiếp theo: thư viện ảnh, nhập Excel / xuất PDF** |
+| Giai đoạn hiện tại | **MVP phần 2: website công khai, thống kê truy cập, lời nhắn của khách, thư viện ảnh theo album xong; chịu tải đông người xem (bộ nhớ đệm, nén). Tiếp theo: nhập Excel / xuất PDF** |
 | Mã nguồn | https://github.com/CongTuan99bk/giapha (nhánh `main`, CI xanh) |
 | Tài liệu đặc tả đầy đủ | "Tài liệu dự án: Hệ thống Gia Phả Cội Nguồn" v1.0 — https://claude.ai/artifact/1Wy2PqEVYSLqycMLH8LMzG |
 | Bản thảo kỹ thuật | https://claude.ai/artifact/T24kXNyJ9UkUPdRwMzBkFd |
@@ -52,7 +52,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Sổ tay chủ sở hữu & Hướng dẫn sử dụng v1.0 | Xong (2026-11-01) | Viết theo thiết kế; đối chiếu lại tên nút, thêm ảnh chụp khi có giao diện |
 | Giai đoạn 0 — Nền móng (tuần 1–2) | **Xong (2026-11-01)** | Monorepo, CI, schema + RLS, genealogy-core, lunar-vn, schemas — 126 test xanh |
 | MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Xong phần chính (2026-11-02)** | Đăng nhập email/số điện thoại, tạo dòng họ, phả đồ, thêm/sửa/xoá người, danh sách, xưng hô, mời/duyệt thành viên, vai trò, ảnh, trang chủ, lịch giỗ, PWA, demo Docker — 118 test API + 24 test trình duyệt. Nhập phả đầy đủ xong 0.11.0 |
-| MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | **Đang làm** | Xong: website công khai + ban liên lạc (0.12), thống kê truy cập, lời nhắn của khách, ảnh xem trước khi chia sẻ link, tối ưu đông người dùng (0.14) — 134 test API + 25 test trình duyệt. Còn: sự kiện họp họ, xuất PDF/Excel |
+| MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | **Đang làm** | Xong: website công khai + ban liên lạc (0.12), thống kê truy cập, lời nhắn của khách, ảnh xem trước khi chia sẻ link, tối ưu đông người dùng (0.14), thư viện ảnh theo album (0.15) — 144 test API + 26 test trình duyệt. Còn: sự kiện họp họ, xuất PDF/Excel |
 | Phase 2 (tuần 15–24), Phase 3 (tuần 25–32) | Chưa bắt đầu | |
 
 ### 2.2. Việc đang làm
@@ -62,7 +62,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 1. ~~Lịch giỗ~~ — xong 0.10.0 (còn: nhắc qua email khi có SMTP, sự kiện họp họ/chạp mả).
 2. ~~Hoàn thiện nhập phả~~ — xong 0.11.0 (còn: tiểu sử định dạng chữ đậm/nghiêng, ảnh trong tiểu sử; nhánh/chi).
 3. ~~Website công khai + thông tin liên hệ~~ — xong 0.12.0; ~~thống kê truy cập, form gửi lời nhắn, ảnh xem trước khi chia sẻ link, chịu tải đông người~~ — xong 0.14.0. Còn: nội dung trang công khai cho máy tìm kiếm (Google) vẫn dựng phía trình duyệt; Turnstile cho form lời nhắn khi bị spam.
-3b. Thư viện ảnh/tư liệu theo album (KI-022); nhập Excel / xuất PDF.
+3b. ~~Thư viện ảnh theo album~~ — xong 0.15.0 (còn: video, tài liệu PDF, gắn người vào ảnh, thành viên thường tự đóng góp ảnh). Tiếp: nhập Excel / xuất PDF.
 4. Ứng dụng iOS/Android (Capacitor bọc PWA).
 4. Sửa bảng xưng hô riêng của dòng họ (KI-013); "Tôi gọi người này là gì?" từ người đã gắn "Đây là tôi".
 5. (Tuỳ chọn) chuyển kho GitHub về riêng tư. Chốt các câu hỏi còn lại ở mục 3.2.
@@ -207,7 +207,8 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | kinship | Tra xưng hô | FR-KIN | **API xong** (`GET /kinship`, hai chiều); bảng chưa duyệt (KI-001) |
 | events | Sự kiện, lịch giỗ, nhắc | FR-EVENT | Logic lõi xong (`lunar-vn`); API, job chưa làm |
 | import-export | Excel, PDF/ảnh, sao lưu, GEDCOM (P2) | FR-IO | Chưa làm |
-| media, posts, places | Thư viện, bài viết, bản đồ | FR-MEDIA, FR-CONTENT, FR-GRAVE | Chưa làm |
+| media, albums | Thư viện ảnh theo album | FR-MEDIA | Xong 0.15.0 (chỉ ảnh) |
+| posts, places | Bài viết, bản đồ | FR-CONTENT, FR-GRAVE | Chưa làm |
 | site-settings, contacts, domains | Website, liên hệ ban quản lý, tên miền | FR-SITE | Chưa làm |
 | analytics | Heartbeat, page view, online realtime (SSE), báo cáo ngày | FR-STAT | Chưa làm |
 | audit, trash | Nhật ký, thùng rác | FR-ADMIN | Chưa làm |
@@ -265,6 +266,13 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | `GET /public/media/:id/:variant` | công khai | chỉ `sm/md/lg` (không ảnh gốc), chỉ ảnh banner hoặc chân dung người công khai; `Cache-Control: public, max-age=86400` |
 | `POST /t/pv` · `POST /t/hb` | công khai | thống kê: `{h, v (mã khách 10–32 ký tự), p (đường dẫn, bỏ query), m 0/1, r? (nguồn), pid? (người đang xem)}` → luôn 204; bot (theo user-agent) bị bỏ qua; giới hạn 3000/5 phút/IP |
 | `GET /public/stats` | công khai | `{online, today, total}` — nhớ 30 giây |
+| `GET /clans/:clanId/albums` | member | `{albums[{id, title, description, visibility, coverId, createdAt, count, cover, lastAddedAt}], loose{count}}` — album có ảnh mới lên trước; bìa = ảnh đã chọn, không thì ảnh đầu |
+| `POST /clans/:clanId/albums` · `PATCH …/albums/:id` | editor | `{title 1–120, description? ≤2000, visibility public\|members (mặc định members), coverId? (phải là ảnh trong album → 422 COVER_NOT_IN_ALBUM)}` |
+| `GET /clans/:clanId/albums/:id` · `GET …/albums/anh-le` | member | `{album, photos[MediaItem]}` — ảnh cũ trước; `anh-le` = ảnh chưa xếp album (album: null) |
+| `DELETE /clans/:clanId/albums/:id?xoaAnh=1` | editor | mặc định giữ ảnh (về ảnh lẻ); `xoaAnh=1` xoá luôn ảnh (file xoá sau khi commit) |
+| `POST /clans/:clanId/media/move` | editor | `{mediaIds[1..500], albumId \| null}` → `{moved}`; ảnh bìa bị chuyển đi thì album tự lấy ảnh đầu |
+| `POST /clans/:clanId/media` (trường `albumId`) | editor | tải thẳng vào album |
+| `GET /public/albums` · `GET /public/albums/:id` | công khai | chỉ album `public` có ảnh; ảnh chỉ cỡ sm/md/lg (không ảnh gốc); ảnh trong album công khai được phép qua `/public/media` |
 | `POST /public/messages` | công khai | lời nhắn `{name, replyTo (số điện thoại hoặc email), message 5–4000, website? (ô bẫy — có chữ thì bỏ qua, vẫn 204)}` → 204, email báo quản trị (nếu có SMTP); 10 lần/giờ/IP |
 | `GET /clans/:clanId/messages?status=open\|all` · `PATCH …/:id {handled}` · `DELETE …/:id` | admin | `{items[{id, name, replyTo, message, createdAt, handledAt}], open}` (200 mới nhất) |
 | `GET /clans/:clanId/stats/live` | admin | `{online, guests, members, pages[{path, online}], at}` — khách gửi tín hiệu trong 90 giây |
@@ -404,6 +412,12 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.15.0] — 2026-11-09 — Thư viện ảnh theo album
+### Thêm
+- API album: danh sách (số ảnh, ảnh bìa), tạo/sửa (tên, mô tả, ai được xem, ảnh bìa), xoá (giữ hoặc xoá ảnh), chuyển nhiều ảnh, tải thẳng vào album, "Ảnh lẻ"; album công khai trên `/public/albums`. Không cần migration (bảng `albums`, cột `media.album_id` có từ 0.1).
+- Web: thẻ **Ảnh** cho thành viên — lưới album, trang album (thêm nhiều ảnh một lúc, 3 ảnh song song, báo ảnh lỗi; xem lớn, tải ảnh gốc), chế độ **Chọn ảnh** (chuyển album, đặt ảnh bìa, sửa chú thích, xoá), sửa/xoá album. Trang công khai: thẻ **Ảnh** (`/xem/anh`) và mục "Thư viện ảnh" trên trang chủ công khai.
+- Test: 10 test API album, 1 test trình duyệt (tạo album → tải 3 ảnh → bìa, chú thích → công khai → khách xem).
 
 ## [0.14.0] — 2026-11-09 — Đông người xem cùng lúc, thống kê truy cập, lời nhắn của khách, ảnh xem trước khi chia sẻ link
 ### Thêm
@@ -630,7 +644,7 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-019 | Ảnh HEIC chưa đọc được (sharp dựng sẵn không có HEVC). iPhone qua trình duyệt thường tự đổi sang JPG | Thấp | Nếu người dùng gặp nhiều: chuyển đổi trên trình duyệt (thư viện WASM) trước khi tải |
 | KI-020 | Chưa giới hạn tổng dung lượng ảnh mỗi dòng họ; VPS 40 GB | Trung bình | Thêm hạn mức + cảnh báo khi > 70% ổ đĩa, trước khi mở cho nhiều người tải |
 | KI-021 | Ảnh chỉ xem được khi đã đăng nhập (route dưới `/clans/:clanId`). Website công khai sẽ cần route ảnh công khai cho banner/ảnh người đã mất có `privacy=public` | Trung bình | Khi làm website công khai (MVP phần 2) |
-| KI-022 | Chưa có trang Thư viện ảnh/tư liệu (album) — API liệt kê ảnh đã có | Trung bình | Bước tiếp theo sau triển khai |
+| KI-022 | ~~Chưa có thư viện ảnh~~ — xong 0.15.0. Còn: video, tài liệu PDF; chỉ biên tập viên trở lên tải ảnh (thành viên thường chưa đóng góp được) | Thấp | Thêm vai trò/duyệt ảnh đóng góp khi chủ dự án cần |
 | KI-023 | Quick Tunnel: link đổi mỗi lần khởi động lại, không cam kết hoạt động — chỉ để demo | Thấp | Chạy thật: Oracle Free/Bizfly + Caddy, hoặc Cloudflare Tunnel có tên (cần tài khoản + tên miền) |
 | KI-024 | Image `cloudflare/cloudflared:latest` chưa ghim phiên bản | Thấp | Ghim tag cụ thể khi chạy lâu dài |
 | KI-025 | Sao lưu nằm trên cùng máy; chưa tự đẩy sang Google Drive | Trung bình | Thêm rclone vào service backup khi chạy thật |

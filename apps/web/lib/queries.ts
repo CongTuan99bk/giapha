@@ -3,6 +3,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type {
+  Album,
+  AlbumDetail,
+  AlbumList,
+  AlbumVisibility,
+  MediaItem,
   AnniversaryList,
   ContactMessage,
   DailyStats,
@@ -354,3 +359,74 @@ export function useDeleteMessage(clanId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: messagesKey(clanId) }),
   });
 }
+
+/* ——— Thư viện ảnh theo album ——— */
+
+const albumsKey = (clanId: string) => ["clan", clanId, "albums"] as const;
+/** "anh-le" = ảnh chưa xếp album */
+export const LOOSE_ALBUM = "anh-le";
+
+export const useAlbums = (clanId: string) =>
+  useQuery({ queryKey: albumsKey(clanId), queryFn: () => api<AlbumList>("GET", `/clans/${clanId}/albums`) });
+
+export const useAlbum = (clanId: string, albumId: string) =>
+  useQuery({ queryKey: [...albumsKey(clanId), albumId], queryFn: () => api<AlbumDetail>("GET", `/clans/${clanId}/albums/${albumId}`), retry: false });
+
+export interface AlbumInput {
+  title?: string;
+  description?: string | null;
+  visibility?: AlbumVisibility;
+  coverId?: string | null;
+}
+
+/** Mọi thay đổi ảnh/album làm mới cả danh sách lẫn từng album (số ảnh, ảnh bìa đổi theo) */
+function useInvalidateAlbums(clanId: string) {
+  const qc = useQueryClient();
+  return () => qc.invalidateQueries({ queryKey: albumsKey(clanId) });
+}
+
+export function useCreateAlbum(clanId: string) {
+  const done = useInvalidateAlbums(clanId);
+  return useMutation({ mutationFn: (input: AlbumInput & { title: string }) => api<Album>("POST", `/clans/${clanId}/albums`, input), onSuccess: done });
+}
+
+export function useUpdateAlbum(clanId: string, albumId: string) {
+  const done = useInvalidateAlbums(clanId);
+  return useMutation({ mutationFn: (input: AlbumInput) => api<Album>("PATCH", `/clans/${clanId}/albums/${albumId}`, input), onSuccess: done });
+}
+
+export function useDeleteAlbum(clanId: string, albumId: string) {
+  const done = useInvalidateAlbums(clanId);
+  return useMutation({
+    mutationFn: (deletePhotos: boolean) => api<void>("DELETE", `/clans/${clanId}/albums/${albumId}${deletePhotos ? "?xoaAnh=1" : ""}`),
+    onSuccess: done,
+  });
+}
+
+export function useMovePhotos(clanId: string) {
+  const done = useInvalidateAlbums(clanId);
+  return useMutation({
+    mutationFn: (v: { mediaIds: string[]; albumId: string | null }) => api<{ moved: number }>("POST", `/clans/${clanId}/media/move`, v),
+    onSuccess: done,
+  });
+}
+
+export function useUpdateCaption(clanId: string) {
+  const done = useInvalidateAlbums(clanId);
+  return useMutation({
+    mutationFn: (v: { id: string; caption: string | null }) => api<MediaItem>("PATCH", `/clans/${clanId}/media/${v.id}`, { caption: v.caption }),
+    onSuccess: done,
+  });
+}
+
+export function useDeletePhotos(clanId: string) {
+  const done = useInvalidateAlbums(clanId);
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      for (const id of ids) await api<void>("DELETE", `/clans/${clanId}/media/${id}`);
+    },
+    onSettled: done,
+  });
+}
+
+export const invalidateAlbums = (qc: ReturnType<typeof useQueryClient>, clanId: string) => qc.invalidateQueries({ queryKey: albumsKey(clanId) });

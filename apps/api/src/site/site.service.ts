@@ -5,7 +5,7 @@ import { z } from "zod";
 import { audit } from "../common/audit.js";
 import type { Membership } from "../common/context.js";
 import type { Tx } from "../db/database.js";
-import { MediaService, toMediaDto } from "../media/media.service.js";
+import { MEDIA_COLUMNS, MediaService, toMediaDto } from "../media/media.service.js";
 
 /** Phần "trang chủ" trong site_settings.data: banner tự trượt, câu đối hai bên, khẩu hiệu. */
 export const homeSettingsSchema = z
@@ -44,7 +44,7 @@ export class SiteService {
     const rows = ids.length
       ? await trx
           .selectFrom("media")
-          .select(["id", "clan_id", "storage_key", "mime", "size_bytes", "width", "height", "caption", "created_at"])
+          .select(MEDIA_COLUMNS)
           .where("id", "in", ids)
           .where("deleted_at", "is", null)
           .execute()

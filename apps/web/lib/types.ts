@@ -224,6 +224,8 @@ export interface MediaItem {
   width: number | null;
   height: number | null;
   caption: string | null;
+  /** Album chứa ảnh; null = ảnh lẻ */
+  albumId: string | null;
   sizeBytes: number;
   createdAt: string;
   urls: Record<ImageVariant, string>;
@@ -326,4 +328,40 @@ export interface ContactMessage {
   message: string;
   createdAt: string;
   handledAt: string | null;
+}
+
+/** Ảnh trong thư viện: thành viên có đủ cỡ + ảnh gốc; khách chỉ có cỡ xem */
+export interface Photo {
+  id: string;
+  width: number | null;
+  height: number | null;
+  caption: string | null;
+  urls: { sm: string; md: string; lg: string; orig?: string };
+}
+
+export type AlbumVisibility = "public" | "members";
+
+export interface Album {
+  id: string;
+  title: string;
+  description: string | null;
+  /** public: khách xem được; members: chỉ con cháu đã đăng nhập */
+  visibility: AlbumVisibility;
+  coverId: string | null;
+  createdAt: string;
+  count: number;
+  cover: Photo | null;
+  lastAddedAt: string | null;
+}
+
+export interface AlbumList {
+  albums: Album[];
+  /** Ảnh chưa xếp album (chỉ thành viên thấy) */
+  loose?: { count: number };
+}
+
+export interface AlbumDetail {
+  /** null = trang "Ảnh lẻ" */
+  album: Omit<Album, "count" | "cover" | "lastAddedAt"> | null;
+  photos: Photo[];
 }

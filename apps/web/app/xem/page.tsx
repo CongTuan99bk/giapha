@@ -2,24 +2,26 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { AlbumGrid } from "@/components/albums";
 import { AnniversaryRow } from "@/components/anniversary-list";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { CoupletPanel, TempleAddress } from "@/components/clan-home-parts";
 import { ContactList } from "@/components/contact-list";
 import { Lightbox } from "@/components/lightbox";
 import { PublicCounter } from "@/components/public-counter";
-import { usePublicAnniversaries, usePublicSite } from "@/lib/public";
+import { usePublicAlbums, usePublicAnniversaries, usePublicSite } from "@/lib/public";
 import type { MediaItem } from "@/lib/types";
 
 /** Trang chủ công khai: ảnh nhà thờ họ, câu đối, địa chỉ, giỗ sắp tới, ban liên lạc */
 export default function PublicHome() {
   const site = usePublicSite();
   const gio = usePublicAnniversaries(365);
+  const albums = usePublicAlbums().data?.albums ?? [];
   const [viewing, setViewing] = useState<number | null>(null);
   if (!site.data) return null;
   const { clan, home, stats, contacts } = site.data;
   // ảnh công khai không có bản gốc: dùng bản lớn thay chỗ
-  const slides: MediaItem[] = home.banners.map((b) => ({ ...b, sizeBytes: 0, createdAt: "", urls: { ...b.urls, orig: b.urls.lg } }));
+  const slides: MediaItem[] = home.banners.map((b) => ({ ...b, albumId: null, sizeBytes: 0, createdAt: "", urls: { ...b.urls, orig: b.urls.lg } }));
   const soon = (gio.data?.items ?? []).filter((a) => a.daysUntil <= 60).slice(0, 4);
   const title = (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-then/85 via-then/40 to-transparent px-5 pb-6 pt-16 md:px-8">
@@ -91,6 +93,22 @@ export default function PublicHome() {
             Lịch giỗ
           </Link>
         </div>
+
+        {albums.length > 0 && (
+          <section aria-labelledby="tieu-de-anh" className="mt-12 border-t border-ngoc-200 pt-8">
+            <div className="mb-5 flex items-baseline justify-between gap-4">
+              <h2 id="tieu-de-anh" className="font-serif text-2xl">
+                Thư viện ảnh
+              </h2>
+              {albums.length > 4 && (
+                <Link href="/xem/anh" className="text-sm font-medium text-son underline-offset-4 hover:underline">
+                  Xem cả {albums.length} album
+                </Link>
+              )}
+            </div>
+            <AlbumGrid albums={albums.slice(0, 4)} hrefOf={(a) => `/xem/anh?album=${a.id}`} />
+          </section>
+        )}
 
         <section id="lien-he" aria-labelledby="tieu-de-lien-he" className="mt-12 scroll-mt-4 border-t border-ngoc-200 pt-8">
           <h2 id="tieu-de-lien-he" className="font-serif text-2xl">

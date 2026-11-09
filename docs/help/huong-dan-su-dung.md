@@ -1,6 +1,6 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.9
+version: 1.10
 updated: 2026-11-09
 audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
@@ -246,9 +246,35 @@ Dành cho dòng họ đã có danh sách trên Excel. Thường do quản trị 
 
 **Sự kiện:** ngày giỗ tự có khi nhập ngày mất âm lịch. Sự kiện khác (họp họ, chạp mả, lễ hội): **Quản trị → Sự kiện → Thêm sự kiện**, chọn ngày âm hoặc dương, lặp hằng năm hay không.
 
-**Thư viện:** **Quản trị → Thư viện → Tạo album** → kéo thả nhiều ảnh, video vào. Ảnh được tự thu nhỏ để xem nhanh trên điện thoại.
+**Thư viện ảnh:** xem mục 15b bên dưới. *(Video và tài liệu PDF sẽ có sau.)*
 
 **Bản đồ:** **Quản trị → Bản đồ → Thêm địa điểm**, chọn loại (nhà thờ họ, mộ phần), ghim vị trí trên bản đồ, gắn với một người nếu là mộ.
+
+## 15b. Thư viện ảnh theo album
+
+Thẻ **Ảnh** chứa các album của dòng họ: giỗ Tổ, họp mặt, nhà thờ họ, ảnh xưa của ông bà… Mọi thành viên đều xem được; **biên tập viên** trở lên mới thêm, sắp xếp và xoá ảnh.
+
+**Tạo album và thêm ảnh**
+1. Vào **Ảnh** → bấm **Tạo album**.
+2. Nhập **Tên album** (ví dụ *Giỗ Tổ năm 2026*), mô tả nếu muốn (ngày, nơi chụp, ai có mặt).
+3. Chọn **Ai được xem**:
+   - **Chỉ thành viên** (mặc định): con cháu đã đăng nhập mới xem được.
+   - **Công khai**: hiện cả ở thẻ **Ảnh** trên trang công khai và mục *Thư viện ảnh* ở trang chủ công khai — ai có link cũng xem được. Nên tránh ảnh riêng tư của người còn sống.
+4. Bấm **Tạo album** → trang album mở ra. Bấm **Thêm ảnh** và chọn **nhiều ảnh một lúc**. Màn hình báo *Đang tải 3/10 ảnh…*; ảnh nào lỗi (ảnh HEIC của iPhone, ảnh lớn hơn 15 MB) được liệt kê riêng, các ảnh khác vẫn tải tiếp.
+
+**Xem ảnh:** bấm vào ảnh để xem lớn; vuốt hoặc dùng phím mũi tên để chuyển ảnh, **Phóng to** để xem chi tiết, **Tải ảnh gốc** để lưu về máy (chỉ thành viên).
+
+**Sắp xếp ảnh:** trong album, bấm **Chọn ảnh**, rồi bấm vào các ảnh cần làm. Thanh dưới đáy cho phép:
+- **Chuyển sang album…** — chọn album khác rồi bấm **Chuyển** (hoặc *Ảnh lẻ* để bỏ khỏi album).
+- **Đặt làm ảnh bìa** (khi chọn 1 ảnh) — ảnh hiện ngoài danh sách album. Chưa chọn thì album lấy ảnh đầu tiên.
+- **Sửa chú thích** (khi chọn 1 ảnh) — ghi ai, ở đâu, năm nào.
+- **Xoá ảnh** — xoá hẳn; ảnh đang làm chân dung hoặc banner cũng bị gỡ.
+
+Bấm **Xong** để thoát chế độ chọn.
+
+**Ảnh lẻ:** ảnh chưa thuộc album nào (chân dung, banner trang chủ). Mở **Ảnh lẻ** → **Chọn ảnh** → **Chuyển sang album…** để xếp vào album.
+
+**Sửa hoặc xoá album:** trong album bấm **Sửa album** để đổi tên, mô tả, ai được xem. **Xoá album này…** cho chọn **giữ ảnh** (chuyển về *Ảnh lẻ*) hoặc **xoá luôn ảnh** (không lấy lại được).
 
 ## 16. Xuất phả đồ để in hoặc chia sẻ
 
@@ -303,7 +329,7 @@ Vào **Cài đặt → Lời nhắn của khách**:
 5. Gõ **địa chỉ nhà thờ họ** — hiện trên trang chủ (cả trang công khai) kèm nút **Chỉ đường** mở Google Maps.
 6. Bấm **Lưu trang chủ**, rồi mở thẻ **Trang chủ** để xem.
 
-**Trang công khai (đã có):** dòng họ có sẵn trang cho khách xem không cần đăng nhập — địa chỉ là trang đầu của website, hoặc `…/xem`. Trang này dùng chung ảnh banner, câu đối, khẩu hiệu, địa chỉ ở trên; phả đồ và lịch giỗ **chỉ gồm người đã mất** để chế độ *Mọi người* (mặc định của người đã mất). Muốn giấu một cụ khỏi trang công khai: sửa người đó → **Ai được xem thông tin** → *Chỉ thành viên dòng họ*. Ảnh trên trang công khai chỉ có cỡ xem, không tải được ảnh gốc.
+**Trang công khai (đã có):** dòng họ có sẵn trang cho khách xem không cần đăng nhập — địa chỉ là trang đầu của website, hoặc `…/xem`. Trang này dùng chung ảnh banner, câu đối, khẩu hiệu, địa chỉ ở trên; phả đồ và lịch giỗ **chỉ gồm người đã mất** để chế độ *Mọi người* (mặc định của người đã mất). Muốn giấu một cụ khỏi trang công khai: sửa người đó → **Ai được xem thông tin** → *Chỉ thành viên dòng họ*. Thẻ **Ảnh** trên trang công khai chỉ gồm album để *Công khai* (mục 15b). Ảnh trên trang công khai chỉ có cỡ xem, không tải được ảnh gốc.
 
 **Ảnh khi chia sẻ link:** gửi link trang dòng họ lên Zalo/Facebook sẽ hiện tên dòng họ, khẩu hiệu và **ảnh banner đầu tiên** — nên đặt ảnh đẹp nhất (ảnh nhà thờ họ) lên đầu. Đổi ảnh xong khoảng nửa phút là link mới có ảnh mới; link đã gửi trước đó có thể vẫn hiện ảnh cũ do Zalo/Facebook nhớ lại.
 

@@ -32,7 +32,7 @@ export function register() {
       if (!r.ok) return;
       lastEtag = etag;
       // mở thử để dựng lại ngay, khách tiếp theo nhận trang mới
-      for (const path of ["/xem", "/", "/xem/pha-do", "/xem/lich-gio", "/xem/lien-he"]) {
+      for (const path of ["/xem", "/", "/xem/pha-do", "/xem/lich-gio", "/xem/anh", "/xem/lien-he"]) {
         await fetch(self + path, { cache: "no-store" })
           .then((x) => x.arrayBuffer())
           .catch(() => undefined);

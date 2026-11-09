@@ -3,6 +3,7 @@ import { idSchema } from "@coinguon/schemas";
 import { Controller, Get, Param, Query, Req, Res } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { z } from "zod";
+import { AlbumsService } from "../albums/albums.service.js";
 import { loadAnniversarySources } from "../anniversaries/anniversaries.controller.js";
 import { todayInVietnam, upcomingAnniversaries } from "../anniversaries/upcoming.js";
 import { Public } from "../common/context.js";
@@ -23,6 +24,9 @@ export const isPublicPerson = (p: { is_living: boolean; privacy: string }) => !p
 
 /** Ảnh công khai chỉ có cỡ xem; ảnh gốc độ phân giải cao dành cho thành viên */
 const PUBLIC_VARIANTS = ["sm", "md", "lg"] as const;
+/** Ảnh cho khách: chỉ cỡ xem (không có ảnh gốc), đường dẫn công khai */
+const publicPhoto = (m: MediaRow) => ({ id: m.id, width: m.width, height: m.height, caption: m.caption, urls: publicUrls(m.id) });
+
 const publicUrls = (id: string) =>
   Object.fromEntries(PUBLIC_VARIANTS.map((v) => [v, `/api/v1/public/media/${id}/${v}`])) as Record<(typeof PUBLIC_VARIANTS)[number], string>;
 
@@ -57,6 +61,7 @@ export class PublicController {
     private readonly media: MediaService,
     private readonly cache: ResponseCache,
     private readonly clans: MainClanService,
+    private readonly albums: AlbumsService,
   ) {}
 
   private mainClan(): Promise<MainClan> {
@@ -92,7 +97,16 @@ export class PublicController {
       .where("is_living", "=", false)
       .where("privacy", "=", "public")
       .execute();
-    const ids = [...new Set([...home.banners.map((b) => b.id), ...avatars.map((a) => a.avatar_media_id!)])];
+    // ảnh trong album công khai
+    const albumPhotos = await trx
+      .selectFrom("media as m")
+      .innerJoin("albums as a", "a.id", "m.album_id")
+      .select("m.id")
+      .where("a.visibility", "=", "public")
+      .where("a.deleted_at", "is", null)
+      .where("m.deleted_at", "is", null)
+      .execute();
+    const ids = [...new Set([...home.banners.map((b) => b.id), ...avatars.map((a) => a.avatar_media_id!), ...albumPhotos.map((p) => p.id)])];
     return new Map((await this.media.getMany(trx, ids)).map((r) => [r.id, r]));
   }
 
@@ -186,6 +200,18 @@ export class PublicController {
           .map((u) => ({ id: u.id, orderIndex: u.orderIndex, partner: u.partner, children: keep(u.children) })),
       };
     });
+  }
+
+  /** Thư viện ảnh: album công khai có ảnh, mới thêm ảnh lên trước */
+  @Get("albums")
+  albumList(@Req() req: Request, @Res() res: Response): Promise<void> {
+    return this.respond(req, res, "albums", (trx) => this.albums.list(trx, { publicOnly: true, toDto: publicPhoto }));
+  }
+
+  @Get("albums/:albumId")
+  album(@Param("albumId") albumId: string, @Req() req: Request, @Res() res: Response): Promise<void> {
+    const id = idSchema.parse(albumId);
+    return this.respond(req, res, `album:${id}`, (trx) => this.albums.detail(trx, id, { publicOnly: true, toDto: publicPhoto }));
   }
 
   @Get("anniversaries")

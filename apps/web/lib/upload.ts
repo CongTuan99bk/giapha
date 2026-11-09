@@ -16,12 +16,13 @@ export function checkImageFile(file: { type: string; size: number; name: string 
 }
 
 /** Tải một ảnh lên thư viện của dòng họ (multipart, kèm header CSRF). */
-export async function uploadImage(clanId: string, file: File, caption?: string): Promise<MediaItem> {
+export async function uploadImage(clanId: string, file: File, caption?: string, albumId?: string): Promise<MediaItem> {
   const problem = checkImageFile(file);
   if (problem) throw new ApiError(422, "UNSUPPORTED_IMAGE", problem);
   const form = new FormData();
   form.append("file", file);
   if (caption) form.append("caption", caption);
+  if (albumId) form.append("albumId", albumId);
   const headers: Record<string, string> = { Accept: "application/json" };
   const csrf = readCookie("csrf");
   if (csrf) headers["X-CSRF-Token"] = csrf;

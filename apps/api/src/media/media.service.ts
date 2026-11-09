@@ -70,6 +70,7 @@ export interface MediaRow {
   width: number | null;
   height: number | null;
   caption: string | null;
+  album_id: string | null;
   created_at: Date;
 }
 
@@ -80,20 +81,22 @@ export function toMediaDto(m: MediaRow) {
     width: m.width,
     height: m.height,
     caption: m.caption,
+    albumId: m.album_id,
     sizeBytes: m.size_bytes,
     createdAt: m.created_at,
     urls: { sm: `${base}/sm`, md: `${base}/md`, lg: `${base}/lg`, orig: `${base}/orig` },
   };
 }
 
-const COLUMNS = ["id", "clan_id", "storage_key", "mime", "size_bytes", "width", "height", "caption", "created_at"] as const;
+export const MEDIA_COLUMNS = ["id", "clan_id", "storage_key", "mime", "size_bytes", "width", "height", "caption", "album_id", "created_at"] as const;
+const COLUMNS = MEDIA_COLUMNS;
 
 @Injectable()
 export class MediaService {
   constructor(private readonly storage: MediaStorage) {}
 
   /** Ghi file trước, rồi mới ghi DB; DB lỗi thì dọn file để không để rác. */
-  async upload(trx: Tx, actor: Membership, file: Buffer, caption: string | null) {
+  async upload(trx: Tx, actor: Membership, file: Buffer, caption: string | null, albumId: string | null = null) {
     const img = await processImage(file);
     const id = randomUUID();
     const key = `${actor.clanId}/${id}`;
@@ -110,6 +113,7 @@ export class MediaService {
           width: img.width,
           height: img.height,
           caption,
+          album_id: albumId,
           uploaded_by: actor.userId,
         })
         .returning(COLUMNS)

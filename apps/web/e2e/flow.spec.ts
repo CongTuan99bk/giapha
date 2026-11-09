@@ -517,3 +517,60 @@ test("khách gửi lời nhắn, link chia sẻ có ảnh xem trước; ban qu�
   await expect(o.getByRole("button", { name: "7 ngày" })).toHaveAttribute("aria-pressed", "true");
   await o.close();
 });
+
+test("thư viện ảnh: tạo album, tải nhiều ảnh, đặt bìa, công khai cho khách xem", async ({ browser }) => {
+  const o = await browser.newPage();
+  await loginOwner(o);
+  await o.getByRole("link", { name: "Ảnh", exact: true }).click();
+  await expect(o.getByRole("heading", { name: "Thư viện ảnh" })).toBeVisible();
+  // banner và chân dung tải lên trước đó nằm ở "Ảnh lẻ"
+  await expect(o.getByRole("link", { name: /Ảnh lẻ/ })).toBeVisible();
+
+  await o.getByRole("button", { name: "Tạo album" }).click();
+  await o.getByRole("button", { name: "Tạo album" }).click();
+  await expect(o.getByText("Cần đặt tên album")).toBeVisible();
+  await o.getByLabel("Tên album").fill("Giỗ Tổ năm 2026");
+  await o.getByLabel("Mô tả (không bắt buộc)").fill("Mười hai tháng Ba, nhà thờ họ");
+  await o.getByRole("button", { name: "Tạo album" }).click();
+
+  await expect(o.getByRole("heading", { name: "Giỗ Tổ năm 2026" })).toBeVisible();
+  await expect(o.getByText("0 ảnh · Chỉ thành viên xem")).toBeVisible();
+  await o.locator("input[type=file]").setInputFiles([fixture("banner-1.jpg"), fixture("banner-2.jpg"), fixture("chan-dung.jpg")]);
+  await expect(o.getByText("3 ảnh · Chỉ thành viên xem")).toBeVisible({ timeout: 20_000 });
+
+  // chọn ảnh thứ hai làm bìa, ghi chú thích
+  await o.getByRole("button", { name: "Chọn ảnh" }).click();
+  await o.getByRole("button", { name: "Chọn ảnh 2" }).click();
+  await expect(o.getByText("Đã chọn 1 ảnh")).toBeVisible();
+  await o.getByRole("button", { name: "Đặt làm ảnh bìa" }).click();
+  await expect(o.getByRole("button", { name: "Đang là ảnh bìa" })).toBeDisabled();
+  await o.getByRole("button", { name: "Sửa chú thích" }).click();
+  await o.getByLabel("Chú thích ảnh").fill("Con cháu dâng hương");
+  await o.getByRole("button", { name: "Lưu" }).click();
+  await expect(o.getByRole("button", { name: "Bỏ chọn Con cháu dâng hương" })).toBeVisible();
+  await o.getByRole("button", { name: "Xong" }).click();
+
+  // xem lớn
+  await o.getByRole("button", { name: "Xem Con cháu dâng hương" }).click();
+  await expect(o.getByRole("dialog")).toContainText("Con cháu dâng hương");
+  await o.keyboard.press("Escape");
+
+  // để công khai
+  await o.getByRole("button", { name: "Sửa album" }).click();
+  await o.getByLabel(/^Công khai/).check();
+  await o.getByRole("button", { name: "Lưu", exact: true }).click();
+  await expect(o.getByText("3 ảnh · Công khai trên trang dòng họ")).toBeVisible();
+  await o.close();
+
+  const g = await browser.newPage();
+  await g.goto("/xem");
+  await g.getByRole("link", { name: "Ảnh", exact: true }).click();
+  await expect(g).toHaveTitle("Thư viện ảnh · Họ Lê Văn – thôn Thử");
+  await g.getByRole("link", { name: /Giỗ Tổ năm 2026/ }).click();
+  await expect(g.getByRole("heading", { name: "Giỗ Tổ năm 2026" })).toBeVisible();
+  await expect(g.getByText("Mười hai tháng Ba, nhà thờ họ")).toBeVisible();
+  await expect(g.getByRole("button", { name: /^Xem / })).toHaveCount(3);
+  // ảnh lẻ (chân dung người còn sống…) không có trên trang công khai
+  await expect(g.getByText("Ảnh lẻ")).toHaveCount(0);
+  await g.close();
+});

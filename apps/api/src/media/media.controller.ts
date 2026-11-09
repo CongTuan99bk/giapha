@@ -25,6 +25,7 @@ import { unprocessable } from "../common/errors.js";
 import { RateLimit } from "../common/rate-limit.js";
 import { APP_CONFIG, type AppConfig } from "../config.js";
 import { Database } from "../db/database.js";
+import { AlbumsService } from "../albums/albums.service.js";
 import { homeSettingsSchema, SiteService } from "../site/site.service.js";
 import { MediaService, VARIANTS, type Variant } from "./media.service.js";
 
@@ -37,6 +38,7 @@ export class MediaController {
     private readonly db: Database,
     private readonly media: MediaService,
     private readonly site: SiteService,
+    private readonly albums: AlbumsService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -54,7 +56,12 @@ export class MediaController {
     if (!file) throw unprocessable("FILE_REQUIRED", "Chưa chọn ảnh");
     if (file.size > this.config.MEDIA_MAX_MB * 1024 * 1024) throw new PayloadTooLargeException();
     const caption = captionSchema.parse(typeof body.caption === "string" && body.caption.trim() ? body.caption : null);
-    return this.db.withClan(this.ctx(m), (trx) => this.media.upload(trx, m, file.buffer, caption));
+    // tải thẳng vào một album (trường "albumId" trong form)
+    const albumId = typeof body.albumId === "string" && body.albumId ? idSchema.parse(body.albumId) : null;
+    return this.db.withClan(this.ctx(m), async (trx) => {
+      if (albumId) await this.albums.get(trx, albumId);
+      return this.media.upload(trx, m, file.buffer, caption, albumId);
+    });
   }
 
   @Get("media")

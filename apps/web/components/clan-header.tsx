@@ -11,6 +11,7 @@ const TABS = [
   { href: "", label: "Trang chủ" },
   { href: "/pha-do", label: "Phả đồ" },
   { href: "/lich-gio", label: "Lịch giỗ" },
+  { href: "/anh", label: "Ảnh" },
   { href: "/danh-sach", label: "Danh sách" },
   { href: "/xung-ho", label: "Xưng hô" },
 ] as const;
