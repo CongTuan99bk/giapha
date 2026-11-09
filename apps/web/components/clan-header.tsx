@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { useClan, useJoinRequests, useMe, useMessages } from "@/lib/queries";
+import { useClan, useJoinRequests, useMe, useMessages, useSiteMusic } from "@/lib/queries";
 import { ROLE_LABEL, ROLE_RANK } from "@/lib/roles";
+import { MusicButton } from "./music-button";
 
 const TABS = [
   { href: "", label: "Trang chủ" },
@@ -27,6 +28,7 @@ export function ClanHeader({ clanId }: { clanId: string }) {
   const isAdmin = Boolean(clan.data && ROLE_RANK[clan.data.role] >= ROLE_RANK.admin);
   const waiting = useJoinRequests(clanId, isAdmin).data?.length ?? 0;
   const unread = useMessages(clanId, isAdmin).data?.open ?? 0;
+  const music = useSiteMusic(clanId).data?.music;
 
   async function logout() {
     await api("POST", "/auth/logout").catch(() => undefined);
@@ -40,17 +42,33 @@ export function ClanHeader({ clanId }: { clanId: string }) {
         <Link href={base} className="min-w-0 flex-1 truncate font-serif text-xl text-thep-nhat md:text-2xl">
           {clan.data?.name ?? "Gia Phả Cội Nguồn"}
         </Link>
-        {/* Luôn thấy mình đang dùng tài khoản nào, vai trò gì (tránh nhầm khi thử link mời trên cùng máy) */}
-        <span className="hidden text-sm text-ngoc-300 sm:inline">
-          {me.data?.name}
-          {clan.data && <span className="text-ngoc-300"> · {ROLE_LABEL[clan.data.role]}</span>}
-        </span>
+        <MusicButton music={music} />
+        {/* Luôn thấy mình đang dùng tài khoản nào, vai trò gì (tránh nhầm khi thử link mời trên cùng máy); bấm vào để sửa tài khoản */}
+        <Link
+          href={`${base}/tai-khoan`}
+          aria-current={path === `${base}/tai-khoan` ? "page" : undefined}
+          className="rounded px-2 py-1 text-sm text-ngoc-200 hover:text-white aria-[current=page]:text-thep-nhat"
+        >
+          <span className="sm:hidden">Tài khoản</span>
+          <span className="hidden sm:inline">
+            {me.data?.name}
+            {clan.data && <span className="text-ngoc-300"> · {ROLE_LABEL[clan.data.role]}</span>}
+          </span>
+        </Link>
         <button type="button" onClick={logout} className="rounded px-2 py-1 text-sm text-ngoc-200 hover:text-white">
           Đăng xuất
         </button>
       </div>
       <nav aria-label="Mục chính" className="mt-2 flex gap-1 overflow-x-auto px-2 md:px-4">
-        {[...TABS, ...(isAdmin ? ([{ href: "/thong-ke", label: "Thống kê" }, { href: "/cai-dat", label: "Cài đặt" }] as const) : [])].map((t) => {
+        {[
+          ...TABS,
+          ...(isAdmin
+            ? ([
+                { href: "/thong-ke", label: "Thống kê" },
+                { href: "/cai-dat", label: "Cài đặt" },
+              ] as const)
+            : []),
+        ].map((t) => {
           const href = base + t.href;
           const active = t.href === "" ? path === base : path.startsWith(href);
           return (

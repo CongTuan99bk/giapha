@@ -23,6 +23,8 @@ import type {
   JoinRequest,
   KinshipResult,
   Member,
+  MemberAccount,
+  SiteMusic,
   Page,
   Person,
   PersonDetail,
@@ -59,8 +61,7 @@ export const useAnniversaries = (clanId: string, days = 365) =>
 export const useMe = () => useQuery({ queryKey: keys.me, queryFn: () => api<User>("GET", "/me"), retry: false });
 export const useMyClans = (enabled = true) => useQuery({ queryKey: keys.clans, queryFn: () => api<Clan[]>("GET", "/me/clans"), enabled });
 export const useClan = (id: string) => useQuery({ queryKey: keys.clan(id), queryFn: () => api<Clan>("GET", `/clans/${id}`) });
-export const useTree = (clanId: string) =>
-  useQuery({ queryKey: keys.tree(clanId), queryFn: () => api<TreeLayout>("GET", `/clans/${clanId}/tree`) });
+export const useTree = (clanId: string) => useQuery({ queryKey: keys.tree(clanId), queryFn: () => api<TreeLayout>("GET", `/clans/${clanId}/tree`) });
 export const usePerson = (clanId: string, id: string | null) =>
   useQuery({
     queryKey: keys.person(clanId, id ?? ""),
@@ -105,8 +106,7 @@ export function useAddPerson(clanId: string) {
 export function useUpdatePerson(clanId: string) {
   const invalidate = useInvalidateClan(clanId);
   return useMutation({
-    mutationFn: (v: { id: string; patch: Partial<PersonInput> & { version: number } }) =>
-      api<Person>("PATCH", `/clans/${clanId}/persons/${v.id}`, v.patch),
+    mutationFn: (v: { id: string; patch: Partial<PersonInput> & { version: number } }) => api<Person>("PATCH", `/clans/${clanId}/persons/${v.id}`, v.patch),
     onSuccess: invalidate,
   });
 }
@@ -128,7 +128,8 @@ export function useSetParentLink(clanId: string) {
 export function useReorderChildren(clanId: string) {
   const invalidate = useInvalidateClan(clanId);
   return useMutation({
-    mutationFn: (v: { unionId: string; childIds: string[] }) => api<void>("PUT", `/clans/${clanId}/unions/${v.unionId}/children/order`, { childIds: v.childIds }),
+    mutationFn: (v: { unionId: string; childIds: string[] }) =>
+      api<void>("PUT", `/clans/${clanId}/unions/${v.unionId}/children/order`, { childIds: v.childIds }),
     onSuccess: invalidate,
   });
 }
@@ -136,7 +137,8 @@ export function useReorderChildren(clanId: string) {
 export function useReorderUnions(clanId: string) {
   const invalidate = useInvalidateClan(clanId);
   return useMutation({
-    mutationFn: (v: { personId: string; unionIds: string[] }) => api<void>("PUT", `/clans/${clanId}/persons/${v.personId}/unions/order`, { unionIds: v.unionIds }),
+    mutationFn: (v: { personId: string; unionIds: string[] }) =>
+      api<void>("PUT", `/clans/${clanId}/persons/${v.personId}/unions/order`, { unionIds: v.unionIds }),
     onSuccess: invalidate,
   });
 }
@@ -153,8 +155,7 @@ export function useRemoveUnion(clanId: string) {
 export function useDeletePerson(clanId: string) {
   const invalidate = useInvalidateClan(clanId);
   return useMutation({
-    mutationFn: (v: { id: string; confirm: boolean }) =>
-      api<void>("DELETE", `/clans/${clanId}/persons/${v.id}${v.confirm ? "?confirm=true" : ""}`),
+    mutationFn: (v: { id: string; confirm: boolean }) => api<void>("DELETE", `/clans/${clanId}/persons/${v.id}${v.confirm ? "?confirm=true" : ""}`),
     onSuccess: invalidate,
   });
 }
@@ -273,8 +274,7 @@ export function useSaveHome(clanId: string) {
       couplet: { left: string; right: string } | null;
       motto: string | null;
       templeAddress: string | null;
-    }) =>
-      api<HomeSettings>("PUT", `/clans/${clanId}/site/home`, v),
+    }) => api<HomeSettings>("PUT", `/clans/${clanId}/site/home`, v),
     onSuccess: (data) => qc.setQueryData(["clan", clanId, "home"], data),
   });
 }
@@ -282,7 +282,8 @@ export function useSaveHome(clanId: string) {
 export function useSetAvatar(clanId: string) {
   const invalidate = useInvalidateClan(clanId);
   return useMutation({
-    mutationFn: (v: { personId: string; mediaId: string | null }) => api<Person>("PUT", `/clans/${clanId}/persons/${v.personId}/avatar`, { mediaId: v.mediaId }),
+    mutationFn: (v: { personId: string; mediaId: string | null }) =>
+      api<Person>("PUT", `/clans/${clanId}/persons/${v.personId}/avatar`, { mediaId: v.mediaId }),
     onSuccess: invalidate,
   });
 }
@@ -292,8 +293,7 @@ export function useSetAvatar(clanId: string) {
 export type ContactInput = Omit<Contact, "id" | "consentAt" | "consentNote"> & { consentNote?: string };
 const contactsKey = (clanId: string) => ["clan", clanId, "contacts"] as const;
 
-export const useContacts = (clanId: string) =>
-  useQuery({ queryKey: contactsKey(clanId), queryFn: () => api<Contact[]>("GET", `/clans/${clanId}/contacts`) });
+export const useContacts = (clanId: string) => useQuery({ queryKey: contactsKey(clanId), queryFn: () => api<Contact[]>("GET", `/clans/${clanId}/contacts`) });
 
 export function useSaveContact(clanId: string) {
   const qc = useQueryClient();
@@ -368,8 +368,7 @@ const albumsKey = (clanId: string) => ["clan", clanId, "albums"] as const;
 /** "anh-le" = ảnh chưa xếp album */
 export const LOOSE_ALBUM = "anh-le";
 
-export const useAlbums = (clanId: string) =>
-  useQuery({ queryKey: albumsKey(clanId), queryFn: () => api<AlbumList>("GET", `/clans/${clanId}/albums`) });
+export const useAlbums = (clanId: string) => useQuery({ queryKey: albumsKey(clanId), queryFn: () => api<AlbumList>("GET", `/clans/${clanId}/albums`) });
 
 export const useAlbum = (clanId: string, albumId: string) =>
   useQuery({ queryKey: [...albumsKey(clanId), albumId], queryFn: () => api<AlbumDetail>("GET", `/clans/${clanId}/albums/${albumId}`), retry: false });
@@ -463,3 +462,56 @@ export const useTreeExportInfo = (clanId: string, query: string) =>
     queryFn: () => api<TreeExportInfo>("GET", `/clans/${clanId}/export/tree-info?${query}`),
     placeholderData: (prev) => prev,
   });
+
+// ───────────── Tài khoản của tôi ─────────────
+
+export function useUpdateMyAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { name?: string; email?: string | null; phone?: string | null; currentPassword?: string }) => api<User>("PATCH", "/me/account", v),
+    onSuccess: (user) => {
+      qc.setQueryData(keys.me, (old: User | undefined) => ({ ...old, ...user }));
+      // tên / SĐT hiện trong danh sách thành viên của mọi dòng họ mình thuộc
+      void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "clan" && q.queryKey[2] === "members" });
+    },
+  });
+}
+
+export const useChangePassword = () =>
+  useMutation({ mutationFn: (v: { currentPassword: string; newPassword: string }) => api<void>("POST", "/me/password", v) });
+
+/** Quản trị sửa tài khoản của người có vai trò thấp hơn */
+export function useUpdateMemberAccount(clanId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...v }: { id: string; name?: string; email?: string | null; phone?: string | null; newPassword?: string }) =>
+      api<MemberAccount>("PATCH", `/clans/${clanId}/members/${id}/account`, v),
+    onSuccess: () => qc.invalidateQueries({ queryKey: memberKeys.members(clanId) }),
+  });
+}
+
+// ───────────── Nhạc nền ─────────────
+
+export const musicKey = (clanId: string) => ["clan", clanId, "music"] as const;
+
+export const useSiteMusic = (clanId: string) =>
+  useQuery({ queryKey: musicKey(clanId), queryFn: () => api<{ music: SiteMusic | null }>("GET", `/clans/${clanId}/site/music`), staleTime: 10 * 60_000 });
+
+/** Sau khi thay / đổi tên / xoá nhạc: cập nhật ngay cho thành viên, trang công khai hỏi lại */
+export function useMusicSaved(clanId: string) {
+  const qc = useQueryClient();
+  return (data: { music: SiteMusic | null }) => {
+    qc.setQueryData(musicKey(clanId), data);
+    void qc.invalidateQueries({ queryKey: ["public", "music"] });
+  };
+}
+
+export function useRenameMusic(clanId: string) {
+  const saved = useMusicSaved(clanId);
+  return useMutation({ mutationFn: (title: string) => api<{ music: SiteMusic }>("PATCH", `/clans/${clanId}/site/music`, { title }), onSuccess: saved });
+}
+
+export function useRemoveMusic(clanId: string) {
+  const saved = useMusicSaved(clanId);
+  return useMutation({ mutationFn: () => api<void>("DELETE", `/clans/${clanId}/site/music`), onSuccess: () => saved({ music: null }) });
+}

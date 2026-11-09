@@ -1,6 +1,6 @@
 ---
 title: Hướng dẫn sử dụng Gia Phả Cội Nguồn
-version: 1.12
+version: 1.13
 updated: 2026-11-09
 audience: Người dùng (khách, thành viên, người nhập liệu, quản trị dòng họ)
 ---
@@ -40,6 +40,8 @@ Mở địa chỉ web của dòng họ (ban liên lạc gửi qua Zalo) bằng t
 - **Phả đồ** — cây gia phả **chỉ gồm các cụ đã khuất**. Bấm vào một người để xem tiểu sử, ngày giỗ, nơi an táng, cha mẹ, vợ chồng, con (chỉ những người đã khuất).
 - **Lịch giỗ** — ngày giỗ các cụ trong 12 tháng tới.
 - **Liên hệ** — trưởng họ, trưởng các chi, quản trị website.
+
+**Nhạc nền:** nếu dòng họ có nhạc nền, góc trên có nút **Nhạc nền** (hình nốt nhạc). Nhạc **mặc định tắt** — bấm để bật, bấm lần nữa để tắt. Máy nhớ lựa chọn của bạn: lần sau mở trang, chạm vào trang một lần là nhạc phát tiếp (trình duyệt không cho tự phát khi chưa chạm). Chuyển giữa các thẻ, nhạc không bị ngắt.
 
 **Người còn sống không hiện trên trang công khai.** Con cháu trong họ bấm **Đăng nhập** (góc trên) để xem đầy đủ. Người đã khuất mà gia đình để chế độ *Chỉ thành viên dòng họ* hoặc *Ẩn* cũng không hiện. *(Phả ký, tin tức, thư viện, bản đồ mộ phần: Sắp ra mắt.)*
 
@@ -143,6 +145,14 @@ Email **không bắt buộc**, nhưng có email thì tự lấy lại được m
 2. Đăng nhập bằng số điện thoại, không dùng email, hoặc dòng họ chưa bật gửi email: **nhờ ban quản lý tạo link đặt lại mật khẩu** và gửi cho bạn qua Zalo (link dùng được 24 giờ).
 
 Đặt mật khẩu mới xong, bạn được đăng xuất khỏi mọi thiết bị khác; tài khoản đang bị khoá vì nhập sai cũng được mở khoá. Mỗi link chỉ dùng một lần; yêu cầu link mới thì link cũ hết hiệu lực.
+
+Trang đăng nhập hiện tên dòng họ trên bức hoành phi, ảnh nhà thờ họ giữa hai câu đối, số đời trong phả và ngày giỗ sắp tới — nhìn là biết mình đang vào đúng trang của họ mình.
+
+**Tài khoản của tôi:** đã đăng nhập, bấm **tên của bạn** ở góc trên (trên điện thoại là chữ **Tài khoản**):
+- **Thông tin đăng nhập:** sửa họ tên, số điện thoại, email → **Lưu thông tin**. Đổi số điện thoại hoặc email thì hiện thêm ô **Mật khẩu hiện tại** — nhập để xác nhận đúng là bạn. Cần giữ ít nhất số điện thoại hoặc email để đăng nhập.
+- **Đổi mật khẩu:** nhập **Mật khẩu hiện tại**, **Mật khẩu mới** (ít nhất 8 ký tự), **Nhập lại mật khẩu mới** → **Đổi mật khẩu**. Máy đang dùng vẫn đăng nhập; các máy khác (điện thoại cũ, máy ở nhà thờ họ…) phải đăng nhập lại bằng mật khẩu mới.
+
+Quản trị và chủ sở hữu cũng sửa email, số điện thoại, mật khẩu của chính mình ở đây.
 
 **Xác thực 2 lớp** *(Sắp ra mắt)* **(khuyên dùng cho quản trị):** vào **Tài khoản → Bảo mật → Bật xác thực 2 lớp**, quét mã QR bằng ứng dụng Google Authenticator hoặc tương tự. Mỗi lần đăng nhập nhập thêm mã 6 số trên ứng dụng. Cất kỹ các **mã dự phòng** hiện ra lúc bật.
 
@@ -358,6 +368,10 @@ Vào **Cài đặt → Lời nhắn của khách**:
 
 **Trang công khai (đã có):** dòng họ có sẵn trang cho khách xem không cần đăng nhập — địa chỉ là trang đầu của website, hoặc `…/xem`. Trang này dùng chung ảnh banner, câu đối, khẩu hiệu, địa chỉ ở trên; phả đồ và lịch giỗ **chỉ gồm người đã mất** để chế độ *Mọi người* (mặc định của người đã mất). Muốn giấu một cụ khỏi trang công khai: sửa người đó → **Ai được xem thông tin** → *Chỉ thành viên dòng họ*. Thẻ **Ảnh** trên trang công khai chỉ gồm album để *Công khai* (mục 15b). Ảnh trên trang công khai chỉ có cỡ xem, không tải được ảnh gốc.
 
+**Nhạc nền (đã có):** vào **Cài đặt → Nhạc nền** → chọn file nhạc (MP3, M4A, OGG hoặc WAV, tối đa 20 MB), gõ **Tên bản nhạc** nếu muốn (để trống thì lấy theo tên file) → **Tải nhạc lên**. Dòng họ có một bản nhạc dùng cho cả trang thành viên và trang công khai; tải bản khác lên là thay bản cũ. Bấm nút phát để nghe thử; **Đổi tên**, **Gỡ** khi cần. Người xem tự bật nhạc bằng nút **Nhạc nền** trên thanh đầu trang (mặc định tắt, âm lượng nhỏ, phát lặp lại).
+
+> Chỉ dùng bản nhạc dòng họ được phép phát công khai: tự thu, nhạc dân gian không lời, hoặc đã xin phép người giữ bản quyền. Trang công khai ai cũng nghe được. MP3 128 kbps khoảng 1 MB mỗi phút — bản nhạc 3–5 phút là vừa.
+
 **Ảnh khi chia sẻ link:** gửi link trang dòng họ lên Zalo/Facebook sẽ hiện tên dòng họ, khẩu hiệu và **ảnh banner đầu tiên** — nên đặt ảnh đẹp nhất (ảnh nhà thờ họ) lên đầu. Đổi ảnh xong khoảng nửa phút là link mới có ảnh mới; link đã gửi trước đó có thể vẫn hiện ảnh cũ do Zalo/Facebook nhớ lại.
 
 Các mục dưới đây *(Sắp ra mắt)*:
@@ -418,9 +432,11 @@ Danh sách **Link mời còn hiệu lực** cho biết mỗi link đã dùng m�
 | Quản trị | Như người nhập liệu + mời và quản lý thành viên, sửa thông tin dòng họ |
 | Chủ sở hữu | Mọi quyền; không ai đổi hoặc xoá được vai trò này |
 
-Quy tắc: bạn chỉ cấp được vai trò **thấp hơn** vai trò của mình (riêng Chủ sở hữu cấp được Quản trị), và chỉ đổi hoặc xoá được người có vai trò thấp hơn mình. Không ai tự đổi vai trò của chính mình.
+Thứ bậc từ cao xuống: **Chủ sở hữu** (người tạo dòng họ) → **Quản trị** → **Người nhập liệu** → **Thành viên**. Bạn chỉ cấp được vai trò **thấp hơn** vai trò của mình (riêng Chủ sở hữu cấp được Quản trị), và chỉ đổi, sửa hoặc xoá được người có vai trò thấp hơn mình — quản trị không sửa được quản trị khác hay chủ sở hữu. Không ai tự đổi vai trò của chính mình.
 
 **Thành viên:** đổi vai trò bằng ô chọn cạnh tên; bấm **Xoá** → **Xoá khỏi dòng họ** để thu hồi quyền — người đó không vào được dòng họ nữa ngay lập tức.
+
+**Sửa tài khoản của thành viên:** bấm **Sửa tài khoản** dưới tên người đó → sửa **Họ và tên**, **Số điện thoại**, **Email**; muốn đặt mật khẩu mới thay họ thì gõ vào **Mật khẩu mới (không bắt buộc)** → **Lưu tài khoản**. Đặt mật khẩu mới thì người đó bị đăng xuất khỏi mọi máy — báo họ đăng nhập lại bằng mật khẩu bạn vừa đặt (và nên tự đổi mật khẩu ở **Tài khoản của tôi**). Tài khoản của chính bạn thì sửa ở **Tài khoản của tôi** (mục 8).
 
 **Thành viên quên mật khẩu:** bấm **Tạo link đặt lại mật khẩu** dưới tên người đó → **Sao chép link** → gửi qua Zalo. Link dùng được 24 giờ, một lần, chỉ hiện một lần. Bạn chỉ tạo được cho người có vai trò thấp hơn mình; mật khẩu của chính bạn thì dùng **Quên mật khẩu?** ở trang đăng nhập.
 

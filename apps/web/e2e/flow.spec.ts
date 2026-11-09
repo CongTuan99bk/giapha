@@ -62,7 +62,9 @@ test("thêm vợ rồi thêm con với vợ", async () => {
   await expect(panel().getByRole("heading", { name: "Trần Thị Hai" })).toBeVisible();
   await expect(page.locator(node("Trần Thị Hai"))).toHaveAttribute("aria-label", /dâu hoặc rể/);
 
-  await panel().getByRole("button", { name: /Lê Văn Cả/ }).click();
+  await panel()
+    .getByRole("button", { name: /Lê Văn Cả/ })
+    .click();
   await panel().getByRole("button", { name: "Thêm con với Hai" }).click();
   await panel().getByLabel("Họ và tên").fill("Lê Văn Con");
   await panel().getByLabel("Ngày sinh — năm").fill("1980");
@@ -200,7 +202,7 @@ test("người tự đăng ký sau chưa vào được dòng họ, phải chờ 
 
 test("người đã có tài khoản mở link mời → tham gia với vai trò thành viên (chỉ xem)", async () => {
   await page.goto(inviteUrl);
-  await expect(page.getByText("Họ Lê Văn – thôn Thử")).toBeVisible();
+  await expect(page.getByRole("main").getByText("Họ Lê Văn – thôn Thử")).toBeVisible();
   await expect(page.getByText(/Bạn đang đăng nhập là Người Mới \(nguoimoi@e2e.test\)/)).toBeVisible();
   await page.getByRole("button", { name: "Tham gia dòng họ" }).click();
   // vào trang chủ dòng họ (có banner), rồi mở phả đồ
@@ -407,7 +409,9 @@ test("nhập phả đầy đủ: tên huý, nơi an táng, tiểu sử, con nuô
   await expect(pnl().getByRole("heading", { name: "Cha mẹ nuôi" })).toBeVisible();
 
   // xếp lại thứ tự: con nuôi lên trước
-  await pnl().getByRole("button", { name: /Lê Văn Cả/ }).click();
+  await pnl()
+    .getByRole("button", { name: /Lê Văn Cả/ })
+    .click();
   await pnl().getByRole("button", { name: "Đưa Lê Văn Nuôi lên trước" }).click();
   await expect(pnl().getByRole("listitem").first()).toContainText("Lê Văn Nuôi");
   await pnl().getByRole("button", { name: "Lê Văn Nuôi", exact: true }).click();
@@ -476,7 +480,10 @@ test("khách gửi lời nhắn, link chia sẻ có ảnh xem trước; ban qu�
     .poll(
       async () => {
         await g.goto("/xem");
-        return g.locator('meta[property="og:image"]').getAttribute("content").catch(() => null);
+        return g
+          .locator('meta[property="og:image"]')
+          .getAttribute("content")
+          .catch(() => null);
       },
       { timeout: 45_000, intervals: [2000] },
     )
@@ -672,4 +679,142 @@ test("ngày giỗ âm lịch ghi riêng khi không rõ ngày mất; có ngày m�
   await p.getByRole("link", { name: "Lịch giỗ" }).click();
   await expect(p.getByRole("link", { name: "Lê Văn Giỗ" })).toBeVisible();
   await p.close();
+});
+
+/** File WAV im lặng ngắn — đủ để thử tải lên và phát nhạc nền */
+function silentWav(seconds = 1) {
+  const rate = 8000;
+  const n = rate * seconds;
+  const b = Buffer.alloc(44 + n, 128);
+  b.write("RIFF", 0, "latin1");
+  b.writeUInt32LE(36 + n, 4);
+  b.write("WAVEfmt ", 8, "latin1");
+  b.writeUInt32LE(16, 16);
+  b.writeUInt16LE(1, 20);
+  b.writeUInt16LE(1, 22);
+  b.writeUInt32LE(rate, 24);
+  b.writeUInt32LE(rate, 28);
+  b.writeUInt16LE(1, 32);
+  b.writeUInt16LE(8, 34);
+  b.write("data", 36, "latin1");
+  b.writeUInt32LE(n, 40);
+  return b;
+}
+
+test("trang đăng nhập: bên trái là hoành phi tên dòng họ, câu đối, số đời", async ({ browser }) => {
+  const p = await browser.newPage();
+  await p.goto("/dang-nhap");
+  const side = p.getByRole("complementary");
+  await expect(side.getByText("Họ Lê Văn – thôn Thử")).toBeVisible();
+  await expect(side.getByLabel(/^Câu đối bên trái: /)).toBeVisible();
+  await expect(side.getByText(/Trong phả công khai:/)).toBeVisible();
+  await p.close();
+});
+
+test("nhạc nền: quản trị tải lên; người xem tự bật (mặc định tắt), lần sau vào vẫn nhớ", async ({ browser }) => {
+  const p = await browser.newPage();
+  await loginOwner(p);
+  const toggle = p.getByRole("button", { name: "Nhạc nền", exact: true });
+  await expect(toggle).toHaveCount(0); // chưa có nhạc thì không có nút
+  await p.getByRole("link", { name: "Cài đặt" }).click();
+  await p.getByLabel("Chọn bản nhạc").setInputFiles({ name: "nhac-dan-tranh.wav", mimeType: "audio/wav", buffer: silentWav() });
+  await p.getByLabel("Tên bản nhạc (không bắt buộc)").fill("Nhạc nhà thờ họ");
+  await p.getByRole("button", { name: "Tải nhạc lên" }).click();
+  await expect(p.getByText("Đã thay nhạc nền")).toBeVisible();
+  await expect(p.locator("#nhac-nen").getByText("Nhạc nhà thờ họ")).toBeVisible();
+
+  // mặc định tắt; bấm thì bật, chuyển thẻ nhạc không ngắt
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await expect(toggle).toHaveAttribute("title", "Đang phát: Nhạc nhà thờ họ");
+  expect(await p.evaluate(() => localStorage.getItem("coinguon:nhac"))).toBe("1");
+  await p.getByRole("link", { name: "Lịch giỗ" }).click();
+  await expect(toggle).toHaveAttribute("title", "Đang phát: Nhạc nhà thờ họ");
+
+  // tải lại trang: trình duyệt chặn tự phát → chờ lần chạm đầu tiên rồi phát
+  await p.reload();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await p.getByRole("heading", { level: 1 }).click();
+  await expect(toggle).toHaveAttribute("title", "Đang phát: Nhạc nhà thờ họ");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  expect(await p.evaluate(() => localStorage.getItem("coinguon:nhac"))).toBeNull();
+
+  // khách trên trang công khai cũng có nút, mặc định tắt
+  const guest = await browser.newPage();
+  await guest.goto("/xem");
+  await expect(guest.getByRole("button", { name: "Nhạc nền", exact: true })).toHaveAttribute("aria-pressed", "false");
+  await guest.close();
+  await p.close();
+});
+
+test("tài khoản của tôi: đổi số điện thoại cần mật khẩu hiện tại; đổi mật khẩu", async ({ browser }) => {
+  const p = await browser.newPage();
+  await loginOwner(p);
+  await p.getByRole("link", { name: /^Lê Văn Quản/ }).click();
+  await expect(p.getByRole("heading", { name: "Tài khoản của tôi" })).toBeVisible();
+  await expect(p.getByLabel("Email")).toHaveValue(OWNER.email);
+
+  await p.getByLabel("Số điện thoại").fill("0977 888 999");
+  await p.getByRole("button", { name: "Lưu thông tin" }).click();
+  await expect(p.getByText("Nhập mật khẩu hiện tại để đổi email / số điện thoại")).toBeVisible();
+  await p.getByLabel("Mật khẩu hiện tại").first().fill(OWNER.password);
+  await p.getByRole("button", { name: "Lưu thông tin" }).click();
+  await expect(p.getByText("Đã lưu thông tin")).toBeVisible();
+
+  // đổi mật khẩu: sai mật khẩu cũ báo đúng ô; đổi xong đăng nhập được bằng SĐT mới + mật khẩu mới
+  const pw = p.locator("form").filter({ has: p.getByRole("button", { name: "Đổi mật khẩu" }) });
+  await pw.getByLabel("Mật khẩu hiện tại").fill("sai-mat-khau");
+  await pw.getByLabel("Mật khẩu mới", { exact: true }).fill("mat-khau-tam-456");
+  await pw.getByLabel("Nhập lại mật khẩu mới").fill("mat-khau-tam-456");
+  await pw.getByRole("button", { name: "Đổi mật khẩu" }).click();
+  await expect(pw.getByText("Mật khẩu hiện tại không đúng")).toBeVisible();
+  await pw.getByLabel("Mật khẩu hiện tại").fill(OWNER.password);
+  await pw.getByRole("button", { name: "Đổi mật khẩu" }).click();
+  await expect(p.getByText("Đã đổi mật khẩu. Các máy khác đã được đăng xuất.")).toBeVisible();
+
+  const q = await browser.newPage();
+  await q.goto("/dang-nhap");
+  await q.getByLabel("Số điện thoại hoặc email").fill("0977888999");
+  await q.getByLabel("Mật khẩu").fill("mat-khau-tam-456");
+  await q.getByRole("button", { name: "Đăng nhập" }).click();
+  await expect(q.getByRole("heading", { level: 1, name: "Họ Lê Văn – thôn Thử" })).toBeVisible();
+  await q.close();
+
+  // đổi lại mật khẩu cũ cho các bước sau (luồng điện thoại dùng lại tài khoản này)
+  await pw.getByLabel("Mật khẩu hiện tại").fill("mat-khau-tam-456");
+  await pw.getByLabel("Mật khẩu mới", { exact: true }).fill(OWNER.password);
+  await pw.getByLabel("Nhập lại mật khẩu mới").fill(OWNER.password);
+  await pw.getByRole("button", { name: "Đổi mật khẩu" }).click();
+  await expect(p.getByText("Đã đổi mật khẩu. Các máy khác đã được đăng xuất.")).toBeVisible();
+  await p.close();
+});
+
+test("quản trị sửa tài khoản người có vai trò thấp hơn và đặt mật khẩu mới thay họ", async ({ browser }) => {
+  const o = await browser.newPage();
+  await loginOwner(o);
+  await o.getByRole("link", { name: "Cài đặt" }).click();
+  // tài khoản của chính mình không sửa ở đây
+  await expect(o.getByRole("listitem").filter({ hasText: "(bạn)" }).getByRole("button", { name: "Sửa tài khoản" })).toHaveCount(0);
+  const row = o.getByRole("listitem").filter({ hasText: "0905 222 333" });
+  await row.getByRole("button", { name: "Sửa tài khoản" }).click();
+  const form = o.getByRole("form", { name: "Sửa tài khoản của Lê Văn Cụ" });
+  await form.getByLabel("Họ và tên").fill("Lê Văn Cụ Ông");
+  await form.getByLabel("Mật khẩu mới (không bắt buộc)").fill("ngan");
+  await form.getByRole("button", { name: "Lưu tài khoản" }).click();
+  await expect(form.getByText("Mật khẩu tối thiểu 8 ký tự")).toBeVisible();
+  await form.getByLabel("Mật khẩu mới (không bắt buộc)").fill("quan-tri-dat-cho-cu");
+  await form.getByRole("button", { name: "Lưu tài khoản" }).click();
+  await expect(o.getByText("Đã lưu. Báo Lê Văn Cụ Ông đăng nhập lại bằng mật khẩu mới.")).toBeVisible();
+  await expect(o.getByLabel("Vai trò của Lê Văn Cụ Ông")).toHaveValue("member");
+
+  const q = await browser.newPage();
+  await q.goto("/dang-nhap");
+  await q.getByLabel("Số điện thoại hoặc email").fill("0905222333");
+  await q.getByLabel("Mật khẩu").fill("quan-tri-dat-cho-cu");
+  await q.getByRole("button", { name: "Đăng nhập" }).click();
+  await expect(q.getByText("Lê Văn Cụ Ông · Thành viên")).toBeVisible();
+  await q.close();
+  await o.close();
 });

@@ -371,8 +371,23 @@ export interface AlbumDetail {
 /* ——— Nhập – xuất ——— */
 
 export type ImportColumn =
-  | "ma" | "hoTen" | "gioiTinh" | "maCha" | "maMe" | "quanHe" | "thuTu" | "maVoChong" | "tenKhac"
-  | "ngaySinh" | "daMat" | "ngayMat" | "ngayGio" | "queQuan" | "ngheNghiep" | "noiAnTang" | "tieuSu";
+  | "ma"
+  | "hoTen"
+  | "gioiTinh"
+  | "maCha"
+  | "maMe"
+  | "quanHe"
+  | "thuTu"
+  | "maVoChong"
+  | "tenKhac"
+  | "ngaySinh"
+  | "daMat"
+  | "ngayMat"
+  | "ngayGio"
+  | "queQuan"
+  | "ngheNghiep"
+  | "noiAnTang"
+  | "tieuSu";
 
 export interface ImportIssue {
   row: number;
@@ -434,4 +449,23 @@ export interface LunarAnniversary {
   day: number;
   month: number;
   isLeapMonth: boolean;
+}
+
+/** Nhạc nền của dòng họ (một bài, khách tự bật — mặc định tắt) */
+export interface SiteMusic {
+  title: string;
+  mime: string;
+  sizeBytes: number;
+  updatedAt: string;
+  /** Đường dẫn file, có `?v=` đổi mỗi lần thay bài */
+  url: string;
+}
+
+/** Kết quả quản trị sửa tài khoản thành viên */
+export interface MemberAccount {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  passwordSet: boolean;
 }

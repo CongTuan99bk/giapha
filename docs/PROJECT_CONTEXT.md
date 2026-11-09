@@ -5,10 +5,10 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.16.1 |
+| Phiên bản file | 0.17.0 |
 | Cập nhật lần cuối | 2026-11-09 |
 | Người cập nhật | TuanLC, Claude |
-| Giai đoạn hiện tại | **MVP phần 2: website công khai, thống kê truy cập, lời nhắn của khách, thư viện ảnh theo album, nhập phả từ Excel, in phả đồ PDF/SVG xong; chịu tải đông người xem (bộ nhớ đệm, nén). Tiếp theo: ứng dụng iOS/Android** |
+| Giai đoạn hiện tại | **MVP phần 2: website công khai, thống kê truy cập, lời nhắn của khách, thư viện ảnh theo album, nhập phả từ Excel, in phả đồ PDF/SVG, tài khoản của tôi (đổi thông tin / mật khẩu), quản trị sửa tài khoản thành viên, nhạc nền xong; chịu tải đông người xem (bộ nhớ đệm, nén). Tiếp theo: ứng dụng iOS/Android** |
 | Mã nguồn | https://github.com/CongTuan99bk/giapha (nhánh `main`, CI xanh) |
 | Tài liệu đặc tả đầy đủ | "Tài liệu dự án: Hệ thống Gia Phả Cội Nguồn" v1.0 — https://claude.ai/artifact/1Wy2PqEVYSLqycMLH8LMzG |
 | Bản thảo kỹ thuật | https://claude.ai/artifact/T24kXNyJ9UkUPdRwMzBkFd |
@@ -52,7 +52,7 @@ Người dùng chính: ban liên lạc dòng họ (thường lớn tuổi) → g
 | Sổ tay chủ sở hữu & Hướng dẫn sử dụng v1.0 | Xong (2026-11-01) | Viết theo thiết kế; đối chiếu lại tên nút, thêm ảnh chụp khi có giao diện |
 | Giai đoạn 0 — Nền móng (tuần 1–2) | **Xong (2026-11-01)** | Monorepo, CI, schema + RLS, genealogy-core, lunar-vn, schemas — 126 test xanh |
 | MVP phần 1 — Phả đồ, thành viên (tuần 3–8) | **Xong phần chính (2026-11-02)** | Đăng nhập email/số điện thoại, tạo dòng họ, phả đồ, thêm/sửa/xoá người, danh sách, xưng hô, mời/duyệt thành viên, vai trò, ảnh, trang chủ, lịch giỗ, PWA, demo Docker — 118 test API + 24 test trình duyệt. Nhập phả đầy đủ xong 0.11.0 |
-| MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | **Đang làm** | Xong: website công khai + ban liên lạc (0.12), thống kê truy cập, lời nhắn của khách, ảnh xem trước khi chia sẻ link, tối ưu đông người dùng (0.14), thư viện ảnh theo album (0.15), nhập Excel + in PDF/SVG + xuất danh sách (0.16) — 177 test API + 28 test trình duyệt. Còn: sự kiện họp họ |
+| MVP phần 2 — Website, sự kiện, xuất, thống kê, liên hệ (tuần 9–14) | **Đang làm** | Xong: website công khai + ban liên lạc (0.12), thống kê truy cập, lời nhắn của khách, ảnh xem trước khi chia sẻ link, tối ưu đông người dùng (0.14), thư viện ảnh theo album (0.15), nhập Excel + in PDF/SVG + xuất danh sách (0.16), tài khoản + nhạc nền + trang đăng nhập mới (0.17) — 186 test API + 32 test trình duyệt. Còn: sự kiện họp họ |
 | Phase 2 (tuần 15–24), Phase 3 (tuần 25–32) | Chưa bắt đầu | |
 
 ### 2.2. Việc đang làm
@@ -201,7 +201,7 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | Module (apps/api/src/modules) | Trách nhiệm | Yêu cầu | Trạng thái |
 | --- | --- | --- | --- |
 | common | SessionGuard (cookie + CSRF), TenantGuard (`withClan` đặt `app.clan_id`, vai trò `@MinRole`), ErrorFilter, audit | NFR-SEC | **Xong** (chưa có rate limit — KI-010) |
-| auth | Đăng ký, đăng nhập, OTP, 2FA, Google | FR-AUTH | **Email + mật khẩu xong** (khoá 15 phút sau 5 lần sai); OTP/2FA/Google chưa |
+| auth, account | Đăng ký, đăng nhập, tài khoản của tôi, quản trị sửa tài khoản thành viên, OTP, 2FA, Google | FR-AUTH | **Email/SĐT + mật khẩu xong** (khoá 15 phút sau 5 lần sai); tự sửa tên/email/SĐT, đổi mật khẩu, quản trị sửa tài khoản người vai trò thấp hơn (0.17.0); OTP/2FA/Google chưa |
 | clans, members | Dòng họ, mời, vai trò, phạm vi chi | FR-CLAN | **Xong** (2026-11-02): tạo/sửa dòng họ, link mời (vai trò, hạn, số lượt, theo email, gắn người), đổi vai trò, xoá thành viên, "Đây là tôi"; phạm vi chi chưa (KI-011) |
 | persons, unions, tree | CRUD người/quan hệ, cây có cache, mã xem | FR-TREE, FR-PERSON | **API xong**: CRUD, thêm con/vợ chồng/cha mẹ, sắp thứ tự con, tìm không dấu, `GET /tree` có bố cục; cache cây & mã xem chưa |
 | kinship | Tra xưng hô | FR-KIN | **API xong** (`GET /kinship`, hai chiều); bảng chưa duyệt (KI-001) |
@@ -209,7 +209,7 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | import-export | Nhập Excel (kiểm tra → xác nhận → hoàn tác 24 h), xuất danh sách Excel, in phả đồ PDF/SVG | FR-IO | Xong 0.16.0 (còn: PNG, sao lưu tải về, GEDCOM P2) |
 | media, albums | Thư viện ảnh theo album | FR-MEDIA | Xong 0.15.0 (chỉ ảnh) |
 | posts, places | Bài viết, bản đồ | FR-CONTENT, FR-GRAVE | Chưa làm |
-| site-settings, contacts, domains | Website, liên hệ ban quản lý, tên miền | FR-SITE | Chưa làm |
+| site-settings, contacts, domains | Website, liên hệ ban quản lý, nhạc nền, tên miền | FR-SITE | Trang chủ, ban liên lạc (0.12), nhạc nền (0.17) xong; tên miền riêng chưa |
 | analytics | Heartbeat, page view, online realtime (SSE), báo cáo ngày | FR-STAT | Chưa làm |
 | audit, trash | Nhật ký, thùng rác | FR-ADMIN | Chưa làm |
 | platform, billing | Super-admin, gói cước (P3), quyền hỗ trợ có thời hạn, ẩn nội dung vi phạm | FR-PLAT | Chưa làm |
@@ -239,6 +239,9 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | `GET /clans/:clanId/anniversaries?from=YYYY-MM-DD&days=1..800` | member | `{from, days, items[{personId, fullName, generation, inClan, deathYear, lunar, solarDate, weekday, daysUntil, nth, adjustments}], missingDeathDay}`; mặc định từ hôm nay giờ VN, 365 ngày; người `hidden` chỉ admin thấy |
 | `GET /clans/:clanId/anniversaries.ics?years=1..5` | member | file lịch RFC 5545, sự kiện cả ngày, nhắc trước 3 ngày; tên file `lich-gio-<slug>.ics` |
 | `GET /me`, `GET /me/clans` | đã đăng nhập | |
+| `PATCH /me/account` | đã đăng nhập | `{name?, email?, phone?, currentPassword?}` — `null`/rỗng = bỏ email hoặc SĐT; đổi email/SĐT cần `currentPassword` (`CURRENT_PASSWORD_REQUIRED`, `WRONG_PASSWORD` 422 ô `currentPassword`); còn ít nhất một cách đăng nhập (`LOGIN_ID_REQUIRED`); `EMAIL_TAKEN`/`PHONE_TAKEN` 409; trả `{id, name, email, phone}`; 20 lần/15 phút |
+| `POST /me/password` | đã đăng nhập | `{currentPassword, newPassword ≥ 8}` → 204; **xoá mọi phiên khác** (máy đang dùng giữ đăng nhập), mở khoá, link đặt lại cũ hết hiệu lực; `WRONG_PASSWORD` 422 |
+| `PATCH /clans/:clanId/members/:memberId/account` | admin | `{name?, email?, phone?, newPassword?}` cho người **vai trò thấp hơn** (`ROLE_TOO_LOW`; chính mình → `USE_OWN_ACCOUNT_PAGE`; chế độ nhiều dòng họ: tài khoản còn thuộc dòng họ khác → `USER_IN_OTHER_CLAN`); `newPassword` → xoá mọi phiên của người đó; ghi nhật ký `member.account.update` (không ghi mật khẩu); trả `{id, name, email, phone, passwordSet, roleRank}`. Đổi vai trò vẫn là `PATCH …/members/:memberId {role}` |
 | `POST /auth/forgot-password` | công khai | `{email}` → luôn 202 (không lộ email có tài khoản); gửi link 30 phút qua SMTP hoặc ghi log |
 | `POST /auth/reset-password` | công khai | `{token, password}` → `{email}`; dùng một lần, mở khoá tài khoản, xoá mọi phiên; `RESET_LINK_INVALID` 410 |
 | `POST /clans/:clanId/members/:memberId/password-reset` | admin | link 24 giờ `{path, expiresAt}` cho thành viên vai trò thấp hơn (`USE_FORGOT_PASSWORD` nếu là chính mình) |
@@ -261,6 +264,9 @@ Mọi bảng nghiệp vụ có `clan_id` + RLS. Xoá mềm bằng `deleted_at`.
 | `PATCH/DELETE /clans/:clanId/media/:id` | editor | sửa chú thích; xoá (gỡ khỏi ảnh chân dung, banner tự bỏ, xoá file sau commit) |
 | `PUT /clans/:clanId/persons/:id/avatar` | editor | `{mediaId \| null}` — không tăng `version`; ảnh phải cùng dòng họ (`MEDIA_NOT_FOUND`) |
 | `GET /clans/:clanId/site/home` · `PUT` (admin) | member | `{banners[], couplet {left,right} \| null, motto, templeAddress, stats {people, generations}}`; lưu trong `site_settings.data.home` |
+| `GET /clans/:clanId/site/music` · `GET …/music/file` | member | `{music: {title, mime, sizeBytes, updatedAt, url (?v= đổi khi thay bài)} \| null}`; file hỗ trợ `Range` (tua, phát ngay), `Cache-Control: public, max-age=31536000, immutable` |
+| `PUT /clans/:clanId/site/music` · `PATCH {title}` · `DELETE` | admin | multipart `file` (MP3/M4A/OGG/WAV nhận dạng bằng nội dung — `NOT_AUDIO` 422; ≤ 20 MB) + `title?` (trống → tên file); một bài duy nhất, bài cũ xoá sau khi ghi xong bài mới; 20 lần/giờ |
+| `GET /public/music` · `GET /public/music/file` | công khai | nhạc nền của dòng họ chính (chế độ single) |
 | `GET /public/site` | công khai | chế độ single: `{clan, home {banners[{id, urls sm/md/lg}], couplet, motto, templeAddress}, stats {people, generations} (người đã mất công khai), contacts[{name, role, phone, email}]}`; multi → `NO_PUBLIC_SITE` 404 |
 | `GET /public/tree` · `GET /public/persons/:id` · `GET /public/anniversaries?days` | công khai | chỉ người **đã mất** + `privacy = public` (ADR-017); người thân không công khai bị lược; hồ sơ không có `version`, `privacy` |
 | `GET /public/media/:id/:variant` | công khai | chỉ `sm/md/lg` (không ảnh gốc), chỉ ảnh banner hoặc chân dung người công khai; `Cache-Control: public, max-age=86400` |
@@ -412,6 +418,7 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | ADR-019 | 2026-11-09 | Thống kê truy cập **gom trong bộ nhớ API, ghi mỗi phút** vào `analytics_daily`/`analytics_dims`; đang xem tính trong bộ nhớ; mã khách trong `localStorage` | Một bản API; không thêm Redis (tiết kiệm RAM VPS); đông người xem cũng chỉ một lần ghi/phút | Redis HyperLogLog (ADR-004/005 — giữ làm hướng mở rộng); ghi DB mỗi lượt xem |
 | ADR-020 | 2026-11-09 | **Vẽ phả đồ PDF/SVG ngay trong API** bằng PDFKit + fontkit từ cùng bố cục `layoutTree` (một "cảnh" hình đơn giản, hai bộ vẽ); phông Be Vietnam Pro + Alegreya bản TTF đầy đủ trong `apps/api/assets/fonts` (Alegreya tĩnh tạo từ bản biến thiên bằng fontTools); xuất **đồng bộ** (không hàng đợi, bảng `exports` chưa dùng); nhiều trang: lặp lại lề "Đời n", nhãn hàng/cột để ghép | 2.000 người: PDF < 1 s, SVG 0,3 s; không cần Chromium trong image (~300 MB) | Playwright/Chromium in HTML (nặng, chậm); vẽ phía trình duyệt (khó in khổ lớn, phông) |
 | ADR-021 | 2026-11-09 | **Nhập Excel hai bước**: kiểm tra (lưu dòng thô + lỗi vào `imports`) → xác nhận (lập lại kế hoạch với dữ liệu hiện tại rồi ghi) → hoàn tác 24 h (xoá cứng quan hệ, xoá mềm người). Nối vào phả cũ bằng Mã = id người đã có (lấy từ file xuất); dòng người đã có bị bỏ qua, không cập nhật. Thuỷ tổ = người không cha mẹ, có con, nam, dòng trên. `partner_a` = người có cha mẹ trong họ | Người lớn tuổi quen Excel; thấy lỗi theo dòng trước khi ghi; an toàn khi lỡ tay | Sửa người đã có qua Excel (dễ ghi đè nhầm); nhập ngay không xem trước |
+| ADR-022 | 2026-11-09 | **Nhạc nền**: một bài cho cả dòng họ, lưu ổ đĩa `MEDIA_DIR/nhac/<clanId>/<uuid>.<đuôi>`, thông tin trong `site_settings.data.music`; phát bằng **một** `Audio` dùng chung (chuyển trang không ngắt), **mặc định tắt**, người xem bật thì nhớ trên máy (`localStorage coinguon:nhac`) — vào lại trang thì phát ở lần chạm đầu tiên (trình duyệt chặn tự phát) | Người lớn tuổi mở web có tiếng nhạc bất ngờ dễ hoảng; tốn dữ liệu di động; trình duyệt chặn tự phát | Tự phát khi vào trang; nhiều bài / danh sách phát |
 | ADR-011 | 2026-11-01 | `CLAN_MODE=single`: chỉ tạo được dòng họ đầu tiên, `GET /instance` cho web biết dòng họ chính; vẫn giữ RLS đa dòng họ | Chủ dự án dùng riêng cho một dòng họ; giữ đường mở rộng | Bỏ hẳn `clan_id` / RLS |
 | ADR-010 | 2026-11-01 | API dùng **Kysely** (query builder có kiểu) thay Prisma Client; Prisma chỉ giữ schema + migration. NestJS 12 ESM | Đặt `set_config('app.clan_id')` trong cùng transaction cho RLS rõ ràng; ltree, CTE đệ quy, `update … from (values …)` viết thẳng SQL; không cần engine nhị phân của Prisma | Prisma Client + `$extends` cho RLS, Drizzle |
 | ADR-009 | 2026-11-01 | Ràng buộc phả hệ cả ở DB (trigger chặn vòng lặp, tự làm cha mẹ, nối chéo dòng họ) ngoài kiểm tra ở `genealogy-core` | Phòng thủ nhiều lớp; FK không xét RLS nên cần trigger chặn nối người khác dòng họ | Chỉ kiểm tra ở service |
@@ -421,6 +428,16 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.17.0] — 2026-11-09 — Tài khoản của tôi, quản trị sửa tài khoản thành viên, nhạc nền, trang đăng nhập mới
+### Thêm
+- **Trang đăng nhập / đăng ký / link mời**: bên trái dựng như gian thờ họ (`components/auth-showcase.tsx`) — hoành phi tên dòng họ + quê gốc, ảnh banner đầu tiên trong khung vàng (không có ảnh thì khẩu hiệu), hai câu đối viết dọc mỗi chữ một dòng (chưa ghi câu đối thì "Cây có cội / Nước có nguồn"), số đời và số cụ trong phả công khai, giỗ sắp tới trong 60 ngày. Điện thoại chỉ hiện hoành phi để form lên đầu.
+- **Tài khoản của tôi** (`/dong-ho/:id/tai-khoan`, bấm tên mình trên thanh đầu trang; điện thoại: "Tài khoản"): sửa họ tên, số điện thoại, email (đổi email/SĐT mới hiện ô mật khẩu hiện tại); đổi mật khẩu (nhập lại để chắc). Module API `account` (`account.service.ts`, `account.controller.ts`).
+- **Quản trị sửa tài khoản thành viên**: Cài đặt → Thành viên → "Sửa tài khoản" (họ tên, SĐT, email, đặt mật khẩu mới) cho người vai trò thấp hơn; ô đổi vai trò giữ nguyên. Thứ bậc: chủ sở hữu > quản trị > người nhập liệu > thành viên — quản trị không sửa được quản trị khác hay chủ sở hữu.
+- **Nhạc nền** (ADR-022): Cài đặt → Nhạc nền (tải lên, nghe thử, đổi tên, gỡ, nhắc chỉ dùng nhạc được phép phát); nút "Nhạc nền" trên thanh đầu trang thành viên và trang công khai (`components/music-button.tsx`, `aria-pressed`), chỉ hiện khi có nhạc; âm lượng tăng dần tới 35%, phát lặp.
+- Test: 9 test API (`account-music.e2e.test.ts`), 4 test trình duyệt; `Client.login` trong helper test.
+### Bảo mật
+- Đổi email / SĐT đăng nhập cần mật khẩu hiện tại (máy để quên mở không bị chiếm tài khoản). Đổi mật khẩu đăng xuất mọi máy khác; quản trị đặt mật khẩu mới thì người đó bị đăng xuất khỏi mọi máy. File nhạc kiểm tra bằng nội dung, không tin đuôi tên file.
 
 ## [0.16.1] — 2026-11-09 — Ô "Ngày giỗ (âm lịch)" trong form người
 ### Thêm
@@ -681,6 +698,8 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-033 | ~~Ngày giỗ ghi riêng chỉ nhập được qua Excel~~ — xong 0.16.1: form người có ô "Ngày giỗ (âm lịch)" | — | — |
 | KI-034 | Cây rất rộng (cả nghìn người cùng đời) in một trang thì chữ li ti, chia trang thì hàng trăm trang — trang Nhập – xuất báo trước và khuyên in từng nhánh. Chưa có xuất ảnh PNG | Thấp | In từng chi; thêm PNG khi cần |
 | KI-035 | Kiểm thử trình duyệt: Playwright không đưa được file từ đường dẫn có dấu tiếng Việt vào ô chọn file — file thử ghi vào thư mục tạm không dấu | Thấp | — |
+| KI-036 | Đổi email trong Tài khoản của tôi / quản trị sửa email **không gửi thư xác nhận** (chưa có SMTP chắc chắn) — gõ sai email thì link quên mật khẩu gửi nhầm chỗ | Trung bình | Gửi mã xác nhận tới email mới khi bật SMTP |
+| KI-037 | Nhạc nền: một bài; iPhone không cho chỉnh âm lượng bằng mã (phát theo âm lượng máy); vào lại trang phải chạm một lần mới phát (chính sách trình duyệt) | Thấp | Nhiều bài khi có nhu cầu |
 | KI-031 | Đổi ảnh banner / tên dòng họ: ảnh xem trước khi chia sẻ link cập nhật sau ~15 giây; Zalo/Facebook còn nhớ ảnh cũ của link đã chia sẻ (dùng công cụ "Sharing Debugger" của Facebook để làm mới) | Thấp | — |
 | KI-027 | Số điện thoại chưa được xác minh (OTP SMS): ai cũng đăng ký được bằng số của người khác (vẫn phải chờ quản trị duyệt) | Trung bình | Quản trị kiểm tra trước khi duyệt; thêm OTP SMS/Zalo khi có ngân sách |
 | KI-008 | Bố cục phả đồ hiện là dạng "khối căn giữa", chưa nén nhánh kiểu Reingold–Tilford (cây rộng hơn cần thiết) | Thấp | Tối ưu khi làm trình chỉnh sửa phả đồ nếu cây quá rộng |

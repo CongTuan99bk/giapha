@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { usePublicMusic } from "@/lib/public";
 import { useMe } from "@/lib/queries";
+import { MusicButton } from "./music-button";
 
 const TABS = [
   { href: "/xem", label: "Trang chủ" },
@@ -16,12 +18,14 @@ const TABS = [
 export function PublicHeader({ name }: { name: string }) {
   const path = usePathname();
   const me = useMe();
+  const music = usePublicMusic().data?.music;
   return (
     <header className="bg-then text-ngoc-50">
       <div className="flex items-center gap-4 px-4 pt-3 md:px-6">
         <Link href="/xem" className="min-w-0 flex-1 truncate font-serif text-xl text-thep-nhat md:text-2xl">
           {name}
         </Link>
+        <MusicButton music={music} />
         {me.data ? (
           <Link href="/" className="rounded px-2 py-1 text-sm text-ngoc-200 hover:text-white">
             Trang thành viên

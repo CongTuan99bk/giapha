@@ -2,7 +2,10 @@ import { type DynamicModule, Module } from "@nestjs/common";
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { AlbumsController } from "./albums/albums.controller.js";
 import { AlbumsService } from "./albums/albums.service.js";
+import { AccountController, MemberAccountController } from "./account/account.controller.js";
+import { AccountService } from "./account/account.service.js";
 import { AnalyticsService } from "./analytics/analytics.service.js";
+import { MusicController, PublicMusicController } from "./site/music.controller.js";
 import { ImportExportController } from "./import-export/import-export.controller.js";
 import { ImportExportService } from "./import-export/import-export.service.js";
 import { PublicStatsController, StatsController, TrackController } from "./analytics/analytics.controller.js";
@@ -60,6 +63,10 @@ export class AppModule {
         ContactsController,
         PublicController,
         AlbumsController,
+        AccountController,
+        MusicController,
+        PublicMusicController,
+        MemberAccountController,
         ImportExportController,
         PublicStatsController,
         PublicMessagesController,
@@ -77,6 +84,7 @@ export class AppModule {
         ResponseCache,
         MainClanService,
         AlbumsService,
+        AccountService,
         ImportExportService,
         AnalyticsService,
         ClansService,

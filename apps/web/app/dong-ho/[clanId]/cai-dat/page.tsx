@@ -6,7 +6,9 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { ContactsManager } from "@/components/contacts-manager";
 import { Field, FormError } from "@/components/field";
 import { HomeSettingsForm } from "@/components/home-settings-form";
+import { MemberAccountForm } from "@/components/member-account-form";
 import { MessagesInbox } from "@/components/messages-inbox";
+import { MusicSettings } from "@/components/music-settings";
 import { PersonPicker } from "@/components/person-picker";
 import { api, fieldErrors } from "@/lib/api";
 import { formatPhone, loginLabel } from "@/lib/format";
@@ -54,13 +56,24 @@ export default function SettingsPage() {
           <HomeSettingsForm clanId={clanId} />
         </Section>
         <Section
+          id="nhac-nen"
+          title="Nhạc nền"
+          lead="Một bản nhạc cho cả trang thành viên và trang công khai. Mặc định tắt — người xem bấm nút Nhạc nền trên thanh đầu trang để nghe."
+        >
+          <MusicSettings clanId={clanId} />
+        </Section>
+        <Section
           id="lien-he"
           title="Ban liên lạc"
           lead="Trưởng họ, trưởng các chi, quản trị website — hiện ở mục Liên hệ trên trang công khai, theo đúng thứ tự dưới đây."
         >
           <ContactsManager clanId={clanId} />
         </Section>
-        <Section title="Thành viên">
+        <Section
+          id="thanh-vien"
+          title="Thành viên"
+          lead="Bạn sửa được tài khoản và đổi vai trò của người có vai trò thấp hơn mình. Tài khoản của chính bạn sửa ở mục Tài khoản trên thanh đầu trang."
+        >
           <MemberList clan={clan.data} />
         </Section>
         <Section title="Thông tin dòng họ">
@@ -257,7 +270,21 @@ function AccountForm({ clan }: { clan: Clan }) {
 }
 
 /** Tài khoản vừa tạo: soạn sẵn tin nhắn kèm link đặt mật khẩu để gửi qua Zalo */
-function CreatedAccount({ name, login, url, expiresAt, clanName, onDone }: { name: string; login: string; url: string; expiresAt: string; clanName: string; onDone: () => void }) {
+function CreatedAccount({
+  name,
+  login,
+  url,
+  expiresAt,
+  clanName,
+  onDone,
+}: {
+  name: string;
+  login: string;
+  url: string;
+  expiresAt: string;
+  clanName: string;
+  onDone: () => void;
+}) {
   const [copied, setCopied] = useState(false);
   const until = new Date(expiresAt).toLocaleDateString("vi-VN");
   const text = `Chào ${name}, ban quản lý đã tạo tài khoản gia phả ${clanName} cho bạn.\nBước 1: mở link sau để đặt mật khẩu (dùng được tới ${until}):\n${url}\nBước 2: đăng nhập bằng ${login} và mật khẩu vừa đặt.`;
@@ -268,7 +295,14 @@ function CreatedAccount({ name, login, url, expiresAt, clanName, onDone }: { nam
       <p className="mt-1 text-sm text-reu">
         Gửi tin nhắn dưới đây qua Zalo. Link chỉ hiện một lần; làm mất thì vào danh sách Thành viên, bấm “Tạo link đặt mật khẩu”.
       </p>
-      <textarea aria-label="Tin nhắn gửi kèm link đặt mật khẩu" readOnly rows={5} value={text} onFocus={(e) => e.currentTarget.select()} className="o-nhap mt-4 text-sm" />
+      <textarea
+        aria-label="Tin nhắn gửi kèm link đặt mật khẩu"
+        readOnly
+        rows={5}
+        value={text}
+        onFocus={(e) => e.currentTarget.select()}
+        className="o-nhap mt-4 text-sm"
+      />
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
@@ -405,16 +439,8 @@ function CreatedLink({ invitation, onDone }: { invitation: Invitation; onDone: (
   return (
     <div className="rounded-lg border border-thep bg-thep-nhat/60 p-5" role="status">
       <p className="font-serif text-xl">Đã tạo link mời {ROLE_LABEL[invitation.role].toLowerCase()}</p>
-      <p className="mt-1 text-sm text-reu">
-        Link chỉ hiện một lần. Sao chép và gửi ngay; nếu làm mất, hãy tạo link mới.
-      </p>
-      <input
-        aria-label="Link mời"
-        readOnly
-        value={url}
-        onFocus={(e) => e.currentTarget.select()}
-        className="o-nhap mt-4 font-mono text-sm"
-      />
+      <p className="mt-1 text-sm text-reu">Link chỉ hiện một lần. Sao chép và gửi ngay; nếu làm mất, hãy tạo link mới.</p>
+      <input aria-label="Link mời" readOnly value={url} onFocus={(e) => e.currentTarget.select()} className="o-nhap mt-4 font-mono text-sm" />
       <div className="mt-3 flex flex-wrap gap-2">
         <button type="button" className="btn-chinh" onClick={copy}>
           {copied ? "Đã sao chép" : "Sao chép link"}
@@ -473,6 +499,8 @@ function MemberList({ clan }: { clan: Clan }) {
   const update = useUpdateMember(clan.id);
   const remove = useRemoveMember(clan.id);
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
   const [error, setError] = useState<string | null>(null);
   const roles = grantableRoles(clan.role);
 
@@ -481,6 +509,9 @@ function MemberList({ clan }: { clan: Clan }) {
   return (
     <>
       <FormError message={error} />
+      <p role="status" className="text-sm text-reu empty:hidden">
+        {notice}
+      </p>
       <ul className="divide-y divide-ngoc-200 border-y border-ngoc-200">
         {members.data.map((m) => {
           const self = m.userId === me.data?.id;
@@ -495,7 +526,23 @@ function MemberList({ clan }: { clan: Clan }) {
                 <p className="truncate text-sm text-reu">{loginLabel(m)}</p>
                 {m.person && <p className="text-sm text-reu">Trong phả: {m.person.fullName}</p>}
                 {m.passwordPending && <p className="text-sm font-medium text-son-dam">Chưa đặt mật khẩu lần đầu</p>}
-                {editable && <ResetLink clanId={clan.id} memberId={m.id} name={m.name} firstTime={m.passwordPending} />}
+                {editable && (
+                  <div className="flex flex-wrap items-baseline gap-x-5">
+                    {editing !== m.id && (
+                      <button
+                        type="button"
+                        className="mt-1 text-sm text-son hover:underline"
+                        onClick={() => {
+                          setNotice("");
+                          setEditing(m.id);
+                        }}
+                      >
+                        Sửa tài khoản
+                      </button>
+                    )}
+                    <ResetLink clanId={clan.id} memberId={m.id} name={m.name} firstTime={m.passwordPending} />
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {editable ? (
@@ -524,9 +571,7 @@ function MemberList({ clan }: { clan: Clan }) {
                       <button
                         type="button"
                         className="btn bg-loi text-white hover:bg-son-dam"
-                        onClick={() =>
-                          remove.mutate(m.id, { onError: (err) => setError(err.message), onSettled: () => setConfirming(null) })
-                        }
+                        onClick={() => remove.mutate(m.id, { onError: (err) => setError(err.message), onSettled: () => setConfirming(null) })}
                       >
                         Xoá khỏi dòng họ
                       </button>
@@ -540,6 +585,18 @@ function MemberList({ clan }: { clan: Clan }) {
                     </button>
                   ))}
               </div>
+              {editable && editing === m.id && (
+                <div className="sm:col-span-2">
+                  <MemberAccountForm
+                    clanId={clan.id}
+                    member={m}
+                    onDone={(message) => {
+                      setEditing(null);
+                      setNotice(message);
+                    }}
+                  />
+                </div>
+              )}
             </li>
           );
         })}

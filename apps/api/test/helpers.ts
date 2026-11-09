@@ -6,11 +6,8 @@ import { loadConfig } from "../src/config.js";
 
 // Database riêng cho test API (coinguon_test_api) để không đụng test RLS của packages/db khi turbo chạy song song.
 export const OWNER_URL = process.env.TEST_API_DATABASE_URL ?? "postgresql://coinguon:coinguon@localhost:5432/coinguon_test_api";
-export const APP_URL =
-  process.env.TEST_API_APP_DATABASE_URL ?? "postgresql://coinguon_app:coinguon_app@localhost:5432/coinguon_test_api";
-export const PLATFORM_URL =
-  process.env.TEST_API_PLATFORM_DATABASE_URL ??
-  "postgresql://coinguon_platform:coinguon_platform@localhost:5432/coinguon_test_api";
+export const APP_URL = process.env.TEST_API_APP_DATABASE_URL ?? "postgresql://coinguon_app:coinguon_app@localhost:5432/coinguon_test_api";
+export const PLATFORM_URL = process.env.TEST_API_PLATFORM_DATABASE_URL ?? "postgresql://coinguon_platform:coinguon_platform@localhost:5432/coinguon_test_api";
 
 /** Xoá sạch dữ liệu giữa các file test (dùng role chủ sở hữu, không bị RLS). */
 export async function resetDatabase(): Promise<void> {
@@ -56,11 +53,22 @@ export class Client {
     return res.body.user as { id: string; email: string };
   }
 
+  /** Đăng nhập bằng email hoặc số điện thoại (mặc định mật khẩu của register) */
+  async login(identifier: string, password = "matkhau-an-toan") {
+    const res = await this.agent.post("/api/v1/auth/login").send({ identifier, password });
+    if (res.status !== 200) throw new Error(`login ${res.status}: ${JSON.stringify(res.body)}`);
+    this.csrf = res.body.csrfToken;
+    return res.body.user as { id: string };
+  }
+
   get(url: string) {
     return this.agent.get(`/api/v1${url}`);
   }
   post(url: string, body?: object) {
-    return this.agent.post(`/api/v1${url}`).set("X-CSRF-Token", this.csrf).send(body ?? {});
+    return this.agent
+      .post(`/api/v1${url}`)
+      .set("X-CSRF-Token", this.csrf)
+      .send(body ?? {});
   }
   patch(url: string, body: object) {
     return this.agent.patch(`/api/v1${url}`).set("X-CSRF-Token", this.csrf).send(body);
