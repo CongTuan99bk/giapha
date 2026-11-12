@@ -145,7 +145,8 @@ jobs:
       - name: Lệnh chạy server dữ liệu thật + link cố định Tailscale (lệnh tailscale giả)
         run: |
           set -e
-          docker compose -f infra/docker/compose.prod.yml --env-file .env.ci down
+          # bước trên đã tạo CSDL "coinguon" bằng mật khẩu của .env.ci → xoá để lệnh chạy bắt đầu như máy mới
+          docker compose -f infra/docker/compose.prod.yml --env-file .env.ci down -v
           mkdir -p /tmp/fts
           echo '{"backend":"Running","dnsName":"giapha.vi-du.ts.net.","funnel":"ok"}' > /tmp/fts/state.json
           export TAILSCALE_BIN=$PWD/scripts/test/fake-tailscale.mjs FAKE_TS_DIR=/tmp/fts
