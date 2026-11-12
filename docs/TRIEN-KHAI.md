@@ -1,10 +1,11 @@
 # Hướng dẫn đưa Gia Phả Cội Nguồn lên mạng
 
-Có ba cách, từ dễ đến chắc chắn:
+Có ba cách, từ dễ đến chắc chắn (cách A có hai kiểu link):
 
 | Cách | Chi phí | Chạy 24/7? | Link | Hợp cho |
 | --- | --- | --- | --- | --- |
 | **A. Máy cá nhân + Cloudflare Quick Tunnel** | 0 đ | Chỉ khi máy bật | `https://<ngẫu-nhiên>.trycloudflare.com`, **đổi mỗi lần khởi động lại** | Demo nhanh hôm nay |
+| **A. Máy cá nhân + Tailscale Funnel** | 0 đ (tài khoản Tailscale miễn phí) | Chỉ khi máy bật | `https://<tên-máy>.<tên-mạng>.ts.net`, **cố định** | Gửi link cho cả họ khi chưa có tên miền |
 | **B. Oracle Cloud Always Free** | 0 đ (cần thẻ để xác minh) | Có | `https://<IP>.sslip.io` hoặc tên miền riêng | Dùng thử lâu dài, miễn phí |
 | **C. VPS Bizfly 4 GB** | ~240.000 đ/tháng (chưa VAT) | Có, máy chủ ở Việt Nam | Tên miền riêng | Chạy thật cho cả họ |
 
@@ -39,7 +40,7 @@ pnpm chay --mau      # dữ liệu MẪU (giả) để thử, để demo
 pnpm chay --that     # dữ liệu THẬT của dòng họ
 ```
 
-**Windows:** bấm đúp file **`chay-server.cmd`** ở thư mục repo → chọn **1** (dữ liệu mẫu), **2** (dữ liệu thật) hoặc **3** (dữ liệu thật, chỉ xem trên máy này). macOS/Linux: `./chay-server.sh mau` hoặc `./chay-server.sh that`.
+**Windows:** bấm đúp file **`chay-server.cmd`** ở thư mục repo → chọn **1** (dữ liệu mẫu), **2** (dữ liệu thật), **3** (dữ liệu thật, chỉ xem trên máy này), **4** (dữ liệu thật, link cố định qua Tailscale — xem mục *Link cố định* bên dưới) hoặc **5** (quay lại link tạm Cloudflare). macOS/Linux: `./chay-server.sh mau`, `./chay-server.sh that`, `./chay-server.sh that-tailscale`.
 
 Mỗi lần chạy, lệnh tự làm hết: kiểm tra Docker → **dọn server cũ** (cả bản `pnpm demo` cũ) → build bản mới nhất → chạy → in **link chia sẻ** `https://….trycloudflare.com` (gửi qua Zalo là mở được trên điện thoại).
 
@@ -65,7 +66,9 @@ Hai loại dữ liệu nằm ở **hai bộ dữ liệu Docker riêng** (`coingu
 | --- | --- |
 | `pnpm chay --mau` / `pnpm demo` | Chạy lại với dữ liệu mẫu mới tinh |
 | `pnpm chay --that` | Chạy (hoặc cập nhật) server dữ liệu thật |
-| thêm `--khong-link` | Không mở link Cloudflare, chỉ xem trên máy này (http://localhost:3000) |
+| thêm `--tailscale` | Link **cố định** qua Tailscale; nhớ lựa chọn — các lần `pnpm chay --that` sau dùng luôn |
+| thêm `--cloudflare` | Quay lại link tạm Cloudflare (mặc định) |
+| thêm `--khong-link` | Lần này không mở link chia sẻ, chỉ xem trên máy này (http://localhost:3000) |
 | `pnpm chay:link` | In lại link chia sẻ của server đang chạy |
 | `pnpm chay:sao-luu` | Sao lưu ngay (CSDL + ảnh) |
 | `pnpm chay:nhat-ky` | Xem nhật ký máy chủ (Ctrl+C để thoát) |
@@ -74,9 +77,42 @@ Hai loại dữ liệu nằm ở **hai bộ dữ liệu Docker riêng** (`coingu
 ### Lưu ý
 
 - Máy tính **ngủ hoặc tắt thì link không vào được**. Windows: *Settings → System → Power* → để *Sleep: Never* khi đang chạy.
-- **Link đổi mỗi lần chạy lại** — gửi lại link mới cho mọi người. Muốn link cố định 24/7: xem cách B (Oracle Free) bên dưới.
+- Link Cloudflare **đổi mỗi lần chạy lại** — gửi lại link mới cho mọi người. Muốn link cố định: dùng Tailscale (mục ngay dưới), hoặc cách B/C.
 - Quick Tunnel là dịch vụ thử nghiệm của Cloudflare: không cam kết luôn chạy, tối đa 200 người truy cập cùng lúc — thừa cho một dòng họ.
 - Mật khẩu CSDL sinh ngẫu nhiên trong `.env.demo` / `.env.that`. **Không gửi cho ai, không đưa lên GitHub** (đã được bỏ qua sẵn). **Giữ kỹ `.env.that`** — mất file này thì không mở được CSDL thật (vẫn khôi phục được từ bản sao lưu).
+
+### Link cố định qua Tailscale (không cần mua tên miền)
+
+Tailscale Funnel cho một link `https://<tên-máy>.<tên-mạng>.ts.net` **không đổi khi chạy lại**. Như Cloudflare, không phải mở cổng trên modem; khác ở chỗ dữ liệu được mã hoá **tới tận máy bạn** (máy chủ trung gian của Tailscale không đọc được).
+
+**Cài một lần:**
+
+1. Tải **Tailscale** — https://tailscale.com/download → Windows → cài → **Log in** (dùng tài khoản Google hoặc Microsoft). macOS: dùng bản tải từ trang Tailscale.
+2. **Đặt tên máy ngắn gọn trước khi gửi link** (link chứa tên máy): vào https://login.tailscale.com/admin/machines → máy của bạn → **⋯ → Edit machine name** → bỏ chọn *Auto-generate from OS hostname* → gõ ví dụ `giapha` → **Update name**.
+3. *(Tuỳ chọn)* đổi phần tên mạng (`tailxxxx`) thành tên dễ đọc: https://login.tailscale.com/admin/dns → mục **Tailnet DNS name** → chọn một tên Tailscale gợi ý.
+
+**Chạy:** bấm đúp `chay-server.cmd` → **4**, hoặc `pnpm chay --that --tailscale`.
+
+- Lần đầu Tailscale in một link `https://login.tailscale.com/f/funnel?...` → mở link, bấm **Enable** (bật HTTPS và Funnel cho mạng của bạn). Lệnh tự chạy tiếp; nếu lệnh đã thoát thì chạy lại.
+- Xong, lệnh in **Link cố định (Tailscale)**. Lần đầu mở link có thể mất khoảng 1 phút (Tailscale cấp chứng chỉ https).
+- Các lần sau chọn **2** (hoặc `pnpm chay --that`) vẫn dùng đúng link đó. Quay lại Cloudflare: chọn **5** (`--cloudflare`).
+
+**Cần biết:**
+
+- Tailscale chỉ cho Internet vào **trang web gia phả** trên máy (cổng 3000) — không lộ thư mục hay máy khác trong nhà. `pnpm chay:dung` hoặc chuyển sang Cloudflare thì link Tailscale tự đóng.
+- Đổi tên máy / tên mạng trên Tailscale thì link đổi theo — đặt tên xong rồi mới gửi link cho cả họ.
+- Băng thông Funnel có giới hạn (Tailscale không công bố con số) — xem nhiều ảnh cùng lúc có thể chậm hơn Cloudflare. Máy vẫn phải bật.
+- Hệ thống tự đặt `CLIENT_IP_HEADER=x-forwarded-for` (Tailscale ghi IP thật của khách vào header này) để chặn dò mật khẩu theo IP; dùng Cloudflare thì đặt lại `cf-connecting-ip`.
+
+| Thấy gì | Làm gì |
+| --- | --- |
+| `Chưa cài Tailscale` | Cài theo bước 1, mở Tailscale, đăng nhập, chạy lại |
+| `Tailscale chưa đăng nhập` / `đang tắt` | Bấm biểu tượng Tailscale ở khay đồng hồ → **Log in** / **Connect** |
+| `Mạng Tailscale chưa cho phép Funnel` | Mở link Tailscale vừa in (hoặc https://login.tailscale.com/admin/acls) để bật Funnel, chạy lại |
+| `Tailscale từ chối quyền mở Funnel` | Windows: mở PowerShell bằng **Run as administrator** rồi chạy lại. Linux: `sudo tailscale set --operator=$USER` một lần |
+| `chưa bật MagicDNS` | https://login.tailscale.com/admin/dns → **Enable MagicDNS**, chạy lại |
+
+Server vẫn chạy trên máy (http://localhost:3000) khi chưa mở được link Tailscale; sửa xong chạy lại lệnh là được.
 
 ### Khi `pnpm chay` báo lỗi
 
@@ -160,7 +196,7 @@ Muốn gửi email bằng Gmail:
    ```
 3. Chạy lại `pnpm chay --that` (hoặc lệnh `docker compose … up -d`).
 
-Với cách A, `PUBLIC_URL` (địa chỉ trong link email và ảnh xem trước khi gửi link lên Zalo/Facebook) được `pnpm chay` tự cập nhật theo link Quick Tunnel mới.
+Với cách A, `PUBLIC_URL` (địa chỉ trong link email và ảnh xem trước khi gửi link lên Zalo/Facebook) được `pnpm chay` tự cập nhật theo link Quick Tunnel mới hoặc link Tailscale.
 Cách B/C: ghi `PUBLIC_URL=https://giapha.tenmien.vn` vào file env.
 
 ---

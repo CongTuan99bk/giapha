@@ -5,7 +5,10 @@
 //   pnpm chay --that         Dữ liệu THẬT: sao lưu, dỡ server cũ, build bản mới nhất, chạy lại. Dữ liệu giữ nguyên.
 //
 //   Tuỳ chọn thêm:
-//     --khong-link             không mở link Cloudflare (chỉ xem trên máy này: http://localhost:3000)
+//     --tailscale              link CỐ ĐỊNH qua Tailscale Funnel (https://<tên-máy>.<tên-mạng>.ts.net) — cần cài Tailscale.
+//                              Nhớ lựa chọn: các lần `pnpm chay --that` sau dùng luôn Tailscale.
+//     --cloudflare             quay lại link tạm Cloudflare (mặc định; mỗi lần chạy một link mới)
+//     --khong-link             lần này không mở link chia sẻ (chỉ xem trên máy này: http://localhost:3000)
 //     --xoa-du-lieu-cu         (với --that) XOÁ dữ liệu đang có rồi bắt đầu trống — đã sao lưu trước khi xoá
 //
 //   pnpm chay:link           in lại link chia sẻ của server đang chạy
@@ -20,6 +23,7 @@ import { randomBytes } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { findTailscale, INSTALL_HINT, startFunnel, stopFunnel, tailscaleStatus } from "./tailscale.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2).filter((a) => a !== "--");
@@ -109,7 +113,14 @@ function readEnv(file) {
 
 function writeEnv(file, env, title) {
   const header = `# ${title} — sinh tự động bởi \`pnpm chay\`. KHÔNG đưa file này lên GitHub.\n`;
-  writeFileSync(join(root, file), header + Object.entries(env).map(([k, v]) => `${k}=${v}`).join("\n") + "\n");
+  writeFileSync(
+    join(root, file),
+    header +
+      Object.entries(env)
+        .map(([k, v]) => `${k}=${v}`)
+        .join("\n") +
+      "\n",
+  );
 }
 
 /**
@@ -154,8 +165,10 @@ function ensureEnv(mode) {
     PLATFORM_DB_PASSWORD: secret(),
     COOKIE_SECURE: "true",
     CLAN_MODE: "single",
-    // Sau Cloudflare: lấy IP thật của người dùng (chặn dò mật khẩu theo IP)
+    // Header mang IP thật của người dùng (chặn dò mật khẩu theo IP) — đặt lại theo cách chia sẻ link mỗi lần chạy
     CLIENT_IP_HEADER: "cf-connecting-ip",
+    // Cách chia sẻ link: cloudflare (link tạm, đổi mỗi lần) | tailscale (link cố định)
+    LINK: "cloudflare",
     PUBLIC_URL: "",
     SMTP_URL: "",
     BACKUP_DIR: m.backupDir,
@@ -226,6 +239,21 @@ function activeMode() {
   return null;
 }
 
+/**
+ * IP thật của người dùng nằm ở header nào: Cloudflare gửi `cf-connecting-ip`; Tailscale Funnel GHI ĐÈ `x-forwarded-for`
+ * bằng IP khách (khách không tự gửi giả được). Đặt sai header thì người ngoài giả IP để né giới hạn dò mật khẩu.
+ */
+const IP_HEADER = { cloudflare: "cf-connecting-ip", tailscale: "x-forwarded-for" };
+const webPort = (env) => env.WEB_PORT || "3000";
+
+/** Tắt Funnel do lệnh này mở (khi chuyển sang Cloudflare / dừng server) — Tailscale chưa cài hay chưa chạy thì thôi */
+function closeTailscale(env) {
+  const bin = findTailscale();
+  if (!bin) return;
+  const st = tailscaleStatus(bin);
+  if (st.ok && stopFunnel(bin, st.host, webPort(env))) console.log(`  Đã đóng link Tailscale ${st.link}.`);
+}
+
 // ───────── chạy server ─────────
 
 async function start() {
@@ -235,11 +263,39 @@ async function start() {
     process.exit(1);
   }
   const m = MODES[mode];
-  const tunnel = !flag("--khong-link");
   console.log(`══════ Gia Phả Cội Nguồn — chạy server ${m.label} ══════`);
   checkDocker();
   fixLineEndings();
   const env = ensureEnv(mode);
+
+  // Cách chia sẻ link: cờ lần này, không thì lựa chọn đã nhớ trong file env
+  if (flag("--tailscale")) env.LINK = "tailscale";
+  else if (flag("--cloudflare")) env.LINK = "cloudflare";
+  const share = flag("--khong-link") ? "khong" : env.LINK === "tailscale" ? "tailscale" : "cloudflare";
+  const tunnel = share === "cloudflare";
+  let ts = null;
+  if (share === "tailscale") {
+    // kiểm tra TRƯỚC khi dỡ server cũ: Tailscale chưa sẵn sàng thì dừng, server đang chạy giữ nguyên
+    step("Kiểm tra Tailscale (link cố định)");
+    const bin = findTailscale();
+    if (!bin) {
+      console.error(
+        `✗ Chưa cài Tailscale (hoặc không tìm thấy lệnh tailscale).\n  ${INSTALL_HINT}\n  Hoặc dùng link tạm Cloudflare: pnpm chay --${mode} --cloudflare`,
+      );
+      process.exit(1);
+    }
+    const st = tailscaleStatus(bin);
+    if (!st.ok) {
+      console.error(`✗ ${st.problem}`);
+      process.exit(1);
+    }
+    ts = { bin, host: st.host, link: st.link };
+    console.log(`  Link cố định sẽ là: ${ts.link}`);
+    // biết trước link → đặt ngay, không phải khởi động lại api/web sau khi mở link
+    env.PUBLIC_URL = ts.link;
+  }
+  if (share !== "khong") env.CLIENT_IP_HEADER = IP_HEADER[share];
+  writeEnv(m.envFile, env, `Cấu hình server ${m.label}`);
 
   // 1. Dọn server đang chạy (cả hai chế độ dùng chung cổng 3000)
   step("Dọn server cũ");
@@ -269,12 +325,33 @@ async function start() {
   // 3. Dữ liệu
   if (mode === "mau") {
     step("Tạo dữ liệu mẫu (60 người giả, 6 đời, ảnh minh hoạ)");
-    docker([...composeArgs(mode, false), "run", "--rm", "-e", `SEED_EMAIL=${env.SEED_EMAIL}`, "-e", `SEED_PASSWORD=${env.SEED_PASSWORD}`, "api", "node", "dist/seed.js"]);
+    docker([
+      ...composeArgs(mode, false),
+      "run",
+      "--rm",
+      "-e",
+      `SEED_EMAIL=${env.SEED_EMAIL}`,
+      "-e",
+      `SEED_PASSWORD=${env.SEED_PASSWORD}`,
+      "api",
+      "node",
+      "dist/seed.js",
+    ]);
   }
   const clans = psql(mode, "select coalesce(string_agg(name, ' | '), '') from clans where deleted_at is null");
 
   // 4. Link chia sẻ
   let link = null;
+  let linkProblem = null;
+  if (share === "tailscale") {
+    step("Mở link cố định qua Tailscale Funnel");
+    const r = await startFunnel(ts.bin, ts.host, webPort(env));
+    if (r.ok) link = ts.link;
+    else linkProblem = r.problem;
+  } else {
+    // chuyển từ Tailscale sang Cloudflare / lần này chỉ xem trên máy: đóng đường vào từ Internet qua Tailscale (nếu đang mở)
+    closeTailscale(env);
+  }
   if (tunnel) {
     step("Lấy link chia sẻ từ Cloudflare");
     link = await waitForLink(mode);
@@ -288,11 +365,14 @@ async function start() {
 
   // 5. Tóm tắt
   const local = `http://localhost:${env.WEB_PORT || 3000}`;
-  const lines = [
-    `\n✓ Server ${m.label} đang chạy.`,
-    tunnel ? `  Link gửi cho người khác: ${link ?? "(chưa lấy được — chạy `pnpm chay:link` sau ít phút)"}` : "  Không mở link chia sẻ (--khong-link).",
-    `  Trên máy này:            ${local}`,
-  ];
+  const linkLine = {
+    cloudflare: `  Link gửi cho người khác: ${link ?? "(chưa lấy được — chạy `pnpm chay:link` sau ít phút)"}`,
+    tailscale: link
+      ? `  Link cố định (Tailscale): ${link}\n  (Lần đầu mở link có thể mất khoảng 1 phút để Tailscale cấp chứng chỉ https.)`
+      : `  ⚠ Chưa mở được link Tailscale: ${linkProblem}\n    Server vẫn chạy trên máy này.`,
+    khong: "  Không mở link chia sẻ (--khong-link).",
+  }[share];
+  const lines = [`\n✓ Server ${m.label} đang chạy.`, linkLine, `  Trên máy này:            ${local}`];
   if (mode === "mau") {
     lines.push(`  Tài khoản quản lý mẫu:   ${env.SEED_EMAIL} / ${env.SEED_PASSWORD}`);
     lines.push("  Dữ liệu mẫu bị xoá và tạo lại mỗi lần chạy `pnpm chay --mau`.");
@@ -309,6 +389,8 @@ async function start() {
     lines.push(`  Sao lưu tự động lúc ${env.BACKUP_HOUR}:00 hằng ngày vào thư mục backups/ (máy phải đang bật); nên chép ra Google Drive định kỳ.`);
   }
   lines.push("  Dừng: pnpm chay:dung" + (tunnel ? " — link đổi mỗi lần chạy lại." : ""));
+  if (tunnel) lines.push(`  Muốn link cố định (không đổi khi chạy lại): pnpm chay --${mode} --tailscale`);
+  if (share === "tailscale") lines.push(`  Quay lại link tạm Cloudflare: pnpm chay --${mode} --cloudflare`);
   console.log(lines.join("\n"));
 }
 
@@ -327,7 +409,14 @@ if (cmd === "start") {
   await start();
 } else if (cmd === "link") {
   const mode = needActive();
-  const link = currentLink(mode);
+  const env = readEnv(MODES[mode].envFile);
+  let link = null;
+  if (env.LINK === "tailscale") {
+    const bin = findTailscale();
+    const st = bin ? tailscaleStatus(bin) : { ok: false, problem: "Chưa cài Tailscale." };
+    link = st.ok ? st.link : null;
+    if (!st.ok) console.error(st.problem);
+  } else link = currentLink(mode);
   console.log(link ? `Link hiện tại (${MODES[mode].label}): ${link}` : "Server đang chạy không mở link chia sẻ (--khong-link) hoặc chưa lấy được link.");
 } else if (cmd === "logs") {
   docker([...composeArgs(needActive()), "logs", "-f", "--tail", "100", "api", "web", "tunnel"], { allowFail: true });
@@ -338,11 +427,18 @@ if (cmd === "start") {
 } else if (cmd === "stop") {
   checkDocker();
   for (const mode of ["mau", "that"]) {
-    const ids = docker(["ps", "-q", "--filter", `label=com.docker.compose.project=${MODES[mode].project}`], { capture: true, allowFail: true }).stdout.split(/\s+/).filter(Boolean);
+    const ids = docker(["ps", "-q", "--filter", `label=com.docker.compose.project=${MODES[mode].project}`], { capture: true, allowFail: true })
+      .stdout.split(/\s+/)
+      .filter(Boolean);
     if (ids.length) docker(["stop", ...ids], { capture: true, allowFail: true });
+    // đóng link Tailscale: không để cổng web trên máy mở ra Internet khi server đã dừng
+    const env = readEnv(MODES[mode].envFile);
+    if (env.LINK === "tailscale") closeTailscale(env);
   }
   console.log("\nĐã dừng. Dữ liệu thật vẫn còn; chạy lại bằng `pnpm chay --that` (hoặc `--mau`).");
 } else {
-  console.error(`Lệnh không rõ: ${cmd}. Dùng: pnpm chay --mau | --that  ·  chay:link · chay:nhat-ky · chay:sao-luu · chay:dung`);
+  console.error(
+    `Lệnh không rõ: ${cmd}. Dùng: pnpm chay --mau | --that [--tailscale | --cloudflare | --khong-link]  ·  chay:link · chay:nhat-ky · chay:sao-luu · chay:dung`,
+  );
   process.exit(1);
 }

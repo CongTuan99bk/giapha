@@ -44,6 +44,9 @@ jobs:
       - name: Kiểm tra giấy phép thư viện (mọi gói production, kể cả gián tiếp)
         run: node scripts/check-licenses.mjs
 
+      - name: Lệnh chạy server — link cố định Tailscale (lệnh tailscale giả)
+        run: pnpm test:scripts
+
       - name: Kiểm tra lỗ hổng thư viện
         run: pnpm audit --prod --audit-level high
 
@@ -139,6 +142,21 @@ jobs:
           docker compose -f infra/docker/compose.prod.yml --env-file .env.ci exec -T backup /bin/sh /backup.sh now
           ls -la backups
           ls backups/db_*.dump backups/media_*.tar.gz
+      - name: Lệnh chạy server dữ liệu thật + link cố định Tailscale (lệnh tailscale giả)
+        run: |
+          set -e
+          docker compose -f infra/docker/compose.prod.yml --env-file .env.ci down
+          mkdir -p /tmp/fts
+          echo '{"backend":"Running","dnsName":"giapha.vi-du.ts.net.","funnel":"ok"}' > /tmp/fts/state.json
+          export TAILSCALE_BIN=$PWD/scripts/test/fake-tailscale.mjs FAKE_TS_DIR=/tmp/fts
+          node scripts/server.mjs start --that --tailscale
+          grep -x 'PUBLIC_URL=https://giapha.vi-du.ts.net' .env.that
+          grep -x 'CLIENT_IP_HEADER=x-forwarded-for' .env.that
+          grep -q '"Proxy":"http://127.0.0.1:3000"' /tmp/fts/funnel.json
+          for i in $(seq 1 60); do curl -fsS http://localhost:3000/api/v1/health && break; sleep 5; done
+          curl -fsS http://localhost:3000/api/v1/health
+          node scripts/server.mjs stop
+          test ! -f /tmp/fts/funnel.json
       - name: Nhật ký khi lỗi
         if: failure()
         run: docker compose -f infra/docker/compose.prod.yml --env-file .env.ci logs --no-color --tail 200

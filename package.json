@@ -25,7 +25,8 @@
     "chay:link": "node scripts/server.mjs link",
     "chay:nhat-ky": "node scripts/server.mjs logs",
     "chay:sao-luu": "node scripts/server.mjs backup",
-    "chay:dung": "node scripts/server.mjs stop"
+    "chay:dung": "node scripts/server.mjs stop",
+    "test:scripts": "node --test \"scripts/test/*.test.mjs\""
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

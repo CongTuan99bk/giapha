@@ -5,8 +5,8 @@
 
 | Mục | Giá trị |
 | --- | --- |
-| Phiên bản file | 0.17.0 |
-| Cập nhật lần cuối | 2026-11-09 |
+| Phiên bản file | 0.17.1 |
+| Cập nhật lần cuối | 2026-11-12 |
 | Người cập nhật | TuanLC, Claude |
 | Giai đoạn hiện tại | **MVP phần 2: website công khai, thống kê truy cập, lời nhắn của khách, thư viện ảnh theo album, nhập phả từ Excel, in phả đồ PDF/SVG, tài khoản của tôi (đổi thông tin / mật khẩu), quản trị sửa tài khoản thành viên, nhạc nền xong; chịu tải đông người xem (bộ nhớ đệm, nén). Tiếp theo: ứng dụng iOS/Android** |
 | Mã nguồn | https://github.com/CongTuan99bk/giapha (nhánh `main`, CI xanh) |
@@ -419,6 +419,7 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | ADR-020 | 2026-11-09 | **Vẽ phả đồ PDF/SVG ngay trong API** bằng PDFKit + fontkit từ cùng bố cục `layoutTree` (một "cảnh" hình đơn giản, hai bộ vẽ); phông Be Vietnam Pro + Alegreya bản TTF đầy đủ trong `apps/api/assets/fonts` (Alegreya tĩnh tạo từ bản biến thiên bằng fontTools); xuất **đồng bộ** (không hàng đợi, bảng `exports` chưa dùng); nhiều trang: lặp lại lề "Đời n", nhãn hàng/cột để ghép | 2.000 người: PDF < 1 s, SVG 0,3 s; không cần Chromium trong image (~300 MB) | Playwright/Chromium in HTML (nặng, chậm); vẽ phía trình duyệt (khó in khổ lớn, phông) |
 | ADR-021 | 2026-11-09 | **Nhập Excel hai bước**: kiểm tra (lưu dòng thô + lỗi vào `imports`) → xác nhận (lập lại kế hoạch với dữ liệu hiện tại rồi ghi) → hoàn tác 24 h (xoá cứng quan hệ, xoá mềm người). Nối vào phả cũ bằng Mã = id người đã có (lấy từ file xuất); dòng người đã có bị bỏ qua, không cập nhật. Thuỷ tổ = người không cha mẹ, có con, nam, dòng trên. `partner_a` = người có cha mẹ trong họ | Người lớn tuổi quen Excel; thấy lỗi theo dòng trước khi ghi; an toàn khi lỡ tay | Sửa người đã có qua Excel (dễ ghi đè nhầm); nhập ngay không xem trước |
 | ADR-022 | 2026-11-09 | **Nhạc nền**: một bài cho cả dòng họ, lưu ổ đĩa `MEDIA_DIR/nhac/<clanId>/<uuid>.<đuôi>`, thông tin trong `site_settings.data.music`; phát bằng **một** `Audio` dùng chung (chuyển trang không ngắt), **mặc định tắt**, người xem bật thì nhớ trên máy (`localStorage coinguon:nhac`) — vào lại trang thì phát ở lần chạm đầu tiên (trình duyệt chặn tự phát) | Người lớn tuổi mở web có tiếng nhạc bất ngờ dễ hoảng; tốn dữ liệu di động; trình duyệt chặn tự phát | Tự phát khi vào trang; nhiều bài / danh sách phát |
+| ADR-023 | 2026-11-12 | **Link cố định không cần tên miền: Tailscale Funnel** (`pnpm chay --that --tailscale`, nhớ trong `LINK=` của file env). Tailscale chạy trên máy (không trong Docker), Funnel 443 → `http://127.0.0.1:3000`; API đọc IP khách từ `x-forwarded-for` (Tailscale **ghi đè** header này, Next chuyển nguyên sang API) — Cloudflare thì `cf-connecting-ip`. Kiểm tra Tailscale trước khi dỡ server cũ; chỉ tắt Funnel do mình mở (đúng đích 127.0.0.1:cổng web) khi dừng / chuyển sang Cloudflare | Chủ dự án muốn link không đổi khi chạy lại mà chưa mua tên miền; Quick Tunnel đổi link mỗi lần, ≤ 200 yêu cầu cùng lúc, không cam kết chạy | Cloudflare Tunnel có tên (cần tên miền), ngrok miễn phí (1 GB/tháng, trang cảnh báo), Oracle Free (máy chủ ở nước ngoài), tên miền miễn phí eu.org (chờ duyệt lâu) |
 | ADR-011 | 2026-11-01 | `CLAN_MODE=single`: chỉ tạo được dòng họ đầu tiên, `GET /instance` cho web biết dòng họ chính; vẫn giữ RLS đa dòng họ | Chủ dự án dùng riêng cho một dòng họ; giữ đường mở rộng | Bỏ hẳn `clan_id` / RLS |
 | ADR-010 | 2026-11-01 | API dùng **Kysely** (query builder có kiểu) thay Prisma Client; Prisma chỉ giữ schema + migration. NestJS 12 ESM | Đặt `set_config('app.clan_id')` trong cùng transaction cho RLS rõ ràng; ltree, CTE đệ quy, `update … from (values …)` viết thẳng SQL; không cần engine nhị phân của Prisma | Prisma Client + `$extends` cho RLS, Drizzle |
 | ADR-009 | 2026-11-01 | Ràng buộc phả hệ cả ở DB (trigger chặn vòng lặp, tự làm cha mẹ, nối chéo dòng họ) ngoài kiểm tra ở `genealogy-core` | Phòng thủ nhiều lớp; FK không xét RLS nên cần trigger chặn nối người khác dòng họ | Chỉ kiểm tra ở service |
@@ -428,6 +429,14 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 ## 17. CHANGELOG
 
 Định dạng: `## [phiên bản] — YYYY-MM-DD` rồi các mục Thêm / Sửa / Xoá / Bảo mật.
+
+## [0.17.1] — 2026-11-12 — Link cố định qua Tailscale Funnel
+### Thêm
+- `pnpm chay --that --tailscale` (ADR-023): link `https://<tên-máy>.<tên-mạng>.ts.net` không đổi khi chạy lại; lựa chọn được nhớ (`LINK=tailscale` trong `.env.that` / `.env.demo`), `--cloudflare` để quay lại link tạm. `chay-server.cmd` thêm lựa chọn **4** (Tailscale) và **5** (Cloudflare); `chay-server.sh that-tailscale | that-cloudflare`.
+- `scripts/tailscale.mjs`: tìm lệnh tailscale (PATH, đường dẫn cài mặc định Windows/macOS, `TAILSCALE_BIN`), kiểm tra trạng thái (chưa đăng nhập, đang tắt, chờ duyệt, chưa bật MagicDNS — báo cách sửa), mở Funnel chạy nền (lần đầu hiện link bật Funnel, chờ người dùng bật), nhận diện lỗi thiếu quyền / mạng chưa cho Funnel, chỉ tắt Funnel do mình mở.
+- `PUBLIC_URL` đặt theo link Tailscale ngay trước khi build (không phải khởi động lại); `CLIENT_IP_HEADER` tự đổi `x-forwarded-for` ↔ `cf-connecting-ip` theo cách chia sẻ. `pnpm chay:link` in link Tailscale; `pnpm chay:dung` đóng Funnel.
+- Test: `pnpm test:scripts` (5 test với lệnh tailscale giả `scripts/test/fake-tailscale.mjs`, chạy trong CI); job docker của CI chạy thật `server.mjs start --that --tailscale` rồi `stop`.
+- Tài liệu: `docs/TRIEN-KHAI.md` mục *Link cố định qua Tailscale*.
 
 ## [0.17.0] — 2026-11-09 — Tài khoản của tôi, quản trị sửa tài khoản thành viên, nhạc nền, trang đăng nhập mới
 ### Thêm
@@ -700,6 +709,7 @@ Test DB tích hợp: `packages/db` dùng `TEST_DATABASE_URL`, `TEST_APP_DATABASE
 | KI-035 | Kiểm thử trình duyệt: Playwright không đưa được file từ đường dẫn có dấu tiếng Việt vào ô chọn file — file thử ghi vào thư mục tạm không dấu | Thấp | — |
 | KI-036 | Đổi email trong Tài khoản của tôi / quản trị sửa email **không gửi thư xác nhận** (chưa có SMTP chắc chắn) — gõ sai email thì link quên mật khẩu gửi nhầm chỗ | Trung bình | Gửi mã xác nhận tới email mới khi bật SMTP |
 | KI-037 | Nhạc nền: một bài; iPhone không cho chỉnh âm lượng bằng mã (phát theo âm lượng máy); vào lại trang phải chạm một lần mới phát (chính sách trình duyệt) | Thấp | Nhiều bài khi có nhu cầu |
+| KI-038 | Link Tailscale: băng thông Funnel có giới hạn không công bố; link đổi nếu đổi tên máy / tên mạng Tailscale; máy phải bật. Chưa thử trên máy Windows thật (đã thử bằng lệnh tailscale giả + đối chiếu mã nguồn CLI Tailscale) | Thấp | Mua tên miền + Cloudflare Tunnel có tên, hoặc lên VPS |
 | KI-031 | Đổi ảnh banner / tên dòng họ: ảnh xem trước khi chia sẻ link cập nhật sau ~15 giây; Zalo/Facebook còn nhớ ảnh cũ của link đã chia sẻ (dùng công cụ "Sharing Debugger" của Facebook để làm mới) | Thấp | — |
 | KI-027 | Số điện thoại chưa được xác minh (OTP SMS): ai cũng đăng ký được bằng số của người khác (vẫn phải chờ quản trị duyệt) | Trung bình | Quản trị kiểm tra trước khi duyệt; thêm OTP SMS/Zalo khi có ngân sách |
 | KI-008 | Bố cục phả đồ hiện là dạng "khối căn giữa", chưa nén nhánh kiểu Reingold–Tilford (cây rộng hơn cần thiết) | Thấp | Tối ưu khi làm trình chỉnh sửa phả đồ nếu cây quá rộng |
